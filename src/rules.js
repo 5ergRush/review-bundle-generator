@@ -60,8 +60,9 @@ export function parseRulesYaml(source) {
   try { input = doc.toJS({ maxAliasCount: 0 }); }
   catch { throw new RuleError('INVALID_YAML', 'Rule YAML could not be converted.'); }
   keys(input, ['schemaVersion', 'rules'], 'Rule document');
-  check(['review-rules/v1', 'review-rules/v2'].includes(input.schemaVersion), 'Expected review-rules/v1 or v2.');
-  const version2 = input.schemaVersion === 'review-rules/v2';
+  check(['review-rules/v1', 'review-rules/v2', 'review-rules/v3'].includes(input.schemaVersion), 'Expected review-rules/v1, v2 or v3.');
+  const version2 = input.schemaVersion !== 'review-rules/v1';
+  const version3 = input.schemaVersion === 'review-rules/v3';
   check(Array.isArray(input.rules) && input.rules.length <= 250, 'Expected at most 250 rules.');
   const seen = new Set();
   const rules = input.rules.map(rule => {
@@ -88,11 +89,17 @@ export function parseRulesYaml(source) {
     if (condition.changedSyntax !== undefined) {
       check(Array.isArray(condition.changedSyntax) && condition.changedSyntax.length <= 8, 'changedSyntax must have 0–8 predicates.');
       changedSyntax = condition.changedSyntax.map(predicate => {
-        keys(predicate, ['side', 'kind', 'identifiers', 'callee'], 'Syntax predicate');
-        check(['added', 'removed'].includes(predicate.side) && ['throw-guard', 'call'].includes(predicate.kind), 'Unsupported syntax predicate.');
+        keys(predicate, ['side', 'kind', 'identifiers', 'callee', ...(version3 ? ['target', 'within'] : [])], 'Syntax predicate');
+        check(['added', 'removed'].includes(predicate.side) && ['throw-guard', 'call', ...(version3 ? ['member-call', 'assignment'] : [])].includes(predicate.kind), 'Unsupported syntax predicate.');
         const identifiers = predicate.identifiers === undefined ? [] : list(predicate.identifiers, value => typeof value === 'string' && /^[a-zA-Z_$][a-zA-Z0-9_$]{0,79}$/u.test(value), 'identifiers', true);
-        check(predicate.kind === 'call' ? typeof predicate.callee === 'string' && /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/u.test(predicate.callee) && predicate.callee.length <= 200 : predicate.callee === undefined, 'Calls require a bounded literal callee; guards cannot have a callee.');
-        return { side: predicate.side, kind: predicate.kind, identifiers, ...(predicate.kind === 'call' ? { callee: predicate.callee } : {}) };
+        const dotted = value => typeof value === 'string' && value.length <= 200 && /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/u.test(value);
+        const isCall = ['call', 'member-call'].includes(predicate.kind);
+        check(isCall ? dotted(predicate.callee) : predicate.callee === undefined, 'Calls require a literal callee; other kinds cannot have a callee.');
+        check(predicate.kind !== 'member-call' || predicate.callee.startsWith('this.'), 'Member calls require a literal this receiver.');
+        check(predicate.kind === 'assignment' ? dotted(predicate.target) && predicate.target.startsWith('this.') : predicate.target === undefined, 'Assignments require a literal this target; other kinds cannot have a target.');
+        check(predicate.within === undefined || typeof predicate.within === 'string' && /^[a-zA-Z_$][a-zA-Z0-9_$]{0,79}$/u.test(predicate.within), 'within must be a literal named enclosing function or method.');
+        return { side: predicate.side, kind: predicate.kind, identifiers, ...(isCall ? { callee: predicate.callee } : {}),
+          ...(predicate.kind === 'assignment' ? { target: predicate.target } : {}), ...(predicate.within !== undefined ? { within: predicate.within } : {}) };
       }).sort((a, b) => compare(JSON.stringify(a), JSON.stringify(b)));
       changedSyntax = changedSyntax.filter((item, index) => index === 0 || JSON.stringify(item) !== JSON.stringify(changedSyntax[index - 1]));
     }
@@ -161,7 +168,8 @@ export function selectRules(config, changes, facts, evidence = []) {
   };
   const textFacts = new Map(facts.filter(f => f.type === 'text-change').map(f => [f.changeId, f]));
   const decisions = [];
-  const version2 = config.schemaVersion === 'review-rules/v2';
+  const version2 = config.schemaVersion !== 'review-rules/v1';
+  const version3 = config.schemaVersion === 'review-rules/v3';
   const syntaxCache = new Map();
   for (const rule of config.rules) {
     const matches = [], rejected = { status: 0, scope: 0, textUnavailable: 0, threshold: 0, ...(version2 ? { syntaxUnavailable: 0, syntaxNotMatched: 0 } : {}) };
@@ -187,15 +195,20 @@ export function selectRules(config, changes, facts, evidence = []) {
         (rule.when.minRemovedLines !== null && fact.value.removedLines < rule.when.minRemovedLines))) { rejected.threshold++; continue; }
       let syntaxMatches = [];
       if (version2 && rule.when.changedSyntax.length) {
-        if (!syntaxCache.has(change.id)) syntaxCache.set(change.id, observeChangedSyntax(change, evidence, tick));
+        if (!syntaxCache.has(change.id)) syntaxCache.set(change.id, observeChangedSyntax(change, evidence, tick, version3));
         const observed = syntaxCache.get(change.id);
+        let withinUnavailable = false;
         syntaxMatches = rule.when.changedSyntax.map(predicate => observed.observations.filter(item => {
-          tick(); return item.side === predicate.side && item.kind === predicate.kind &&
-            (predicate.kind !== 'call' || predicate.callee === item.callee) && predicate.identifiers.every(name => item.identifiers.includes(name)) &&
+          tick();
+          const candidate = item.side === predicate.side && item.kind === predicate.kind &&
+            (!['call', 'member-call'].includes(predicate.kind) || predicate.callee === item.callee) &&
+            (predicate.kind !== 'assignment' || predicate.target === item.target) && predicate.identifiers.every(name => item.identifiers.includes(name)) &&
             matchedPaths.some(path => path.side === (item.side === 'removed' ? 'old' : 'new'));
+          if (candidate && predicate.within !== undefined && item.within === null) withinUnavailable = true;
+          return candidate && (predicate.within === undefined || predicate.within === item.within);
         }));
         if (syntaxMatches.some(items => !items.length)) {
-          if (!observed.available) rejected.syntaxUnavailable++; else rejected.syntaxNotMatched++;
+          if (!observed.available || withinUnavailable) rejected.syntaxUnavailable++; else rejected.syntaxNotMatched++;
           continue;
         }
       }
@@ -208,7 +221,7 @@ export function selectRules(config, changes, facts, evidence = []) {
         rejected.scope ? 'scope-not-matched' : 'status-not-matched';
     decisions.push({ ruleId: rule.id, status, reason, matches, rejected });
   }
-  return { schemaVersion: version2 ? 'rule-selection/v2' : 'rule-selection/v1', configId: config.id, rules: config.rules,
+  return { schemaVersion: version3 ? 'rule-selection/v3' : version2 ? 'rule-selection/v2' : 'rule-selection/v1', configId: config.id, rules: config.rules,
     policy: { paths: 'old-or-new-side', criteria: 'same-side-and', defaultEntryKinds: ['file'],
-      maxOperations: MAX_OPERATIONS, unavailableText: 'skip-with-reason', ...(version2 ? { syntax: 'bounded-typescript-patch-context', compilerVersion: SYNTAX_COMPILER_VERSION, comparison: 'token-multiset-within-hunk', identifierBinding: 'spelling-only', calleeResolution: 'literal-property-chain', syntaxConditions: 'all-predicates-same-change', unavailableSyntax: 'skip-with-reason', maxHunkBytesPerSide: 128 * 1024, maxTokensAndNodesPerHunkSide: 25000 } : {}) }, decisions };
+      maxOperations: MAX_OPERATIONS, unavailableText: 'skip-with-reason', ...(version2 ? { syntax: 'bounded-typescript-patch-context', compilerVersion: SYNTAX_COMPILER_VERSION, comparison: version3 ? 'token-and-enclosing-name-multiset-within-hunk' : 'token-multiset-within-hunk', identifierBinding: 'spelling-only', calleeResolution: 'literal-property-chain', ...(version3 ? { memberReceiver: 'literal-this', enclosingScope: 'nearest-named-function-like', assignments: 'simple-equals-literal-this-target' } : {}), syntaxConditions: 'all-predicates-same-change', unavailableSyntax: 'skip-with-reason', maxHunkBytesPerSide: 128 * 1024, maxTokensAndNodesPerHunkSide: 25000 } : {}) }, decisions };
 }

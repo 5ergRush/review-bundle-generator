@@ -119,5 +119,70 @@
       "+  // updated documentation"
     ],
     "expectedRules": []
+  },
+  {
+    "id": "component-ngOnDestroy-unsubscribe",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  ngOnDestroy() {\n    this.subscription.unsubscribe();\n  }\n}\n",
+    "after": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  ngOnDestroy() {\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [
+      "teardown-invariant"
+    ]
+  },
+  {
+    "id": "component-refresh-unsubscribe",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  refresh() {\n    this.subscription.unsubscribe();\n  }\n}\n",
+    "after": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  refresh() {\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.subscription.unsubscribe();"
+    ],
+    "expectedRules": []
+  },
+  {
+    "id": "component-teardown-comment",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  ngOnDestroy() {\n    this.subscription.unsubscribe();\n  }\n}\n",
+    "after": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  ngOnDestroy() {\n    this.subscription.unsubscribe(); // same teardown\n  }\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.subscription.unsubscribe();",
+      "+    this.subscription.unsubscribe(); // same teardown"
+    ],
+    "expectedRules": []
+  },
+  {
+    "id": "component-load-state",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  loading = false;\n  load() {\n    this.loading = true;\n    return 1;\n  }\n}\n",
+    "after": "export class Screen {\n  loading = false;\n  load() {\n    return 1;\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.loading = true;"
+    ],
+    "expectedRules": [
+      "loading-state-invariant"
+    ]
+  },
+  {
+    "id": "component-reset-state",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  loading = false;\n  reset() {\n    this.loading = true;\n    return 1;\n  }\n}\n",
+    "after": "export class Screen {\n  loading = false;\n  reset() {\n    return 1;\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.loading = true;"
+    ],
+    "expectedRules": []
   }
 ]

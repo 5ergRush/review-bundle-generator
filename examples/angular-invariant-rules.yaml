@@ -1,0 +1,30 @@
+schemaVersion: review-rules/v3
+rules:
+  - id: teardown-invariant
+    title: Review changed subscription teardown
+    instruction: >-
+      Check whether the subscription still stops at component destruction.
+      A changed unsubscribe call is a trigger, not proof of a leak: verify
+      equivalent teardown such as an owning destroy signal before reporting.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: member-call
+          callee: this.subscription.unsubscribe
+          within: ngOnDestroy
+  - id: loading-state-invariant
+    title: Review changed loading-state transitions
+    instruction: >-
+      Verify that the loading state has correct transitions on success, failure
+      and cancellation. Check consumers and cleanup before reporting a defect;
+      an assignment change alone does not prove incorrect behavior.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: assignment
+          target: this.loading
+          within: load

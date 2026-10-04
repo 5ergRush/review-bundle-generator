@@ -2,7 +2,7 @@
 
 `cases.json` contains authored synthetic source changes and independent factual
 and rule-relevance expectations. `report.json` records the current audit result:
-facts, packet checks and narrow syntax-rule specificity pass on nine cases.
+facts, packet checks and narrow syntax-rule specificity pass on fourteen cases, including contextual teardown/state controls.
 `baseline-v1.json` preserves the original two false selections.
 These are not reviewer outputs or real MR quality measurements.
 
@@ -14,3 +14,8 @@ This is limited synthetic acceptance, not comprehensive semantic correctness or
 measured reviewer quality.
 
 See `docs/validation-plan.md` for the next implementation and Gemini experiment.
+
+`npm run audit:callers` reproduces `caller-report.json` with aliased-import,
+new-caller and same-name exclusion checks. It also confirms two known gaps: indirect
+variable calls and deletion-only new-side targets. Contract checks passing do not
+mean complete caller coverage. Both audits use synthetic TypeScript sources.

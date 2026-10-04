@@ -4,7 +4,7 @@ import { posix } from 'node:path';
 export const SYNTAX_COMPILER_VERSION = ts.version;
 
 // Bounded syntactic observations from patch context. No source execution or I/O.
-export function observeChangedSyntax(change, evidence, tick) {
+export function observeChangedSyntax(change, evidence, tick, contextual = false) {
   if (![change.oldPath, change.newPath].filter(Boolean).every(path => posix.extname(path) === '.ts') || change.coverage !== 'text-diff') return { available: false, observations: [] };
   const patches = change.evidenceIds.map(id => evidence.find(item => item.id === id));
   if (patches.some(item => !item || item.type !== 'git-patch')) return { available: false, observations: [] };
@@ -42,7 +42,7 @@ export function observeChangedSyntax(change, evidence, tick) {
           tick(); if (++count > 25000) { available = false; break; }
           const node = queue.pop();
           const children = []; ts.forEachChild(node, child => { children.push(child); }); queue.push(...children);
-          let kind; let condition; let callee = null;
+          let kind; let condition; let callee = null; let target = null;
           if (ts.isIfStatement(node) && !node.elseStatement) {
             const body = ts.isBlock(node.thenStatement) ? node.thenStatement.statements : [node.thenStatement];
             if (body.length === 1 && ts.isThrowStatement(body[0])) { kind = 'throw-guard'; condition = node.expression; }
@@ -50,8 +50,18 @@ export function observeChangedSyntax(change, evidence, tick) {
             const names = []; let expression = node.expression;
             while (ts.isPropertyAccessExpression(expression)) { names.unshift(expression.name.text); expression = expression.expression; }
             if (ts.isIdentifier(expression)) { names.unshift(expression.text); callee = names.join('.'); kind = 'call'; condition = node; }
+            else if (contextual && expression.kind === ts.SyntaxKind.ThisKeyword && names.length) { callee = ['this', ...names].join('.'); kind = 'member-call'; condition = node; }
+          }
+          if (contextual && ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
+            const names = []; let expression = node.left;
+            while (ts.isPropertyAccessExpression(expression)) { names.unshift(expression.name.text); expression = expression.expression; }
+            if (expression.kind === ts.SyntaxKind.ThisKeyword && names.length) { kind = 'assignment'; target = ['this', ...names].join('.'); condition = node; }
           }
           if (!kind) continue;
+          let within = null; let withinPosition = null;
+          if (contextual) for (let parent = node.parent; parent; parent = parent.parent) {
+            if (ts.isFunctionLike(parent)) { within = parent.name && ts.isIdentifier(parent.name) ? parent.name.text : null; withinPosition = within ? parent.name.getStart(file) : null; break; }
+          }
           const identifiers = new Set(); const pending = [condition];
           while (pending.length) { tick(); const part = pending.pop(); if (ts.isIdentifier(part)) identifiers.add(part.text); ts.forEachChild(part, child => { pending.push(child); }); }
           const start = node.getStart(file); const end = node.end;
@@ -59,13 +69,14 @@ export function observeChangedSyntax(change, evidence, tick) {
           // and a qualifying token must occupy an actual edited line.
           const included = tokens.filter(t => { tick(); return t.start >= start && t.end <= end; });
           const edited = item[side === 'old' ? 'removed' : 'added'];
-          const touched = included.some(t => {
+          let touched = included.some(t => {
             const first = file.getLineAndCharacterOfPosition(t.start).line; const last = file.getLineAndCharacterOfPosition(t.end - 1).line;
             for (let line = first; line <= last; line++) { tick(); if (edited.has(line)) return true; } return false;
           });
+          if (contextual && withinPosition !== null && edited.has(file.getLineAndCharacterOfPosition(withinPosition).line)) touched = true;
           const startLine = file.getLineAndCharacterOfPosition(start).line + item[side === 'old' ? 'oldStart' : 'newStart'];
           const endLine = file.getLineAndCharacterOfPosition(end - 1).line + item[side === 'old' ? 'oldStart' : 'newStart'];
-          nodes.push({ startLine, endLine, kind, identifiers: [...identifiers].sort(), callee, fingerprint: JSON.stringify(included.map(t => t.value)), touched });
+          nodes.push({ ...(contextual ? { within, withinLine: withinPosition === null ? null : file.getLineAndCharacterOfPosition(withinPosition).line + item[side === 'old' ? 'oldStart' : 'newStart'], ...(target ? { target } : {}) } : {}), startLine, endLine, kind, identifiers: [...identifiers].sort(), callee, fingerprint: JSON.stringify(included.map(t => t.value)), touched });
         }
         if (count > 25000) break;
         parsed[side] = nodes;
@@ -73,12 +84,12 @@ export function observeChangedSyntax(change, evidence, tick) {
       if (!parsed.old || !parsed.new) continue;
       for (const side of ['old', 'new']) {
         const oppositeCounts = new Map();
-        for (const node of parsed[side === 'old' ? 'new' : 'old']) { tick(); const key = node.kind + node.fingerprint; oppositeCounts.set(key, (oppositeCounts.get(key) ?? 0) + 1); }
+        for (const node of parsed[side === 'old' ? 'new' : 'old']) { tick(); const key = node.kind + (contextual ? JSON.stringify(node.within) : '') + node.fingerprint; oppositeCounts.set(key, (oppositeCounts.get(key) ?? 0) + 1); }
         // Pair unchanged observations first, then account for duplicate removals.
         for (const node of [...parsed[side]].sort((a, b) => Number(a.touched) - Number(b.touched))) {
-          tick(); const key = node.kind + node.fingerprint; const count = oppositeCounts.get(key) ?? 0;
+          tick(); const key = node.kind + (contextual ? JSON.stringify(node.within) : '') + node.fingerprint; const count = oppositeCounts.get(key) ?? 0;
           if (count) { oppositeCounts.set(key, count - 1); continue; }
-          if (node.touched) observations.push({ kind: node.kind, identifiers: node.identifiers, callee: node.callee,
+          if (node.touched) observations.push({ ...(contextual ? { within: node.within, withinLine: node.withinLine, ...(node.target ? { target: node.target } : {}) } : {}), kind: node.kind, identifiers: node.identifiers, callee: node.callee,
             side: side === 'old' ? 'removed' : 'added', evidenceId: patch.id, hunkIndex: index, startLine: node.startLine, endLine: node.endLine });
         }
       }

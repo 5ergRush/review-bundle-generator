@@ -104,6 +104,64 @@
       "falseSelections": [],
       "missedRules": [],
       "specificity": "passed"
+    },
+    {
+      "caseId": "component-ngOnDestroy-unsubscribe",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "teardown-invariant"
+      ],
+      "selectedRules": [
+        "teardown-invariant"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    },
+    {
+      "caseId": "component-refresh-unsubscribe",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    },
+    {
+      "caseId": "component-teardown-comment",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    },
+    {
+      "caseId": "component-load-state",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "loading-state-invariant"
+      ],
+      "selectedRules": [
+        "loading-state-invariant"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    },
+    {
+      "caseId": "component-reset-state",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
     }
   ],
   "factsPassed": true,

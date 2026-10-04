@@ -20,14 +20,22 @@ Initial five-case result: all factual and packet checks passed. Two guard-remova
 cases selected the intended authorization/money rules; the unrelated file selected
 none. Both comment-only edits in the same files incorrectly selected the same rules.
 This is an observed limitation of path/status/line-count selectors, not evidence
-that those rules find defects. Current selection cannot inspect changed behavior.
-The instructions express concrete domain invariants, but relevance remains coarse.
+that those rules find defects. The original selectors could not inspect changed code.
+Those instructions expressed concrete domain invariants, but relevance was coarse.
 
-Current increment: opt-in review-rules/v2 changed-syntax predicates recognize
+Initial specificity increment: opt-in review-rules/v2 changed-syntax predicates recognize
 changed throw guards and calls, with explicit unavailable evidence and traceable
-patch coordinates. The nine-case audit now passes, including the original controls,
+patch coordinates. The original nine-case audit passed, including the original controls,
 guard-condition replacement, and misleading comments/strings. This fixes the narrow
-baseline gap; it is not complete behavioral analysis. Next: expand rule relevance. Cover positive and
+baseline gap; it is not complete behavioral analysis.
+
+Current increment: v3 adds literal this-member calls, simple state assignments and
+nearest named-function qualifiers. Fourteen fact/packet/relevance cases pass,
+including teardown/loading changes versus unrelated methods. The caller audit
+confirms alias resolution and same-name exclusion, and reproduces deletion-only
+indexing and indirect-variable gaps. Templates/framework ownership and runtime
+behavior remain unverified. Next: explicit declaration counterpart mapping,
+bounded rule-directed caller requests and template relationships. Cover positive and
 same-path negative examples, misleading comments/strings, indirect calls, import
 aliases, validation modifications and Angular state/lifecycle/template relationships.
 Do not substitute filename suffixes or keyword counts for semantic proof. No single

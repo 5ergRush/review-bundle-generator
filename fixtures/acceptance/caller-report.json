@@ -1,0 +1,77 @@
+{
+  "schemaVersion": "caller-acceptance/v1",
+  "evidenceKind": "authored-synthetic-real-git-static-analysis",
+  "results": [
+    {
+      "caseId": "deletion-only-target",
+      "status": "limitation-confirmed",
+      "expectedStaticMatches": {
+        "old": 1,
+        "new": null
+      },
+      "observedStaticMatches": {
+        "old": 1,
+        "new": null
+      },
+      "limitation": "Pure deletion creates no new changed lines; the current declaration index exposes only the old target even though the new function still exists."
+    },
+    {
+      "caseId": "aliased-import",
+      "status": "passed",
+      "expectedStaticMatches": {
+        "old": 1,
+        "new": 1
+      },
+      "observedStaticMatches": {
+        "old": 1,
+        "new": 1
+      }
+    },
+    {
+      "caseId": "new-caller",
+      "status": "passed",
+      "expectedStaticMatches": {
+        "old": 0,
+        "new": 1
+      },
+      "observedStaticMatches": {
+        "old": 0,
+        "new": 1
+      }
+    },
+    {
+      "caseId": "same-name-only",
+      "status": "passed",
+      "expectedStaticMatches": {
+        "old": 0,
+        "new": 0
+      },
+      "observedStaticMatches": {
+        "old": 0,
+        "new": 0
+      }
+    },
+    {
+      "caseId": "indirect-variable-call",
+      "status": "limitation-confirmed",
+      "expectedStaticMatches": {
+        "old": 0,
+        "new": 0
+      },
+      "observedStaticMatches": {
+        "old": 0,
+        "new": 0
+      },
+      "limitation": "Runtime caller exists but variable indirection is not resolved by this static subset; zero matches is not proof of no callers."
+    }
+  ],
+  "contractChecksPassed": true,
+  "completeCallerCoverage": false,
+  "limitations": [
+    "No framework/runtime execution or real corporate MR.",
+    "Rule selection is triggered by changed syntax, not by caller existence.",
+    "Caller evidence requires explicit requests; no automatic rule-directed expansion is implemented.",
+    "Only statically resolved pinned local symbols are returned; zero matches is not a completeness guarantee."
+  ],
+  "reviewerImprovement": "not-measured"
+}

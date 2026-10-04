@@ -4,15 +4,17 @@ import { tmpdir, devNull } from 'node:os';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
-import { stringify } from 'yaml';
+import { stringify, parse } from 'yaml';
 import { createReviewBundle, createReviewerRequest } from '../src/index.js';
 
 const output = resolve(process.argv[2] ?? 'fixtures/acceptance');
 await mkdir(output, { recursive: true });
 const cases = JSON.parse(await readFile(new URL('../fixtures/acceptance/cases.json', import.meta.url), 'utf8'));
-const rules = stringify({ schemaVersion: 'review-rules/v2', rules: [
+const angularRules = parse(await readFile(new URL('../examples/angular-invariant-rules.yaml', import.meta.url), 'utf8'));
+const rules = stringify({ schemaVersion: 'review-rules/v3', rules: [
   { id: 'authorization-guard', title: 'Authorization invariant', instruction: 'The caller passes externally supplied roles. Verify that unauthorized roles cannot reach the protected action. A removed guard needs equivalent enforcement; request caller evidence rather than assume it.', scope: { paths: ['src/access.ts'] }, when: { minRemovedLines: 1, changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['role'] }] } },
   { id: 'money-boundary', title: 'Money invariant', instruction: 'Amounts passed to the payment boundary must remain positive integer minor units. Check validation changes, including zero, negative and fractional inputs; do not assume the UI enforces the invariant.', scope: { paths: ['src/payment.ts'] }, when: { minRemovedLines: 1, changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'] }] } },
+  ...angularRules.rules,
 ] });
 const results = [];
 for (const item of cases) {

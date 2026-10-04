@@ -145,3 +145,8 @@ Changed-code rule conditions are available through opt-in `review-rules/v2`; see
 and [validation plan](docs/validation-plan.md). `npm run audit:acceptance` reproduces
 the authored facts/rule audit from the source checkout. These syntax predicates
 do not prove runtime defects or measured AI reviewer improvement.
+
+Opt-in `review-rules/v3` adds enclosing-method qualifiers, literal `this` calls and
+simple member assignments; see [contextual examples](examples/angular-invariant-rules.yaml).
+`npm run audit:callers` checks static caller provenance and reproduces known indexing
+limits. These acceptance checks do not demonstrate AI reviewer improvement.

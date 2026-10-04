@@ -15,11 +15,12 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/rules.js && node --check src/semantic.js && node --check src/reviewer.js && node --check src/json-file.js && node --check src/evaluation.js && node --check scripts/create-evaluation-fixtures.js && node --check src/gitlab.js && node --check src/runtime.js && node --check scripts/smoke-package.js && node --check src/cli.js && node --check scripts/audit-acceptance.js && node --check src/changed-syntax.js",
+    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/rules.js && node --check src/semantic.js && node --check src/reviewer.js && node --check src/json-file.js && node --check src/evaluation.js && node --check scripts/create-evaluation-fixtures.js && node --check src/gitlab.js && node --check src/runtime.js && node --check scripts/smoke-package.js && node --check src/cli.js && node --check scripts/audit-acceptance.js && node --check src/changed-syntax.js && node --check scripts/audit-callers.js",
     "validate": "npm run check && npm test",
     "fixtures:evaluation": "node scripts/create-evaluation-fixtures.js",
     "smoke:package": "node scripts/smoke-package.js",
-    "audit:acceptance": "node scripts/audit-acceptance.js"
+    "audit:acceptance": "node scripts/audit-acceptance.js",
+    "audit:callers": "node scripts/audit-callers.js"
   },
   "dependencies": {
     "typescript": "5.9.3",
