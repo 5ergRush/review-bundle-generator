@@ -10,9 +10,9 @@ import { createReviewBundle, createReviewerRequest } from '../src/index.js';
 const output = resolve(process.argv[2] ?? 'fixtures/acceptance');
 await mkdir(output, { recursive: true });
 const cases = JSON.parse(await readFile(new URL('../fixtures/acceptance/cases.json', import.meta.url), 'utf8'));
-const rules = stringify({ schemaVersion: 'review-rules/v1', rules: [
-  { id: 'authorization-guard', title: 'Authorization invariant', instruction: 'The caller passes externally supplied roles. Verify that unauthorized roles cannot reach the protected action. A removed guard needs equivalent enforcement; request caller evidence rather than assume it.', scope: { paths: ['src/access.ts'] }, when: { minRemovedLines: 1 } },
-  { id: 'money-boundary', title: 'Money invariant', instruction: 'Amounts passed to the payment boundary must remain positive integer minor units. Check validation changes, including zero, negative and fractional inputs; do not assume the UI enforces the invariant.', scope: { paths: ['src/payment.ts'] }, when: { minRemovedLines: 1 } },
+const rules = stringify({ schemaVersion: 'review-rules/v2', rules: [
+  { id: 'authorization-guard', title: 'Authorization invariant', instruction: 'The caller passes externally supplied roles. Verify that unauthorized roles cannot reach the protected action. A removed guard needs equivalent enforcement; request caller evidence rather than assume it.', scope: { paths: ['src/access.ts'] }, when: { minRemovedLines: 1, changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['role'] }] } },
+  { id: 'money-boundary', title: 'Money invariant', instruction: 'Amounts passed to the payment boundary must remain positive integer minor units. Check validation changes, including zero, negative and fractional inputs; do not assume the UI enforces the invariant.', scope: { paths: ['src/payment.ts'] }, when: { minRemovedLines: 1, changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'] }] } },
 ] });
 const results = [];
 for (const item of cases) {
@@ -47,5 +47,5 @@ const report = { schemaVersion: 'acceptance-audit/v1', evidenceKind: 'authored-s
   reviewerImprovement: 'not-measured', limitations: ['Not real corporate MRs or Angular runtime validation.', 'Expected relevance is authored policy, not proof of a defect.', 'No AI reviewer responses or quality deltas are fabricated.', 'Same-author unblinded reviews cannot establish independent improvement.'] };
 await writeFile(join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify(report, null, 2));
-// Facts/provenance assertions fail the process; specificity failures are reported
-// as measured gaps, not silently turned into passing acceptance assertions.
+// Version 2 now has an acceptance gate for the fixed authored relevance cases.
+assert.equal(report.specificityPassed, true, 'Rule specificity acceptance failed; inspect report.json.');

@@ -12,8 +12,9 @@ Run `npm run audit:acceptance` from the source checkout. Authored expectations i
 Git commits, generates semantic bundles and reviewer packets, and verifies exact
 change paths/status, added/removed line counts, patch lines, pinned evidence
 revisions and selected-rule propagation. Failures of those assertions stop it.
-It separately reports rule relevance against the authored policy. A process exit
-of zero does not mean specificity passed: inspect `specificityPassed`.
+It reports rule relevance against the authored policy. Version 2 now asserts
+`specificityPassed`; regression of an authored case fails the process. The preserved
+`baseline-v1.json` records the original failed five-case baseline.
 
 Initial five-case result: all factual and packet checks passed. Two guard-removal
 cases selected the intended authorization/money rules; the unrelated file selected
@@ -22,8 +23,11 @@ This is an observed limitation of path/status/line-count selectors, not evidence
 that those rules find defects. Current selection cannot inspect changed behavior.
 The instructions express concrete domain invariants, but relevance remains coarse.
 
-Next: implement bounded deterministic predicates using actual changed-code evidence,
-with explicit unsupported/unknown cases and traceable reasons. Cover positive and
+Current increment: opt-in review-rules/v2 changed-syntax predicates recognize
+changed throw guards and calls, with explicit unavailable evidence and traceable
+patch coordinates. The nine-case audit now passes, including the original controls,
+guard-condition replacement, and misleading comments/strings. This fixes the narrow
+baseline gap; it is not complete behavioral analysis. Next: expand rule relevance. Cover positive and
 same-path negative examples, misleading comments/strings, indirect calls, import
 aliases, validation modifications and Angular state/lifecycle/template relationships.
 Do not substitute filename suffixes or keyword counts for semantic proof. No single

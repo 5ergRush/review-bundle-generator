@@ -1,0 +1,28 @@
+schemaVersion: review-rules/v2
+rules:
+  - id: authorization-invariant
+    title: Review changed role enforcement
+    instruction: >-
+      Verify authorization at the protected operation, including non-admin callers.
+      A changed throw guard is a review trigger, not proof of missing enforcement.
+      Request caller or alternative validation evidence before claiming a regression.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: throw-guard
+          identifiers: [role]
+  - id: money-validation
+    title: Review changed integer amount validation
+    instruction: >-
+      Check whether amounts reaching the payment boundary remain positive integer
+      minor units. Consider zero, negatives and fractions; do not assume UI validation.
+      Verify replacement enforcement before reporting a defect.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: throw-guard
+          identifiers: [amount]

@@ -189,7 +189,7 @@ export function compileReviewBundle(input, options = {}) {
     if (binary) binaryFiles++;
     if (special) specialEntries++;
   }
-  const ruleSelection = ruleConfig === null ? null : selectRules(ruleConfig, changes, facts);
+  const ruleSelection = ruleConfig === null ? null : selectRules(ruleConfig, changes, facts, evidence);
   const payload = {
     schemaVersion: ruleSelection === null ? 'review-bundle/v1' : 'review-bundle/v2',
     provenance: { ingestionSchemaVersion: 'git-ingestion/v1', tool: snapshot.tool,

@@ -3,17 +3,17 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #7 merged; validation priority revised by the user. Facts and meaningful rule specificity are the first gate; independent reviewer benefit is the second. Acceptance audit implemented on feat/live-integration-checkpoint.
+Phase: PR #8 verified merged; initial changed-syntax specificity increment implemented on feat/changed-syntax-rules. Nine-case acceptance audit passes; actual reviewer improvement remains unmeasured.
 
 ## Resume here
 
-1. Inspect main, this branch, open PRs and current CI. PR #7 merged at fa78409e757f11878f30751d7786ca2b16ea1377; final-head Node 22/24 CI passed.
-2. The user clarified there is no supplied reviewer implementation yet (likely a skill). Exact transport/input-output mapping is deferred. ChatGPT may review provisionally; Gemini is available through the user for independent fresh-session trials. Do not block acceptance validation on production integrations or invent API access.
-3. First priority: correct facts and specific relevant rules. Run npm run audit:acceptance and read docs/validation-plan.md. Five real-Git authored synthetic cases pass factual/provenance/packet checks, but both same-path comment-only controls receive irrelevant rules. specificityPassed is false. Existing path/status/line-count selectors do not meet the requested behavioral specificity.
-4. Next implementation: bounded, evidence-based behavioral selectors with positive and same-path negative controls, explicit unsupported/unknown handling and provenance. Preserve existing v1 contracts or version new behavior. Then expand to Angular/caller cases and approved real MRs.
-5. Second priority: fresh-session, fixed-model, paired baseline versus generated-context reviewer trials, with hidden pre-frozen expectations, negative cases and repetitions. No actual reviewer gain has been measured. Existing scripted evaluation records demonstrate formulas only. Rules may be tuned on development cases; compare held-out cases separately.
-6. Future dashboard requirement: manually add/remove selected rules before final bundle generation. Preserve automatic decisions and explicit overrides, regenerate bundle/packet identities, and record effective rule versions. See docs/validation-plan.md. Dashboard is future scope.
-7. Generator remains deterministic with no AI calls. Production GitLab/reviewer configuration is needed later for deployment, not for this validation work. No Gemini session, live GitLab call or real MR reviewer experiment has been executed here.
+1. Inspect main, open PRs and CI. PR #8 merged at 5e088f5949818cf1f9aad648c75edcd6fe03170a. Current branch feat/changed-syntax-rules is based on that merge.
+2. Facts and rule relevance remain first priority. Opt-in review-rules/v2 adds bounded AST syntax predicates for changed throw guards/calls; v1 is unchanged. Read docs/rules-contract.md and examples/invariant-rules.yaml. This is patch-context syntax, not complete behavioral/runtime analysis.
+3. Run npm run audit:acceptance: nine authored real-Git cases pass factual/provenance/packet and narrow rule relevance checks, including same-file comments, misleading strings/comments and guard-condition changes. Original five-case failure is retained in fixtures/acceptance/baseline-v1.json. The audit now gates specificity regressions.
+4. New tests cover schema normalization, comments/trivia, call/guard selection, exact line provenance, duplicate nodes, AND conditions, unsupported/incomplete/oversized context and tampered imported packets. Supported predicates are recomputed during reviewer packet validation. Unavailable evidence is explicit, not negative proof.
+5. Next: broaden acceptance to Angular state/lifecycle/template relationships, alias/caller-dependent invariants and approved real MR samples; define evidence predicates from independent policies. Current syntax subset does not satisfy every semantic rule. Once that gate is adequate, prepare opaque paired baseline/treatment trials for the user's Gemini fresh sessions, held-out labels and fixed model/review instructions. No actual reviewer benefit is measured.
+6. Exact production reviewer wire format remains deferred. ChatGPT may review provisionally; Gemini through the user may provide independence. No AI calls are added to the generator, and no subscription/API access is assumed.
+7. Future dashboard: manually add/remove selected rules before final bundle generation, retaining automatic decisions and override provenance and regenerating packet/bundle identities. See docs/validation-plan.md. This remains future scope.
 
 
 ## Objective and authorization
@@ -251,3 +251,7 @@ A new conversation must inspect GitHub's current state before relying on this ch
 Validation checkpoint: all 101 regression tests and syntax checks passed locally; acceptance audit fact/packet assertions passed and reports specificity failure explicitly. CI now reproduces the audit; this green execution must not be described as full behavioral acceptance.
 
 Acceptance delivery: PR #8 https://github.com/5ergRush/review-bundle-generator/pull/8 is open. Code head 09bffd96dcb57a9fbc97d870d4cd2df9b847d108 passed Node 22/24 push CI 37238836123 and PR CI 37238842226, including the acceptance audit, 101 regression tests and package smoke. This documentation checkpoint triggers final-head CI; inspect the current head before merge. Passing CI is audit reproducibility, not behavioral specificity or reviewer-quality acceptance.
+
+- 2026-10-05: Verified PR #8 merged. Added versioned evidence-based changed-syntax rule subset and packet recomputation. Expanded acceptance from five to nine authored cases; original two false selections now excluded, all audit checks pass. Runtime/Angular semantics and real reviewer benefit remain unproved.
+
+Changed-syntax validation: all 117 tests and syntax checks passed locally; nine-case facts/packet/specificity audit passed; offline installed-package smoke passed. Remote PR/CI checkpoint follows after delivery. No actual AI reviewer experiment was conducted.

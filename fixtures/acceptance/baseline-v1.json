@@ -22,10 +22,14 @@
       "facts": "passed",
       "packetIntegrity": "passed",
       "expectedRules": [],
-      "selectedRules": [],
-      "falseSelections": [],
+      "selectedRules": [
+        "authorization-guard"
+      ],
+      "falseSelections": [
+        "authorization-guard"
+      ],
       "missedRules": [],
-      "specificity": "passed"
+      "specificity": "failed"
     },
     {
       "caseId": "payment-guard-removal",
@@ -46,57 +50,17 @@
       "facts": "passed",
       "packetIntegrity": "passed",
       "expectedRules": [],
-      "selectedRules": [],
-      "falseSelections": [],
+      "selectedRules": [
+        "money-boundary"
+      ],
+      "falseSelections": [
+        "money-boundary"
+      ],
       "missedRules": [],
-      "specificity": "passed"
+      "specificity": "failed"
     },
     {
       "caseId": "unrelated-source",
-      "facts": "passed",
-      "packetIntegrity": "passed",
-      "expectedRules": [],
-      "selectedRules": [],
-      "falseSelections": [],
-      "missedRules": [],
-      "specificity": "passed"
-    },
-    {
-      "caseId": "access-guard-comment",
-      "facts": "passed",
-      "packetIntegrity": "passed",
-      "expectedRules": [],
-      "selectedRules": [],
-      "falseSelections": [],
-      "missedRules": [],
-      "specificity": "passed"
-    },
-    {
-      "caseId": "access-guard-condition-change",
-      "facts": "passed",
-      "packetIntegrity": "passed",
-      "expectedRules": [
-        "authorization-guard"
-      ],
-      "selectedRules": [
-        "authorization-guard"
-      ],
-      "falseSelections": [],
-      "missedRules": [],
-      "specificity": "passed"
-    },
-    {
-      "caseId": "access-misleading-string",
-      "facts": "passed",
-      "packetIntegrity": "passed",
-      "expectedRules": [],
-      "selectedRules": [],
-      "falseSelections": [],
-      "missedRules": [],
-      "specificity": "passed"
-    },
-    {
-      "caseId": "access-misleading-comment",
       "facts": "passed",
       "packetIntegrity": "passed",
       "expectedRules": [],
@@ -108,7 +72,7 @@
   ],
   "factsPassed": true,
   "packetIntegrityPassed": true,
-  "specificityPassed": true,
+  "specificityPassed": false,
   "reviewerImprovement": "not-measured",
   "limitations": [
     "Not real corporate MRs or Angular runtime validation.",
