@@ -25,7 +25,8 @@ function limit(value, name, ceiling = MAX_BYTES) {
   requireCondition(Number.isSafeInteger(value) && value > 0 && value <= ceiling, 'INVALID_INPUT', `${name} must be an integer from 1 to ${ceiling}.`);
   return value;
 }
-function boundedJson(value, maxBytes, code) {
+// Shared internally with offline evaluation; not part of the package exports.
+export function boundedJson(value, maxBytes, code) {
   // Check plain JSON before serialization: no getters, toJSON hooks, cycles or lossy values.
   const stack = [{ value, depth: 0 }]; const active = new Set(); let nodes = 0; let stringBytes = 0;
   while (stack.length) {
