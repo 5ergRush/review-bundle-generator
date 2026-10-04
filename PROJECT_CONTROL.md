@@ -3,14 +3,14 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #5 merged; offline frozen-label evaluation harness implemented on feat/evaluation-harness; local validation passed. Remote delivery checkpoint below.
+Phase: PR #5 merged; offline frozen-label evaluation harness implemented on feat/evaluation-harness; local and Node 22/24 CI passed; PR #6 open.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
 2. PR #5 was verified merged on 2026-10-05 at b9f6f9eac6b5da3e6051a02e9415ac7658f319d3. Final-head push and PR CI passed before merge.
 3. Current branch: feat/evaluation-harness, based on that merge. Read docs/evaluation-contract.md: frozen independent labels, explicit adjudication, complete repeated-run matrix, quality/stability/failure coverage and externally supplied usage provenance.
-4. Local syntax checks, all 86 tests and packaging check passed. Inspect the delivery checkpoint for PR and remote CI. Merge remains a user action unless separately authorized.
+4. PR #6: https://github.com/5ergRush/review-bundle-generator/pull/6. Local syntax checks, all 86 tests and packaging check passed, as did Node 22/24 push and PR CI. Inspect final-head CI before merge. Merge remains a user action unless separately authorized.
 5. Next increment: GitLab adapter and operational packaging contracts. Real existing-reviewer transport/payload/authentication/model mapping remains unrecovered. Real GitLab deployment/authentication/project interface is also unrecovered; obtain these before claiming working production integration. Generic transport-independent plumbing can proceed separately.
 6. No actual reviewer quality, cost or latency was measured. Fixture labels/runs/judgments are synthetic. Real benchmark sources/labels and observed provider measurements must come from authorized curated data. Generator and CLI make no AI calls; only explicitly supplied external reviewer adapters may use AI.
 
@@ -75,7 +75,7 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Merged as PR #3; final-head Node 22/24 CI passed |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Initial static subset merged as PR #4; final-head Node 22/24 CI passed |
 | 5 | Reviewer adapters and finding normalization | Versioned generic boundary; adapter failure handling; evidence/provenance preserved | Generic contract merged as PR #5; final-head Node 22/24 CI passed; actual existing-reviewer mapping pending |
-| 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; usage provenance | Offline harness implemented; 86 local tests passed; real reviewer evaluation pending |
+| 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; usage provenance | Offline harness implemented; local + Node 22/24 CI passed; PR #6 open; real reviewer evaluation pending |
 | 7 | GitLab adapter and operational packaging | Real integration validation; configuration/security docs; reproducible build and CI | Pending |
 
 These are implementation increments, not percentage-complete claims.
@@ -197,7 +197,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Limits: 100 cases, 250 labels/case, 8 candidates, 10 repetitions, 500 total slots; JSON depth64/500000 values. Dataset default1MiB/input default64MiB/report default16MiB with 64MiB caps. Output IDs hash normalized content; inputs remain caller-owned, outputs cloned/frozen; failures emit no partial report.
 - Frozen public fixtures contain 2 synthetic cases, 2 scripted candidates and 2 repetitions (8 successful records) with no usage measurements. A separate maintainer authoring script uses temporary generic TypeScript/Git sources with fixed dates, no hooks and isolated configuration; it never invokes a reviewer. Fixture scores validate formulas only and do not establish real quality improvement.
 - Local Node 24/Git 2.51.1: syntax checks, all 86 tests and npm pack --dry-run passed. Seventeen new tests cover independent label identity, known confusion counts/deltas, repeatability/ordering, duplicate claims, explicit judgments, failures/incomplete coverage, complete frozen matrix, packet/revision validation, measurement provenance/paired deltas/overflow, undefined denominators, byte/plain-JSON limits and offline CLI.
-- Delivery PR and CI will be recorded after remote validation. Actual reviewer/GitLab integration and human-labelled real MR benchmarks remain pending; no production readiness or actual performance claims.
+- PR #6: https://github.com/5ergRush/review-bundle-generator/pull/6, open and unmerged. Code commit 0c46a86f6daf4e99ae22e1554ad0d46365f7cbc4 passed Node 22/24 CI: push https://github.com/5ergRush/review-bundle-generator/actions/runs/37234234840 and PR https://github.com/5ergRush/review-bundle-generator/actions/runs/37234273026; both concluded success. This documentation checkpoint triggers final-head CI; inspect current PR head before merge. Actual reviewer/GitLab integration and human-labelled real MR benchmarks remain pending; no production readiness or actual performance claims.
 
 ## Maintenance rule
 
@@ -225,4 +225,4 @@ A new conversation must inspect GitHub's current state before relying on this ch
 
 - 2026-10-05: Verified PR #4 merged; implemented generic reviewer boundary and finding normalization on feat/reviewer-contracts. All 69 tests passed locally; PR #5 open. Code commit 813116cea5ae5a02058aca1d851fce84b53a4cf5 passed Node 22/24 push and PR CI.
 
-- 2026-10-05: Verified PR #5 merged; implemented offline evaluation and frozen synthetic fixtures on feat/evaluation-harness. All 86 tests and packaging checks passed locally; remote delivery pending.
+- 2026-10-05: Verified PR #5 merged; implemented offline evaluation and frozen synthetic fixtures on feat/evaluation-harness. All 86 tests and packaging checks passed locally; PR #6 open. Code commit 0c46a86f6daf4e99ae22e1554ad0d46365f7cbc4 passed Node 22/24 push and PR CI.
