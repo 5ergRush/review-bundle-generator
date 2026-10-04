@@ -10,7 +10,7 @@ import { createReviewBundle, createReviewerRequest } from '../src/index.js';
 const output = resolve(process.argv[2] ?? 'fixtures/acceptance'); await mkdir(output, { recursive: true });
 const alias = "import { validate as check } from './target';\nexport function caller() { return check(-1); }\nfunction validate() { return true; }\nvalidate();\n";
 const cases = [
-  { id: 'deletion-only-target', before: alias, after: alias, old: 1, new: null, pureDeletion: true, limitation: 'Pure deletion creates no new changed lines; the current declaration index exposes only the old target even though the new function still exists.' },
+  { id: 'deletion-only-target', before: alias, after: alias, old: 1, new: 1, pureDeletion: true },
   { id: 'aliased-import', before: alias, after: alias, old: 1, new: 1 },
   { id: 'new-caller', before: 'export const value = 1;\n', after: alias, old: 0, new: 1 },
   { id: 'same-name-only', before: 'function validate() { return true; }\nvalidate();\n', after: 'function validate() { return true; }\nvalidate();\n', old: 0, new: 0 },
@@ -34,7 +34,7 @@ for (const item of cases) {
     const initial = await createReviewBundle(options); assert.equal(initial.ruleSelection.decisions[0].status, 'matched');
     const requests = ['old', 'new'].map(side => {
       const declaration = initial.semanticAnalysis.declarations.find(d => d.side === side && d.name === 'validate' && d.origin.path === 'src/target.ts');
-      if (item[side] === null) { assert.equal(declaration, undefined); return null; }
+      if (item.pureDeletion && side === 'new') { assert.equal(declaration?.basis, 'structural-counterpart'); assert(initial.semanticAnalysis.counterparts.some(d => d.status === 'matched' && d.newTargetId === declaration.id)); }
       assert(declaration); return { kind: 'direct-callers', targetId: declaration.id };
     });
     const bundle = await createReviewBundle({ ...options, contextRequests: requests.filter(Boolean) });

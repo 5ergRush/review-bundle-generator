@@ -35,20 +35,23 @@ also apply.
 
 ## Changed declarations
 
-`semanticAnalysis` contains `typescript-analysis/v1`, compiler version, policy,
-revision summaries and declaration records. Supported named declarations are
+`semanticAnalysis` now contains `typescript-analysis/v2`, compiler version, policy,
+revision summaries, declaration records and counterpart decisions. Imported legacy
+`typescript-analysis/v1` remains supported. Supported named declarations are
 identifier-named functions, methods, classes, interfaces, type aliases, enums and
 variables (including arrow-valued variables). Constructors, anonymous declarations,
 binding patterns and computed/string-literal names are not separate targets.
 Enclosing supported declarations can also be marked changed when their body changes.
-Only actual added/removed lines intersect declaration ranges; unchanged hunk context
-does not mark declarations. Metadata-only changes have no changed declarations.
+Directly changed records require actual added/removed lines intersecting declaration
+ranges; unchanged hunk context does not mark them directly changed. Separate
+structural counterpart records can expose remaining new-side targets. Metadata-only changes have no changed declarations.
 
 Each record carries `id`, `side`, `name`, `qualifiedName`, AST `kind`, `changeId`,
 patch `evidenceIds`, and source `origin` with commit/path/blob and 1-based line/column
 coordinates. End coordinates are exclusive. IDs hash the complete record, excluding
 the ID. They bind the declaration to its source revision and diff evidence.
-Old/new declarations are independent targets, not a semantic pairing.
+Old/new declarations have independent source IDs. Structural counterpart links
+do not assert semantic equivalence.
 
 ## On-demand direct callers
 
@@ -95,22 +98,53 @@ zero static callers is not proof of no callers. The final compact bundle budget
 is enforced after semantic/context records are added and fails without output.
 Rules remain selected instructions, not executed reviews; facts are not findings.
 
-## Additional acceptance coverage and known gaps
+## Structural counterparts: typescript-analysis/v2
 
-`npm run audit:callers` creates real pinned Git examples and checks old/new caller
-counts, aliased imports, unrelated same-name symbols, exact caller lines/revisions,
-source snippet content, rule preservation and reviewer-packet validation. It records
-contract checks separately from completeness. Two known gaps are reproduced:
+After both pinned revisions are analyzed, each directly changed old declaration
+gets one counterpart decision. Candidate grouping uses the same recorded change,
+AST kind and qualified name. It requires exactly one old and one new candidate,
+with parseable sources and supported named scope. Git renames can match within
+one recorded rename change; unrelated files or renamed declarations do not match.
+At most 10,000 candidates are indexed per revision; exceeding that budget fails
+with SEMANTIC_LIMIT. Candidate grouping and indexed lookups use bounded maps.
 
-- Variable indirection (`const invoke = validate; invoke(...)`) is not followed.
-- A pure deletion can leave a function present in the new revision without any
-  added lines intersecting it; that side receives no changed declaration target.
+| Status | New target |
+| --- | --- |
+| `already-indexed` | Existing directly edited new record, retaining its original ID |
+| `matched` | New record with `basis: structural-counterpart` and `counterpartOf: old ID` |
+| `missing` | Null: no candidate remains in indexed TypeScript sources |
+| `ambiguous` | Null: old/new candidates are not unique, including overloads |
+| `parse-unavailable` | Null: relevant source has parse diagnostics |
+| `source-unavailable` | Null: new path is outside the indexed TypeScript sources/kinds |
+| `unsupported-scope` | Null: anonymous function or unnamed conditional block ancestry |
 
-The audit's limitation-confirmed cases are not passing completeness claims. Existing
-analysis uses edited-line intersection per revision, not cross-revision counterpart
-mapping. Rule selection currently uses changed syntax; caller snippets require
-explicit requests and do not automatically determine rule relevance. These gaps
-are stated in semantic bundle limitations. Future work should add an explicit,
-provenance-preserving counterpart contract before extending caller indexing;
-marking the next line after every deletion would wrongly attribute edits to
-unrelated adjacent declarations. No runtime/framework analysis is performed.
+`counterparts` decisions contain `oldTargetId`, `status`, `newTargetId`, ordered by
+old ID. A matched new record has the normal pinned source coordinates/blob/change
+links plus explicit basis/old-target provenance; its ID hashes all those fields.
+These records can be requested by `direct-callers` just like edited targets.
+An old-only deletion therefore permits new-revision caller context for a remaining
+unique declaration. Deleting a whole declaration/file does not falsely mark the
+next declaration, and an ambiguous or unavailable outcome fabricates no target.
+
+This is a structural association, not proof of declaration identity, equivalent
+behavior, or runtime dispatch. A replaced definition with the same unique
+kind/name can be structurally associated; inspect the actual source evidence.
+Existing directly edited declaration IDs remain unchanged, but semantic bundle
+IDs change because the analysis schema/metadata has changed. Reviewer packet
+validation accepts v1/v2, verifies link/status/provenance consistency and rejects
+missing/duplicate/inconsistent decisions. It cannot authenticate the source or
+re-run the TypeScript AST from the small imported snippets; use trusted local Git
+bundle generation for actual source provenance, as before.
+
+## Acceptance coverage and remaining gaps
+
+`npm run audit:callers` checks old/new caller counts, aliased imports, same-name
+exclusion, exact lines/revisions, source snippets and packet validation. The prior
+deletion-only limitation is now a passing acceptance case with explicit structural
+provenance. The variable-indirect case (`const invoke = validate; invoke(...)`)
+remains limitation-confirmed; contract checks are not complete caller coverage.
+
+Rules still select from changed syntax. Caller snippets require explicit requests
+and do not automatically determine rule relevance. Counterpart mapping is
+conservative, and zero static matches is not proof of no runtime callers. No
+Angular framework or template/runtime analysis is performed.

@@ -32,10 +32,10 @@ baseline gap; it is not complete behavioral analysis.
 Current increment: v3 adds literal this-member calls, simple state assignments and
 nearest named-function qualifiers. Fourteen fact/packet/relevance cases pass,
 including teardown/loading changes versus unrelated methods. The caller audit
-confirms alias resolution and same-name exclusion, and reproduces deletion-only
-indexing and indirect-variable gaps. Templates/framework ownership and runtime
-behavior remain unverified. Next: explicit declaration counterpart mapping,
-bounded rule-directed caller requests and template relationships. Cover positive and
+confirms alias resolution and same-name exclusion, and initially reproduced deletion-only
+indexing and indirect-variable gaps. Structural counterpart mapping now resolves
+the unique deletion-only case; indirect-variable calls remain unsupported. Templates/framework ownership and runtime
+behavior remain unverified. Next: bounded rule-directed caller requests and template relationships. Cover positive and
 same-path negative examples, misleading comments/strings, indirect calls, import
 aliases, validation modifications and Angular state/lifecycle/template relationships.
 Do not substitute filename suffixes or keyword counts for semantic proof. No single
