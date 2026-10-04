@@ -1,0 +1,27 @@
+schemaVersion: review-rules/v1
+rules:
+  - id: typescript-state-lifecycle
+    title: Check changed state and subscription lifecycles
+    severity: warning
+    instruction: >-
+      Review the changed TypeScript code for state and subscription lifecycle
+      defects. Base findings on the supplied evidence. Report missing context
+      rather than assuming caller behavior or framework semantics.
+    scope:
+      paths: ['src/**/*.ts']
+      excludePaths: ['**/*.spec.ts']
+      statuses: [A, M, R, T]
+      extensions: ['.ts']
+    when:
+      minAddedLines: 1
+  - id: source-file-removal
+    title: Check the impact of removed source files
+    severity: warning
+    instruction: >-
+      Check whether the removed file leaves an unresolved integration or
+      reference. If callers are absent from the supplied context, request
+      evidence before reporting a definite regression.
+    scope:
+      paths: ['src/**']
+      statuses: [D]
+      entryKinds: [file]

@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { ingestGitDiff } from './git.js';
+import { parseRulesYaml, selectRules } from './rules.js';
 
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BUNDLE_BYTES = 16 * 1024 * 1024;
@@ -143,13 +144,14 @@ const languageHints = new Map([['.ts', 'typescript'], ['.tsx', 'typescript'], ['
 
 /** Compile bounded, deterministic facts and evidence; this performs no AI calls. */
 export function compileReviewBundle(input, options = {}) {
-  if (!object(options) || Object.keys(options).some(key => key !== 'maxBundleBytes')) {
-    throw new BundleError('INVALID_INPUT', 'Expected options with optional maxBundleBytes.');
+  if (!object(options) || Object.keys(options).some(key => !['maxBundleBytes', 'rulesYaml'].includes(key))) {
+    throw new BundleError('INVALID_INPUT', 'Expected options with optional maxBundleBytes and rulesYaml.');
   }
   const maxBundleBytes = options.maxBundleBytes ?? DEFAULT_BUNDLE_BYTES;
   if (!Number.isSafeInteger(maxBundleBytes) || maxBundleBytes < 1 || maxBundleBytes > MAX_INPUT_BYTES) {
     throw new BundleError('INVALID_INPUT', `maxBundleBytes must be from 1 to ${MAX_INPUT_BYTES}.`);
   }
+  const ruleConfig = options.rulesYaml === undefined ? null : parseRulesYaml(options.rulesYaml);
   const snapshot = normalizeSnapshot(input);
   const sections = splitPatches(snapshot);
   const changes = [], evidence = [], facts = [];
@@ -186,19 +188,22 @@ export function compileReviewBundle(input, options = {}) {
     if (binary) binaryFiles++;
     if (special) specialEntries++;
   }
+  const ruleSelection = ruleConfig === null ? null : selectRules(ruleConfig, changes, facts);
   const payload = {
-    schemaVersion: 'review-bundle/v1',
+    schemaVersion: ruleSelection === null ? 'review-bundle/v1' : 'review-bundle/v2',
     provenance: { ingestionSchemaVersion: 'git-ingestion/v1', tool: snapshot.tool,
       revisions: snapshot.revisions, policy: snapshot.policy },
     summary: { changedFiles: changes.length, addedLines, removedLines, binaryFiles, specialEntries,
       textCountsExcludeBinaryAndSpecialEntries: true },
     changes, evidence, facts,
+    ...(ruleSelection === null ? {} : { ruleSelection }),
     coverage: { status: 'partial', stages: { gitDiff: 'complete', deterministicFacts: 'complete',
-      semanticAnalysis: 'not-run', ruleSelection: 'not-run', contextExpansion: 'not-run' },
+      semanticAnalysis: 'not-run', ruleSelection: ruleSelection === null ? 'not-run' : 'complete', contextExpansion: 'not-run' },
     limitations: [...new Set([...snapshot.limitations,
       'Facts describe Git changes; they are not defect findings or semantic correctness claims.',
       'Language hints come only from filenames.',
-      'Semantic analysis, rule selection and adaptive context have not run.'])].sort(compare) },
+      ruleSelection === null ? 'Semantic analysis, rule selection and adaptive context have not run.' :
+        'Semantic analysis and adaptive context have not run; selected rules have not been reviewed.'])].sort(compare) },
   };
   const bundle = { id: `bundle:${hash(payload)}`, ...payload };
   if (Buffer.byteLength(JSON.stringify(bundle)) > maxBundleBytes) {
@@ -209,6 +214,6 @@ export function compileReviewBundle(input, options = {}) {
 
 export async function createReviewBundle(options) {
   if (!object(options)) throw new BundleError('INVALID_INPUT', 'An options object is required.');
-  const { maxBundleBytes, ...gitOptions } = options;
-  return compileReviewBundle(await ingestGitDiff(gitOptions), { maxBundleBytes });
+  const { maxBundleBytes, rulesYaml, ...gitOptions } = options;
+  return compileReviewBundle(await ingestGitDiff(gitOptions), { maxBundleBytes, rulesYaml });
 }

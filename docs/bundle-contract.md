@@ -1,5 +1,7 @@
 # review-bundle/v1 contract
 
+Supplying `rulesYaml` now produces **review-bundle/v2**, adding the versioned [rule-selection section](rules-contract.md) and marking rule selection complete. All base change/evidence/fact/provenance semantics below are preserved. Without rules, v1 output is unchanged. Rule selection is instruction preparation, not completed review; overall coverage remains partial.
+
 This increment compiles a **diff-only bundle**. Facts are observations about Git changes, not AI findings. Every bundle explicitly states that semantic analysis, rule selection and context expansion have not run.
 
 ## Public APIs
@@ -12,7 +14,7 @@ const bundle = await createReviewBundle({ repo: '/checkout', base: 'origin/main'
 const sameBundle = compileReviewBundle(snapshot, { maxBundleBytes: 16 * 1024 * 1024 });
 ```
 
-`createReviewBundle` uses the ingestion options plus optional `maxBundleBytes`. `compileReviewBundle` accepts a snapshot from the current ingestion contract, normalizes supported fields and rejects unsupported versions/policies, invalid provenance shape, duplicate paths, malformed hunks and missing/mismatched patch sections. Unknown input fields are not carried into the bundle.
+`createReviewBundle` uses the ingestion options plus optional `maxBundleBytes` and `rulesYaml`. `compileReviewBundle` accepts these compiler options and a snapshot from the current ingestion contract, normalizes supported fields and rejects unsupported versions/policies, invalid provenance shape, duplicate paths, malformed hunks and missing/mismatched patch sections. Unknown input fields are not carried into the bundle.
 
 Compilation validates structure and internal consistency; it does **not** contact Git to prove that an imported snapshot is genuine. Use `createReviewBundle` to derive evidence from a checkout. Imported snapshots must be obtained from a trusted source.
 

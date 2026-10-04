@@ -3,16 +3,16 @@
 Last updated: 2026-10-04
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: foundation merged; diff-only bundle compilation and facts passed local and Node 22/24 CI validation; PR #2 open.
+Phase: foundation and bundle facts merged; scoped YAML rule selection implemented locally; PR/CI review pending.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
-2. PR #1 was verified merged on 2026-10-04 at eb1a0789a40042d9881c0b516dd43c0984ba0998. Foundation final-head CI passed Node 22/24.
-3. The next increment is on feat/bundle-contract-facts: diff-only review-bundle/v1 compilation, per-change patch evidence, deterministic facts, stable IDs and explicit partial coverage.
-4. Review PR #2 (https://github.com/5ergRush/review-bundle-generator/pull/2) and current-head CI. Bundle code commit 3a2c7728673c0401bf25c6db184dbabc021ecad8 passed Node 22/24 CI. Merge remains a user action unless separately authorized.
-5. Next implementation increment after merge: validated scoped YAML rules, deterministic selection and matched/skipped reasons. Semantic analysis and adaptive context remain later stages.
-6. Include this control file in every implementation PR; separate completed evidence from planned work.
+2. PR #2 was verified merged on 2026-10-04 at 8f993e5f36a96416855976c61b8ec461e672522e. Final-head Node 22/24 CI passed before merge.
+3. Current work is on feat/scoped-yaml-rules: strict review-rules/v1 YAML, deterministic scope/condition matching, evidence-linked matched/skipped decisions and review-bundle/v2 output when rules are supplied.
+4. Inspect the rules PR and current-head Node 22/24 CI before merging. Merge remains a user action unless separately authorized.
+5. Next increment: TypeScript semantic analysis and bounded adaptive context. Define the semantic/evidence contract first; preserve explicit incomplete-analysis markers.
+6. The pipeline still makes no AI calls. Selected review instructions have not been executed. Include this control file in every implementation PR.
 
 ## Objective and authorization
 
@@ -71,8 +71,8 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | --- | --- | --- | --- |
 | 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Committed to main |
 | 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Merged as PR #1; final-head Node 22/24 CI passed |
-| 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Local + Node 22/24 CI passed; PR #2 open |
-| 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Pending |
+| 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Merged as PR #2; final-head Node 22/24 CI passed |
+| 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Locally validated; PR/CI pending |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Pending |
 | 5 | Reviewer adapters and finding normalization | Documented existing-reviewer contract; adapter failure handling; evidence/provenance preserved | Pending |
 | 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; actual usage metrics when exposed | Pending |
@@ -105,17 +105,18 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 | Dashboard | Excluded from v1 |
 | Existing reviewer request/response contract | Not recovered; needed before adapter implementation |
 | GitLab deployment/authentication contract | Not recovered; needed before real integration |
-| YAML rule schema and service transport | To be specified and documented during implementation |
+| YAML rule schema | review-rules/v1 documented in docs/rules-contract.md; no semantic predicates yet |
+| Service transport | Still to be established from integration requirements |
 | Production source recovery | No artifact recovered; begin from verified repository state |
 
 ## Current validation and Git state
 
 - Documentation bootstrap on main: 6c7c8a292d891742471689ad436fc0fb356662db.
-- Current implementation branch: feat/bundle-contract-facts, based on main merge eb1a0789a40042d9881c0b516dd43c0984ba0998.
+- Current implementation branch: feat/scoped-yaml-rules, based on main merge 8f993e5f36a96416855976c61b8ec461e672522e.
 - PR #1: https://github.com/5ergRush/review-bundle-generator/pull/1, verified merged at eb1a0789a40042d9881c0b516dd43c0984ba0998.
 - Foundation code commit: 665844e679b81ed2d358c946eb2b8008af0097ac.
-- Runtime: dependency-free JavaScript ESM; Node >=22 and Git >=2.43. TypeScript semantic analysis is a later increment, not implemented by this foundation.
-- Public library APIs: ingestGitDiff, compileReviewBundle, createReviewBundle; error classes IngestionError and BundleError. CLI commands: review-bundle ingest and review-bundle bundle.
+- Runtime: JavaScript ESM; Node >=22 and Git >=2.43. One pinned runtime dependency: yaml 2.9.1, recorded in package-lock.json. TypeScript semantic analysis remains a later increment.
+- Public library APIs: ingestGitDiff, compileReviewBundle, createReviewBundle; error classes IngestionError, BundleError and RuleError; parseRulesYaml normalizes explicit rule configuration. CLI commands: review-bundle ingest and review-bundle bundle.
 - Versioned ingestion/v1 output records Git version, requested/effective base and head IDs, comparison semantics, rename policy, change metadata, unified patch and explicit limitations.
 - Default comparison is unique merge-base; direct comparison is explicit. Unrelated and ambiguous histories fail closed.
 - Diff computation uses a temporary bare repository with read-only object alternates; pinned head attributes and isolated configuration. Temporary data is removed after success/failure.
@@ -125,16 +126,16 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Ubuntu 24.04 CI passed for Node 22 and 24 at foundation code commit 665844e679b81ed2d358c946eb2b8008af0097ac: push run #1 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227828125 and PR run #2 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227835872. Both concluded success.
 - Foundation final documentation head a6704ceccec00343d3562688a3e3ab27dcf5f013 also passed push run #3 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227909577 and PR run #4 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227914409 before merge.
 - Bundle increment local validation: 28 integration tests and syntax checks passed on Node 24 / Git 2.51.1; npm pack --dry-run passed.
-- PR #2: https://github.com/5ergRush/review-bundle-generator/pull/2, open and unmerged. Code commit 3a2c7728673c0401bf25c6db184dbabc021ecad8 passed Node 22/24 CI: push run #7 https://github.com/5ergRush/review-bundle-generator/actions/runs/37228958916 and PR run #8 https://github.com/5ergRush/review-bundle-generator/actions/runs/37228967546. Both concluded success.
-- This documentation checkpoint records those runs; inspect final-head CI before merging.
-- review-bundle/v1 contract is documented in docs/bundle-contract.md. Bundle IDs hash normalized payloads; changes/facts/evidence carry stable references.
+- PR #2: https://github.com/5ergRush/review-bundle-generator/pull/2, verified merged at 8f993e5f36a96416855976c61b8ec461e672522e. Code commit 3a2c7728673c0401bf25c6db184dbabc021ecad8 passed Node 22/24 CI: push run #7 https://github.com/5ergRush/review-bundle-generator/actions/runs/37228958916 and PR run #8 https://github.com/5ergRush/review-bundle-generator/actions/runs/37228967546. Both concluded success.
+- Bundle final documentation head 0658b9530cf46f9f5035ee50d390f4a983dbdb7b passed push run https://github.com/5ergRush/review-bundle-generator/actions/runs/37229023676 and PR run https://github.com/5ergRush/review-bundle-generator/actions/runs/37229026248 before merge.
+- review-bundle/v1 and rules-enabled v2 contracts are documented in docs/bundle-contract.md and docs/rules-contract.md. Bundle IDs hash normalized payloads; changes/facts/evidence carry stable references.
 - Facts cover Git metadata, text additions/removals and explicit filename-based language hints. Evidence includes exact per-change patches and old/new revision/path/object/hunk coordinates.
 - Imported snapshots are structurally checked, not authenticated against Git objects. createReviewBundle derives evidence directly from the checkout.
 - Compact bundle serialization has a separate 16 MiB default budget, capped at 64 MiB. Failure emits no partial bundle; there are no AI calls.
 
 ### Remaining boundaries
 
-- Bundles are diff-only and explicitly partial. Semantic analysis, rule selection and context expansion are not-run; reviewer/evaluation integrations remain absent. Facts are not defect findings.
+- Bundles are diff-only and explicitly partial. Rule selection is complete only when rules are supplied; semantic analysis and context expansion are not-run. Reviewer/evaluation integrations remain absent. Facts are not defect findings.
 - Binary and special-entry text counts are unavailable, not inferred zero. Filename language hints are not semantic evidence.
 - Bundle compilation accepts at most 10,000 change records; imported snapshot authenticity is the caller's responsibility.
 - Binary contents are omitted. Symlink/gitlink targets are not traversed. Rename detection is heuristic and capped.
@@ -143,6 +144,19 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Working-tree/index changes are excluded. Missing shallow history must be supplied by the caller; ingestion never fetches.
 - Byte-level reproducibility requires the recorded Git version and policy, not commit IDs alone.
 - No production release or real GitLab/reviewer integration exists yet.
+
+
+### Scoped-rule increment
+
+- Input schema review-rules/v1: explicit instructions, scope paths/exclusions, statuses, extensions, entry kinds and optional line thresholds. Unknown keys and malformed configuration fail closed.
+- YAML restrictions: single YAML 1.2 core document; no tags/anchors/aliases/merges; bounded UTF-8 input, structure and rule count. CLI accepts a regular rule file through --rules, only for bundle.
+- Selection is conventional bounded code, with same-side old/new scope semantics. Binary/special text evidence is unavailable for line conditions and produces an explicit skipped reason.
+- Every rule receives a matched/skipped decision. Matches link change/evidence and condition-fact IDs; decisions preserve aggregate rejection counters.
+- Config IDs hash normalized rules. Comments/order/default spelling do not change semantic identity. Selected instructions and normalized configuration are embedded for provenance.
+- No-rules compilation preserves review-bundle/v1 output. Supplied rules produce review-bundle/v2 with rule-selection/v1 and updated stage coverage; selection is not execution of review instructions.
+- Examples in examples/review-rules.yaml are generic and opt-in, not adopted team policy. Rule sources must be trusted review configuration.
+- Local Node 24 / Git 2.51.1 validation: syntax checks and all 41 tests passed; clean npm ci and packaging dry-run passed. Rules PR/CI evidence pending at this checkpoint.
+- Limits: 256 KiB YAML; 250 rules; 32 items per selector list; 10,000 AST nodes; depth 12; 5,000,000 counted selection operations; 4,096 string-unit changed-path limit during selection. Exceeding limits returns no partial selection/bundle.
 
 ## Maintenance rule
 
@@ -161,3 +175,5 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-04: Verified PR #1 merged. Implemented review-bundle/v1, deterministic metadata/text/path-hint facts, per-change evidence with hunk coordinates, structural validation, stable content IDs and separate serialization budget; 28 tests and package dry-run passed locally.
 
 - 2026-10-04: Opened PR #2. Bundle compilation and facts passed Node 22/24 push and PR CI at 3a2c7728673c0401bf25c6db184dbabc021ecad8. Recorded run URLs and review handoff; next increment is scoped YAML rule selection.
+
+- 2026-10-04: Verified PR #2 merged; implemented scoped YAML rule selection, strict parser limits, rule provenance, explicit decisions and rules-enabled bundle v2. Local clean install, syntax checks, all 41 tests and packaging dry-run passed. Next increment is TypeScript semantic analysis and bounded adaptive context.

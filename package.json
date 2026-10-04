@@ -4,12 +4,21 @@
   "private": true,
   "type": "module",
   "description": "Deterministic review context compiler for an existing MR reviewer",
-  "engines": { "node": ">=22" },
-  "exports": { ".": "./src/index.js" },
-  "bin": { "review-bundle": "./src/cli.js" },
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "bin": {
+    "review-bundle": "./src/cli.js"
+  },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/cli.js",
+    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/rules.js && node --check src/cli.js",
     "validate": "npm run check && npm test"
+  },
+  "dependencies": {
+    "yaml": "2.9.1"
   }
 }

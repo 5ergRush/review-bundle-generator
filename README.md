@@ -2,13 +2,13 @@
 
 Deterministic context preparation for an existing AI MR reviewer. The generator will compile relevant changes, rules and bounded supporting context; the external reviewer performs the AI review.
 
-**Current increment:** dependency-free JavaScript ESM library and CLI for committed Git diff ingestion and diff-only bundle compilation. Bundles contain deterministic facts, evidence and explicit partial coverage; semantic analysis and rule/context stages are still pending. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
+**Current increment:** JavaScript ESM library and CLI for committed Git ingestion, diff-only bundles and scoped YAML rule selection. Bundles contain deterministic facts, evidence, matched/skipped rule decisions and explicit partial coverage; semantic analysis and context expansion are still pending. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
 
 ## Requirements and validation
 
 - Node.js 22 or newer; Git 2.43 or newer available on PATH (uses commit-scoped attributes).
 - A local Git working tree with the required commit history available.
-- No API key, network access, runtime package dependency or AI call is needed for ingestion.
+- After installing the pinned YAML parser dependency, runtime operation needs no API key, network access or AI call.
 
 ```sh
 npm ci --ignore-scripts
@@ -22,6 +22,7 @@ node src/cli.js --help
 node src/cli.js ingest --repo /path/to/checkout --base origin/main --head HEAD
 node src/cli.js ingest --repo /path/to/checkout --base COMMIT --head COMMIT --comparison direct
 node src/cli.js bundle --repo /path/to/checkout --base origin/main --head HEAD
+node src/cli.js bundle --repo /path/to/checkout --base origin/main --rules /trusted/review-rules.yaml
 ```
 
 Success writes one compact JSON document to stdout. Failure writes a JSON error to stderr, returns exit code 1, and emits no partial snapshot or bundle. Redirect output to a location outside the analyzed checkout if you want to retain it.
@@ -57,7 +58,7 @@ const snapshot = await ingestGitDiff({
 
 Statuses include added (`A`), modified (`M`), deleted (`D`), renamed (`R`) and type-changed (`T`). Absent paths/objects are `null`. Paths are parsed from NUL-delimited Git metadata, including tabs, newlines and Unicode. Paths and patch bytes must be valid UTF-8; otherwise ingestion fails rather than silently corrupting evidence.
 
-Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. No semantic analysis, YAML selection, adaptive context, reviewer integration or evaluation harness is implemented yet.
+Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. No semantic analysis, adaptive context, reviewer integration or evaluation harness is implemented yet.
 
 Diffs run in a disposable bare repository sharing the checkout's objects read-only. Repository configuration, local attributes, replace refs and uncommitted attributes do not affect patch generation. Attributes are read from the pinned head commit. Global/system attributes and external diff/textconv programs are disabled. The temporary repository is cleaned up on success or failure. Git alternates require the source object-directory path to have no newlines; changed filenames may contain newlines. Available object history remains the caller's responsibility.
 
@@ -73,6 +74,12 @@ const fromSnapshot = compileReviewBundle(snapshot);
 The versioned [review-bundle/v1 contract](docs/bundle-contract.md) defines stable IDs, per-file evidence, revision/line provenance, deterministic facts and stage coverage. These are diff observations, not defect findings. Imported snapshots are structurally checked, but their authenticity must be established by the caller.
 
 Default compact bundle budget is 16 MiB; use `--max-bundle-bytes` (bundle command only) or `maxBundleBytes` in the library, up to 64 MiB. This includes JSON serialization overhead and is separate from ingestion's raw diff budget. Compilation does not truncate evidence to fit.
+
+## Scoped review rules
+
+Supply `rulesYaml` in the library or `--rules PATH` in the bundle CLI. The strict [review-rules/v1 contract](docs/rules-contract.md) supports file-path scopes, exclusions, statuses, extensions, entry kinds and optional text-change thresholds. [Example rules](examples/review-rules.yaml) are supplied explicitly, not implicitly enabled.
+
+With rules, output becomes `review-bundle/v2`: normalized instructions/configuration and one evidence-linked matched/skipped decision per rule. Without rules, v1 output is preserved. Selection uses conventional bounded code; matching a rule does not mean its review instructions have been executed.
 
 ## Delivery
 
