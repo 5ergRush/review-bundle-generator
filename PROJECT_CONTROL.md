@@ -3,16 +3,17 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #6 merged; read-only GitLab metadata adapter and installed-package/runtime validation implemented on feat/gitlab-packaging; local syntax checks, all 101 tests, packaging dry-run and offline installed-package smoke passed. PR #7 is open; code-head Node 22/24 push and PR CI passed. Remote delivery checkpoint below.
+Phase: PR #7 verified merged; all seven planned core increments are in main. Live integration is awaiting actual GitLab and existing-reviewer contracts. Continuation checkpoint on feat/live-integration-checkpoint.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
-2. PR #6 was verified merged on 2026-10-05 at 7a6163fe91a586f9df4336f5906e97aa27031b26. Final-head push and PR CI passed before merge.
-3. Current branch: feat/gitlab-packaging, based on that merge. Read docs/gitlab-contract.md and docs/operations.md: API metadata normalization, pinned local direct diff envelope, explicit stale-snapshot check and installed-tarball/runtime tests.
-4. All 101 tests, syntax checks, packaging dry-run and offline installed-package smoke passed locally. PR #7 is open (https://github.com/5ergRush/review-bundle-generator/pull/7); code-head Node 22/24 push and PR CI passed. This documentation checkpoint triggers final-head CI; verify that head before merge. Merge remains a user action unless separately authorized.
-5. Next requires real integration inputs: approved GitLab instance/project/token policy and trusted checkout/history; existing-reviewer transport/authentication/payload/model/prompt contract; authorized real MR labels/observed usage. These are unrecovered. Do not silently replace the existing reviewer with a new model/provider or claim production readiness from mocks. Generic plumbing can be extended separately if needed.
-6. No live GitLab call, AI review, real reviewer quality/cost measurement or deployment was performed in this increment. Generator/CLI make no AI calls. Only explicit gitlab-snapshot without --metadata performs a metadata HTTPS GET; local commands remain offline. No GitLab writes or source-repository fetches.
+2. PR #7 was verified merged on 2026-10-05 at fa78409e757f11878f30751d7786ca2b16ea1377. Final head f0c1c2b20af8167f0e451c4163c2ddc62f4d89d9 passed Node 22/24 push CI (37236522357) and PR CI (37236524381), including all 101 tests and installed-package smoke.
+3. Current continuation branch: feat/live-integration-checkpoint, based on that merge. This checkpoint changes documentation only; no new implementation PR is open. Read docs/gitlab-contract.md and docs/operations.md for the merged contracts.
+4. Core code, syntax checks, all 101 tests, packaging dry-run and installed-package smoke are validated. Runtime prerequisites and mocked HTTP tests do not establish live production readiness.
+5. Next requires real integration inputs: approved GitLab instance/project/token policy and trusted checkout/history; existing-reviewer transport/authentication/payload/model/prompt contract; authorized real MR labels/observed usage. These are unrecovered. Ask for the reviewer code/configuration or a redacted request/response example and GitLab instance/project plus intended execution environment. Do not request secret tokens in chat. Do not silently replace the existing reviewer with a new model/provider. Generic plumbing can be extended separately if needed.
+6. No live GitLab call, AI review, real reviewer quality/cost measurement or deployment was performed. Generator/CLI make no AI calls. Only explicit gitlab-snapshot without --metadata performs a metadata HTTPS GET; local commands remain offline. No GitLab writes or source-repository fetches.
+
 
 ## Objective and authorization
 
@@ -76,7 +77,7 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Initial static subset merged as PR #4; final-head Node 22/24 CI passed |
 | 5 | Reviewer adapters and finding normalization | Versioned generic boundary; adapter failure handling; evidence/provenance preserved | Generic contract merged as PR #5; final-head Node 22/24 CI passed; actual existing-reviewer mapping pending |
 | 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; usage provenance | Offline harness merged as PR #6; final-head Node 22/24 CI passed; real reviewer evaluation pending |
-| 7 | GitLab adapter and operational packaging | Metadata/pinned refs; configuration docs; installed artifact and CI | Read-only adapter and packaging implemented; live corporate integration/deployment still pending |
+| 7 | GitLab adapter and operational packaging | Metadata/pinned refs; configuration docs; installed artifact and CI | Merged as PR #7; final-head Node 22/24 CI passed; live corporate integration/deployment still pending |
 
 These are implementation increments, not percentage-complete claims.
 Service transport and exact GitLab/reviewer interfaces remain to be established from integration requirements; do not add a dashboard.
@@ -210,7 +211,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Runtime doctor checks Node>=22/Git>=2.43 with bounded version process; runtime-ready means prerequisites only. Explicit package file list ships source/contracts/examples/synthetic fixtures/control while excluding dev tests/CI/maintainer scripts; private package is not published.
 - Installed-package smoke packs/installs tarball offline using cached dependencies, imports exports, exercises installed CLI/bin/doctor, a real synthetic local semantic Git bundle and shipped offline evaluation. New CI step runs this on Node22/24 after source validation.
 - Local GitLab/runtime tests (15 new cases) and installed-package smoke passed. Tests cover identity/forks/metadata filtering, not-ready/inconsistent refs, strict instance/token inputs, GET/auth/redirect/error/body/encoding/deadline contracts, stale snapshots, pinned dirty-isolated bundles/budgets/no overrides/no fetch, offline CLI and doctor version failures. HTTP fixtures are mocked; local Git/package checks are real.
-- Local validation passed: syntax checks, all 101 tests, packaging dry-run and offline installed-package smoke. PR #7: https://github.com/5ergRush/review-bundle-generator/pull/7. Code head c764c0abfa71bb21c38048c94eb01616fe983ff9 passed Node 22/24 push CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37236409652 and PR CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37236414095, including installed-package smoke. This documentation checkpoint triggers final-head CI; verify current head before merge. No actual corporate GitLab/reviewer access, provider review, deployment or real MR evaluation occurred. All live integration requirements remain explicit.
+- Local validation passed: syntax checks, all 101 tests, packaging dry-run and offline installed-package smoke. PR #7: https://github.com/5ergRush/review-bundle-generator/pull/7, verified merged at fa78409e757f11878f30751d7786ca2b16ea1377. Code head c764c0abfa71bb21c38048c94eb01616fe983ff9 passed Node 22/24 push CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37236409652 and PR CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37236414095, including installed-package smoke. Final head f0c1c2b20af8167f0e451c4163c2ddc62f4d89d9 passed push CI 37236522357 and PR CI 37236524381 before merge. No actual corporate GitLab/reviewer access, provider review, deployment or real MR evaluation occurred. All live integration requirements remain explicit.
 
 ## Maintenance rule
 
@@ -241,3 +242,5 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-05: Verified PR #5 merged; implemented offline evaluation and frozen synthetic fixtures on feat/evaluation-harness. All 86 tests and packaging checks passed locally; PR #6 open. Code commit 0c46a86f6daf4e99ae22e1554ad0d46365f7cbc4 passed Node 22/24 push and PR CI.
 
 - 2026-10-05: Verified PR #6 merged; implemented read-only GitLab metadata/local bundle adapter, runtime doctor and installed-package CI smoke on feat/gitlab-packaging. All 101 tests, syntax checks, packaging dry-run and offline installed-package smoke passed; PR #7 opened and code-head Node 22/24 push and PR CI passed. The initial CI smoke exposed missing registry metadata in an npm-ci-only cache; seeding the consumer with locked dependency URLs/integrities resolved it and the rerun passed.
+
+- 2026-10-05: Verified PR #7 merged at fa78409e757f11878f30751d7786ca2b16ea1377 and final-head CI success. Saved continuation checkpoint on feat/live-integration-checkpoint. Actual reviewer/GitLab configuration is the next dependency; no new runtime scope was invented.
