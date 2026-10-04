@@ -1,0 +1,69 @@
+[
+  {
+    "id": "access-guard-removal",
+    "path": "src/access.ts",
+    "before": "export function perform(role: string) {\n  if (role !== 'admin') throw new Error('denied');\n  return true;\n}\n",
+    "after": "export function perform(role: string) {\n  return true;\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  if (role !== 'admin') throw new Error('denied');"
+    ],
+    "expectedRules": [
+      "authorization-guard"
+    ]
+  },
+  {
+    "id": "access-comment-only",
+    "path": "src/access.ts",
+    "before": "export function perform(role: string) {\n  if (role !== 'admin') throw new Error('denied');\n  return true;\n}\n",
+    "after": "export function perform(role: string) {\n  if (role !== 'admin') throw new Error('denied');\n  return true; // unchanged result\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  return true;",
+      "+  return true; // unchanged result"
+    ],
+    "expectedRules": []
+  },
+  {
+    "id": "payment-guard-removal",
+    "path": "src/payment.ts",
+    "before": "export function pay(amount: number) {\n  if (!Number.isInteger(amount) || amount <= 0) throw new Error('invalid');\n  return true;\n}\n",
+    "after": "export function pay(amount: number) {\n  return true;\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  if (!Number.isInteger(amount) || amount <= 0) throw new Error('invalid');"
+    ],
+    "expectedRules": [
+      "money-boundary"
+    ]
+  },
+  {
+    "id": "payment-comment-only",
+    "path": "src/payment.ts",
+    "before": "export function pay(amount: number) {\n  if (!Number.isInteger(amount) || amount <= 0) throw new Error('invalid');\n  return true;\n}\n",
+    "after": "export function pay(amount: number) {\n  if (!Number.isInteger(amount) || amount <= 0) throw new Error('invalid');\n  return true; // unchanged result\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  return true;",
+      "+  return true; // unchanged result"
+    ],
+    "expectedRules": []
+  },
+  {
+    "id": "unrelated-source",
+    "path": "src/format.ts",
+    "before": "export const label = \"old\";\n",
+    "after": "export const label = \"new\";\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-export const label = \"old\";",
+      "+export const label = \"new\";"
+    ],
+    "expectedRules": []
+  }
+]
