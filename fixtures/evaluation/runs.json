@@ -1,0 +1,1967 @@
+{
+  "schemaVersion": "review-evaluation/v1",
+  "datasetId": "dataset:b968cd2a4d25c011339ff196177a8e49b0b9bed174597d45ff97e9ed363a8912",
+  "baselineCandidateId": "diff-only",
+  "repetitions": 2,
+  "candidates": [
+    {
+      "id": "diff-only",
+      "kind": "synthetic",
+      "reviewer": {
+        "id": "synthetic-diff-reviewer",
+        "version": "fixture-v1"
+      }
+    },
+    {
+      "id": "caller-context",
+      "kind": "synthetic",
+      "reviewer": {
+        "id": "synthetic-context-reviewer",
+        "version": "fixture-v1"
+      }
+    }
+  ],
+  "adjudication": {
+    "kind": "synthetic",
+    "author": "fixture-maintainers",
+    "revision": "1"
+  },
+  "runs": [
+    {
+      "candidateId": "diff-only",
+      "caseId": "comment-only",
+      "repetition": 1,
+      "status": "success",
+      "request": {
+        "id": "request:6488e55fb6a0951857e5d1f5eb7ce7a3a4ff3ba74f30959ec03bb49285f57ec1",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:35a58836909f7ba119891c4c4a85784dc89ce744936d542933c9cf8e46cf0c1c",
+        "bundle": {
+          "id": "bundle:35a58836909f7ba119891c4c4a85784dc89ce744936d542933c9cf8e46cf0c1c",
+          "schemaVersion": "review-bundle/v1",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 0,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50",
+              "type": "git-patch",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+                  "path": "rate.ts",
+                  "object": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..9bd47a0 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1,2 @@\n+// Equivalent behavior with an explanatory comment.\n export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 2
+                  }
+                }
+              ]
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:3ff3c27bdf6c7061a79cf8334df201bc08bf303de55d1e2c7c9249003f2aba50",
+              "type": "file-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:fed6785ac5a545a888fe5871b15df0dba2ce1e1a5512bbe71e8952e942418843",
+              "type": "text-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 0,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:33be640158e1f4153a83a8e6bc8974be9f26822dd3aa4b5cde26c744db46af44",
+              "type": "path-hint",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "not-run",
+              "ruleSelection": "not-run",
+              "contextExpansion": "not-run"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Semantic analysis, rule selection and adaptive context have not run.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:6488e55fb6a0951857e5d1f5eb7ce7a3a4ff3ba74f30959ec03bb49285f57ec1",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [
+          {
+            "ruleId": null,
+            "severity": "warning",
+            "title": "Scripted false positive",
+            "description": "Synthetic reviewer claim for scoring-contract validation only.",
+            "evidenceIds": [
+              "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+            ],
+            "location": {
+              "evidenceId": "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50",
+              "side": "new",
+              "startLine": 1,
+              "endLine": 1
+            }
+          }
+        ],
+        "contextRequests": []
+      },
+      "judgments": [
+        {
+          "findingId": "finding:c51d24528c625b5ee3f8c3bec66f72bd1d2d4f9e5054dd7527e286660b591677",
+          "labelId": null
+        }
+      ],
+      "measurements": null
+    },
+    {
+      "candidateId": "diff-only",
+      "caseId": "comment-only",
+      "repetition": 2,
+      "status": "success",
+      "request": {
+        "id": "request:6488e55fb6a0951857e5d1f5eb7ce7a3a4ff3ba74f30959ec03bb49285f57ec1",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:35a58836909f7ba119891c4c4a85784dc89ce744936d542933c9cf8e46cf0c1c",
+        "bundle": {
+          "id": "bundle:35a58836909f7ba119891c4c4a85784dc89ce744936d542933c9cf8e46cf0c1c",
+          "schemaVersion": "review-bundle/v1",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 0,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50",
+              "type": "git-patch",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+                  "path": "rate.ts",
+                  "object": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..9bd47a0 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1,2 @@\n+// Equivalent behavior with an explanatory comment.\n export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 2
+                  }
+                }
+              ]
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:3ff3c27bdf6c7061a79cf8334df201bc08bf303de55d1e2c7c9249003f2aba50",
+              "type": "file-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:fed6785ac5a545a888fe5871b15df0dba2ce1e1a5512bbe71e8952e942418843",
+              "type": "text-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 0,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:33be640158e1f4153a83a8e6bc8974be9f26822dd3aa4b5cde26c744db46af44",
+              "type": "path-hint",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "not-run",
+              "ruleSelection": "not-run",
+              "contextExpansion": "not-run"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Semantic analysis, rule selection and adaptive context have not run.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:6488e55fb6a0951857e5d1f5eb7ce7a3a4ff3ba74f30959ec03bb49285f57ec1",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [],
+        "contextRequests": []
+      },
+      "judgments": [],
+      "measurements": null
+    },
+    {
+      "candidateId": "diff-only",
+      "caseId": "guard-removal",
+      "repetition": 1,
+      "status": "success",
+      "request": {
+        "id": "request:b787207284d1fd8676ce26ea2222096dbca28ee68c4b2a4740de801fc2b99f45",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:6da31829400eeadfcebbfa519ea4641f21cd709f5388eb84cc03250d2f0f0ba9",
+        "bundle": {
+          "id": "bundle:6da31829400eeadfcebbfa519ea4641f21cd709f5388eb84cc03250d2f0f0ba9",
+          "schemaVersion": "review-bundle/v1",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 1,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "type": "git-patch",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                  "path": "rate.ts",
+                  "object": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..908fd40 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1 @@\n-export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n+export function rate(amount: number) { return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 1
+                  }
+                }
+              ]
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:738ee129777bdbf182b161880a826f1451e3abc8c2e3954e33a2a4cde4f69e8c",
+              "type": "file-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:65038ad8d315a65e274c5e1104dbe8779d025fb5990597e1e7652bcedd09db5f",
+              "type": "text-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 1,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:20c7fe23c76f0ed82f28774b43938209801bf0aee0da6e8d6f1acf6b0d504859",
+              "type": "path-hint",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "not-run",
+              "ruleSelection": "not-run",
+              "contextExpansion": "not-run"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Semantic analysis, rule selection and adaptive context have not run.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:b787207284d1fd8676ce26ea2222096dbca28ee68c4b2a4740de801fc2b99f45",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [
+          {
+            "ruleId": null,
+            "severity": "warning",
+            "title": "Zero guard was removed",
+            "description": "Synthetic reviewer claim for scoring-contract validation only.",
+            "evidenceIds": [
+              "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+            ],
+            "location": {
+              "evidenceId": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "side": "new",
+              "startLine": 1,
+              "endLine": 1
+            }
+          }
+        ],
+        "contextRequests": []
+      },
+      "judgments": [
+        {
+          "findingId": "finding:6f1efb1a79acebe7df3a0fa395d67566549f13e9d34de2678b4b268af1951da6",
+          "labelId": "zero-division"
+        }
+      ],
+      "measurements": null
+    },
+    {
+      "candidateId": "diff-only",
+      "caseId": "guard-removal",
+      "repetition": 2,
+      "status": "success",
+      "request": {
+        "id": "request:b787207284d1fd8676ce26ea2222096dbca28ee68c4b2a4740de801fc2b99f45",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:6da31829400eeadfcebbfa519ea4641f21cd709f5388eb84cc03250d2f0f0ba9",
+        "bundle": {
+          "id": "bundle:6da31829400eeadfcebbfa519ea4641f21cd709f5388eb84cc03250d2f0f0ba9",
+          "schemaVersion": "review-bundle/v1",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 1,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "type": "git-patch",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                  "path": "rate.ts",
+                  "object": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..908fd40 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1 @@\n-export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n+export function rate(amount: number) { return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 1
+                  }
+                }
+              ]
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:738ee129777bdbf182b161880a826f1451e3abc8c2e3954e33a2a4cde4f69e8c",
+              "type": "file-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:65038ad8d315a65e274c5e1104dbe8779d025fb5990597e1e7652bcedd09db5f",
+              "type": "text-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 1,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:20c7fe23c76f0ed82f28774b43938209801bf0aee0da6e8d6f1acf6b0d504859",
+              "type": "path-hint",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "not-run",
+              "ruleSelection": "not-run",
+              "contextExpansion": "not-run"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Semantic analysis, rule selection and adaptive context have not run.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:b787207284d1fd8676ce26ea2222096dbca28ee68c4b2a4740de801fc2b99f45",
+        "reviewer": {
+          "id": "synthetic-diff-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [],
+        "contextRequests": []
+      },
+      "judgments": [],
+      "measurements": null
+    },
+    {
+      "candidateId": "caller-context",
+      "caseId": "comment-only",
+      "repetition": 1,
+      "status": "success",
+      "request": {
+        "id": "request:79274726791c867148297cd883296dbf7e312afc8ed209efea17bf59ac53310a",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:6c867ce5da83be52e3c2fe31e5c05c22c03cbf36dd02a35d28e5f5b468fe4dbf",
+        "bundle": {
+          "id": "bundle:6c867ce5da83be52e3c2fe31e5c05c22c03cbf36dd02a35d28e5f5b468fe4dbf",
+          "schemaVersion": "review-bundle/v3",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 0,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50",
+              "type": "git-patch",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+                  "path": "rate.ts",
+                  "object": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..9bd47a0 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1,2 @@\n+// Equivalent behavior with an explanatory comment.\n export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 2
+                  }
+                }
+              ]
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:3ff3c27bdf6c7061a79cf8334df201bc08bf303de55d1e2c7c9249003f2aba50",
+              "type": "file-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:fed6785ac5a545a888fe5871b15df0dba2ce1e1a5512bbe71e8952e942418843",
+              "type": "text-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 0,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:33be640158e1f4153a83a8e6bc8974be9f26822dd3aa4b5cde26c744db46af44",
+              "type": "path-hint",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "partial",
+              "ruleSelection": "not-run",
+              "contextExpansion": "not-requested"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Static TypeScript analysis uses fixed compiler options, no standard libraries, no tsconfig, no installed packages, and no runtime dispatch. Only pinned TypeScript files can resolve. Parse diagnostics and unresolved references are reported; zero static callers is not proof of no callers.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          },
+          "semanticAnalysis": {
+            "schemaVersion": "typescript-analysis/v1",
+            "compilerVersion": "5.9.3",
+            "policy": {
+              "sources": "committed-regular-typescript-files",
+              "configuration": "fixed-esnext-bundler-noLib",
+              "maxFilesPerRevision": 1000,
+              "maxUniqueSourceBytes": 8388608,
+              "maxFileBytes": 524288,
+              "maxAstNodesPerRevision": 250000,
+              "maxCallSitesPerRevision": 10000
+            },
+            "revisions": [
+              {
+                "side": "old",
+                "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                "sourceFiles": 2,
+                "astNodes": 37,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              },
+              {
+                "side": "new",
+                "commit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+                "sourceFiles": 2,
+                "astNodes": 37,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              }
+            ],
+            "declarations": []
+          },
+          "contextExpansion": {
+            "schemaVersion": "caller-context/v1",
+            "policy": {
+              "maxRequests": 50,
+              "maxSnippets": 10,
+              "maxLinesPerSnippet": 80,
+              "maxBytes": 65536
+            },
+            "decisions": [],
+            "serializedEvidenceBytes": 0
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:79274726791c867148297cd883296dbf7e312afc8ed209efea17bf59ac53310a",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [],
+        "contextRequests": []
+      },
+      "judgments": [],
+      "measurements": null
+    },
+    {
+      "candidateId": "caller-context",
+      "caseId": "comment-only",
+      "repetition": 2,
+      "status": "success",
+      "request": {
+        "id": "request:79274726791c867148297cd883296dbf7e312afc8ed209efea17bf59ac53310a",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:6c867ce5da83be52e3c2fe31e5c05c22c03cbf36dd02a35d28e5f5b468fe4dbf",
+        "bundle": {
+          "id": "bundle:6c867ce5da83be52e3c2fe31e5c05c22c03cbf36dd02a35d28e5f5b468fe4dbf",
+          "schemaVersion": "review-bundle/v3",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 0,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50",
+              "type": "git-patch",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+                  "path": "rate.ts",
+                  "object": "9bd47a0883c085c5526aa2eb1e5fa5f958a48afe"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..9bd47a0 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1,2 @@\n+// Equivalent behavior with an explanatory comment.\n export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 2
+                  }
+                }
+              ]
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:3ff3c27bdf6c7061a79cf8334df201bc08bf303de55d1e2c7c9249003f2aba50",
+              "type": "file-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:fed6785ac5a545a888fe5871b15df0dba2ce1e1a5512bbe71e8952e942418843",
+              "type": "text-change",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 0,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:33be640158e1f4153a83a8e6bc8974be9f26822dd3aa4b5cde26c744db46af44",
+              "type": "path-hint",
+              "changeId": "change:d8d136b96392c4613623d5e62daf818675ffb92364a22ac528f6705016319f17",
+              "evidenceIds": [
+                "evidence:e569fc601f98b98f1853a6760a5087aac7ae7df1b654f49f3c4bd8d04fe30b50"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "partial",
+              "ruleSelection": "not-run",
+              "contextExpansion": "not-requested"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Static TypeScript analysis uses fixed compiler options, no standard libraries, no tsconfig, no installed packages, and no runtime dispatch. Only pinned TypeScript files can resolve. Parse diagnostics and unresolved references are reported; zero static callers is not proof of no callers.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          },
+          "semanticAnalysis": {
+            "schemaVersion": "typescript-analysis/v1",
+            "compilerVersion": "5.9.3",
+            "policy": {
+              "sources": "committed-regular-typescript-files",
+              "configuration": "fixed-esnext-bundler-noLib",
+              "maxFilesPerRevision": 1000,
+              "maxUniqueSourceBytes": 8388608,
+              "maxFileBytes": 524288,
+              "maxAstNodesPerRevision": 250000,
+              "maxCallSitesPerRevision": 10000
+            },
+            "revisions": [
+              {
+                "side": "old",
+                "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                "sourceFiles": 2,
+                "astNodes": 37,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              },
+              {
+                "side": "new",
+                "commit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+                "sourceFiles": 2,
+                "astNodes": 37,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              }
+            ],
+            "declarations": []
+          },
+          "contextExpansion": {
+            "schemaVersion": "caller-context/v1",
+            "policy": {
+              "maxRequests": 50,
+              "maxSnippets": 10,
+              "maxLinesPerSnippet": 80,
+              "maxBytes": 65536
+            },
+            "decisions": [],
+            "serializedEvidenceBytes": 0
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:79274726791c867148297cd883296dbf7e312afc8ed209efea17bf59ac53310a",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [],
+        "contextRequests": []
+      },
+      "judgments": [],
+      "measurements": null
+    },
+    {
+      "candidateId": "caller-context",
+      "caseId": "guard-removal",
+      "repetition": 1,
+      "status": "success",
+      "request": {
+        "id": "request:07caa32f77edd2c8bfe1894db102cf1100d49c80bb00b73ec643b95c801b2ff0",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:88da5fac57b49c6812eb86be778bd8345ebf5edb4e9711609a3df97bd7a7623d",
+        "bundle": {
+          "id": "bundle:88da5fac57b49c6812eb86be778bd8345ebf5edb4e9711609a3df97bd7a7623d",
+          "schemaVersion": "review-bundle/v3",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 1,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "type": "git-patch",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                  "path": "rate.ts",
+                  "object": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..908fd40 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1 @@\n-export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n+export function rate(amount: number) { return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "evidence:1bb30a56cd6f500b288f65b2c02257a0754a97906e731bdcbd654660bbdf6ed4",
+              "type": "typescript-source",
+              "origin": {
+                "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                "path": "caller.ts",
+                "object": "af1206aa7beee9c5d0d4f334e0e4d5b3ad30b14b",
+                "start": {
+                  "line": 2,
+                  "column": 1
+                },
+                "end": {
+                  "line": 2,
+                  "column": 33
+                }
+              },
+              "content": "export const zeroRate = rate(0);"
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:738ee129777bdbf182b161880a826f1451e3abc8c2e3954e33a2a4cde4f69e8c",
+              "type": "file-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:65038ad8d315a65e274c5e1104dbe8779d025fb5990597e1e7652bcedd09db5f",
+              "type": "text-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 1,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:20c7fe23c76f0ed82f28774b43938209801bf0aee0da6e8d6f1acf6b0d504859",
+              "type": "path-hint",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "partial",
+              "ruleSelection": "not-run",
+              "contextExpansion": "complete-static-matches"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Static TypeScript analysis uses fixed compiler options, no standard libraries, no tsconfig, no installed packages, and no runtime dispatch. Only pinned TypeScript files can resolve. Parse diagnostics and unresolved references are reported; zero static callers is not proof of no callers.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          },
+          "semanticAnalysis": {
+            "schemaVersion": "typescript-analysis/v1",
+            "compilerVersion": "5.9.3",
+            "policy": {
+              "sources": "committed-regular-typescript-files",
+              "configuration": "fixed-esnext-bundler-noLib",
+              "maxFilesPerRevision": 1000,
+              "maxUniqueSourceBytes": 8388608,
+              "maxFileBytes": 524288,
+              "maxAstNodesPerRevision": 250000,
+              "maxCallSitesPerRevision": 10000
+            },
+            "revisions": [
+              {
+                "side": "old",
+                "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                "sourceFiles": 2,
+                "astNodes": 37,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              },
+              {
+                "side": "new",
+                "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                "sourceFiles": 2,
+                "astNodes": 30,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              }
+            ],
+            "declarations": [
+              {
+                "id": "declaration:360ad5b4379f89a6bc478867777058b9ba8409e83db555ebd56054824726ab5a",
+                "side": "old",
+                "name": "rate",
+                "kind": "FunctionDeclaration",
+                "origin": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+                  "start": {
+                    "line": 1,
+                    "column": 1
+                  },
+                  "end": {
+                    "line": 1,
+                    "column": 90
+                  }
+                },
+                "qualifiedName": "rate",
+                "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+                "evidenceIds": [
+                  "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+                ]
+              },
+              {
+                "id": "declaration:25676cd3255e2d225b00bcaa298b4d6d081833f945401a541954b459a7ce7faf",
+                "side": "new",
+                "name": "rate",
+                "kind": "FunctionDeclaration",
+                "origin": {
+                  "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                  "path": "rate.ts",
+                  "object": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4",
+                  "start": {
+                    "line": 1,
+                    "column": 1
+                  },
+                  "end": {
+                    "line": 1,
+                    "column": 62
+                  }
+                },
+                "qualifiedName": "rate",
+                "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+                "evidenceIds": [
+                  "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+                ]
+              }
+            ]
+          },
+          "contextExpansion": {
+            "schemaVersion": "caller-context/v1",
+            "policy": {
+              "maxRequests": 50,
+              "maxSnippets": 10,
+              "maxLinesPerSnippet": 80,
+              "maxBytes": 65536
+            },
+            "decisions": [
+              {
+                "kind": "direct-callers",
+                "targetId": "declaration:25676cd3255e2d225b00bcaa298b4d6d081833f945401a541954b459a7ce7faf",
+                "status": "complete-static-matches",
+                "matches": [
+                  {
+                    "origin": {
+                      "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                      "path": "caller.ts",
+                      "object": "af1206aa7beee9c5d0d4f334e0e4d5b3ad30b14b",
+                      "start": {
+                        "line": 2,
+                        "column": 25
+                      },
+                      "end": {
+                        "line": 2,
+                        "column": 32
+                      }
+                    },
+                    "evidenceId": "evidence:1bb30a56cd6f500b288f65b2c02257a0754a97906e731bdcbd654660bbdf6ed4",
+                    "omission": null
+                  }
+                ]
+              }
+            ],
+            "serializedEvidenceBytes": 347
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:07caa32f77edd2c8bfe1894db102cf1100d49c80bb00b73ec643b95c801b2ff0",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [
+          {
+            "ruleId": null,
+            "severity": "warning",
+            "title": "Zero guard was removed",
+            "description": "Synthetic reviewer claim for scoring-contract validation only.",
+            "evidenceIds": [
+              "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+            ],
+            "location": {
+              "evidenceId": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "side": "new",
+              "startLine": 1,
+              "endLine": 1
+            }
+          }
+        ],
+        "contextRequests": []
+      },
+      "judgments": [
+        {
+          "findingId": "finding:a4f39f6af141173a6ae7b0fad1ed775150895cb21128fae7967a5845db660d82",
+          "labelId": "zero-division"
+        }
+      ],
+      "measurements": null
+    },
+    {
+      "candidateId": "caller-context",
+      "caseId": "guard-removal",
+      "repetition": 2,
+      "status": "success",
+      "request": {
+        "id": "request:07caa32f77edd2c8bfe1894db102cf1100d49c80bb00b73ec643b95c801b2ff0",
+        "schemaVersion": "reviewer-request/v1",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "bundleId": "bundle:88da5fac57b49c6812eb86be778bd8345ebf5edb4e9711609a3df97bd7a7623d",
+        "bundle": {
+          "id": "bundle:88da5fac57b49c6812eb86be778bd8345ebf5edb4e9711609a3df97bd7a7623d",
+          "schemaVersion": "review-bundle/v3",
+          "provenance": {
+            "ingestionSchemaVersion": "git-ingestion/v1",
+            "tool": {
+              "gitVersion": "git version 2.51.1"
+            },
+            "revisions": {
+              "requestedBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "effectiveBaseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+              "headCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "comparison": "direct"
+            },
+            "policy": {
+              "renameSimilarityPercent": 50,
+              "renameCandidateLimit": 1000,
+              "contextLines": 3,
+              "attributesCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+              "repositoryConfigIsolated": true,
+              "diffAlgorithm": "myers",
+              "maxBytes": 8388608,
+              "committedChangesOnly": true
+            }
+          },
+          "summary": {
+            "changedFiles": 1,
+            "addedLines": 1,
+            "removedLines": 1,
+            "binaryFiles": 0,
+            "specialEntries": 0,
+            "textCountsExcludeBinaryAndSpecialEntries": true
+          },
+          "changes": [
+            {
+              "id": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "status": "M",
+              "similarity": null,
+              "oldPath": "rate.ts",
+              "newPath": "rate.ts",
+              "oldMode": "100644",
+              "newMode": "100644",
+              "oldObject": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+              "newObject": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4",
+              "oldKind": "file",
+              "newKind": "file",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "coverage": "text-diff"
+            }
+          ],
+          "evidence": [
+            {
+              "id": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "type": "git-patch",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "origin": {
+                "old": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35"
+                },
+                "new": {
+                  "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                  "path": "rate.ts",
+                  "object": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4"
+                }
+              },
+              "content": "diff --git a/rate.ts b/rate.ts\nindex 50c38e5..908fd40 100644\n--- a/rate.ts\n+++ b/rate.ts\n@@ -1 +1 @@\n-export function rate(amount: number) { if (amount === 0) return 0; return 100 / amount; }\n+export function rate(amount: number) { return 100 / amount; }\n",
+              "hunks": [
+                {
+                  "old": {
+                    "start": 1,
+                    "lines": 1
+                  },
+                  "new": {
+                    "start": 1,
+                    "lines": 1
+                  }
+                }
+              ]
+            },
+            {
+              "id": "evidence:1bb30a56cd6f500b288f65b2c02257a0754a97906e731bdcbd654660bbdf6ed4",
+              "type": "typescript-source",
+              "origin": {
+                "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                "path": "caller.ts",
+                "object": "af1206aa7beee9c5d0d4f334e0e4d5b3ad30b14b",
+                "start": {
+                  "line": 2,
+                  "column": 1
+                },
+                "end": {
+                  "line": 2,
+                  "column": 33
+                }
+              },
+              "content": "export const zeroRate = rate(0);"
+            }
+          ],
+          "facts": [
+            {
+              "id": "fact:738ee129777bdbf182b161880a826f1451e3abc8c2e3954e33a2a4cde4f69e8c",
+              "type": "file-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "status": "M",
+                "oldPath": "rate.ts",
+                "newPath": "rate.ts",
+                "oldKind": "file",
+                "newKind": "file",
+                "modeChanged": false
+              }
+            },
+            {
+              "id": "fact:65038ad8d315a65e274c5e1104dbe8779d025fb5990597e1e7652bcedd09db5f",
+              "type": "text-change",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "addedLines": 1,
+                "removedLines": 1,
+                "hunkCount": 1
+              }
+            },
+            {
+              "id": "fact:20c7fe23c76f0ed82f28774b43938209801bf0aee0da6e8d6f1acf6b0d504859",
+              "type": "path-hint",
+              "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+              "evidenceIds": [
+                "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+              ],
+              "value": {
+                "extension": ".ts",
+                "language": "typescript",
+                "basis": "filename-only"
+              }
+            }
+          ],
+          "coverage": {
+            "status": "partial",
+            "stages": {
+              "gitDiff": "complete",
+              "deterministicFacts": "complete",
+              "semanticAnalysis": "partial",
+              "ruleSelection": "not-run",
+              "contextExpansion": "complete-static-matches"
+            },
+            "limitations": [
+              "Binary blob contents are not included in patches.",
+              "Facts describe Git changes; they are not defect findings or semantic correctness claims.",
+              "Invalid UTF-8 paths or patch bytes cause an explicit failure.",
+              "Language hints come only from filenames.",
+              "Rename detection is heuristic and exhaustive detection is capped at 1000 candidates.",
+              "Static TypeScript analysis uses fixed compiler options, no standard libraries, no tsconfig, no installed packages, and no runtime dispatch. Only pinned TypeScript files can resolve. Parse diagnostics and unresolved references are reported; zero static callers is not proof of no callers.",
+              "Symlinks and gitlinks are recorded as entries; their targets are not traversed."
+            ]
+          },
+          "semanticAnalysis": {
+            "schemaVersion": "typescript-analysis/v1",
+            "compilerVersion": "5.9.3",
+            "policy": {
+              "sources": "committed-regular-typescript-files",
+              "configuration": "fixed-esnext-bundler-noLib",
+              "maxFilesPerRevision": 1000,
+              "maxUniqueSourceBytes": 8388608,
+              "maxFileBytes": 524288,
+              "maxAstNodesPerRevision": 250000,
+              "maxCallSitesPerRevision": 10000
+            },
+            "revisions": [
+              {
+                "side": "old",
+                "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                "sourceFiles": 2,
+                "astNodes": 37,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              },
+              {
+                "side": "new",
+                "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                "sourceFiles": 2,
+                "astNodes": 30,
+                "resolvedCallSites": 1,
+                "unresolvedCallSites": 0,
+                "unresolvedImports": [],
+                "parseDiagnostics": []
+              }
+            ],
+            "declarations": [
+              {
+                "id": "declaration:360ad5b4379f89a6bc478867777058b9ba8409e83db555ebd56054824726ab5a",
+                "side": "old",
+                "name": "rate",
+                "kind": "FunctionDeclaration",
+                "origin": {
+                  "commit": "5108345f1c715d432daee6184edf55e1b129090e",
+                  "path": "rate.ts",
+                  "object": "50c38e5fdba462d752eb5c6a45cc4d3c8b4f6a35",
+                  "start": {
+                    "line": 1,
+                    "column": 1
+                  },
+                  "end": {
+                    "line": 1,
+                    "column": 90
+                  }
+                },
+                "qualifiedName": "rate",
+                "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+                "evidenceIds": [
+                  "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+                ]
+              },
+              {
+                "id": "declaration:25676cd3255e2d225b00bcaa298b4d6d081833f945401a541954b459a7ce7faf",
+                "side": "new",
+                "name": "rate",
+                "kind": "FunctionDeclaration",
+                "origin": {
+                  "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                  "path": "rate.ts",
+                  "object": "908fd40d5827432ccd34f5eb00747ef8cb9f43d4",
+                  "start": {
+                    "line": 1,
+                    "column": 1
+                  },
+                  "end": {
+                    "line": 1,
+                    "column": 62
+                  }
+                },
+                "qualifiedName": "rate",
+                "changeId": "change:17416322deeed1e6e42c5c26d70beeb1853f94fcc5dfc033ef81c841c028974d",
+                "evidenceIds": [
+                  "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+                ]
+              }
+            ]
+          },
+          "contextExpansion": {
+            "schemaVersion": "caller-context/v1",
+            "policy": {
+              "maxRequests": 50,
+              "maxSnippets": 10,
+              "maxLinesPerSnippet": 80,
+              "maxBytes": 65536
+            },
+            "decisions": [
+              {
+                "kind": "direct-callers",
+                "targetId": "declaration:25676cd3255e2d225b00bcaa298b4d6d081833f945401a541954b459a7ce7faf",
+                "status": "complete-static-matches",
+                "matches": [
+                  {
+                    "origin": {
+                      "commit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+                      "path": "caller.ts",
+                      "object": "af1206aa7beee9c5d0d4f334e0e4d5b3ad30b14b",
+                      "start": {
+                        "line": 2,
+                        "column": 25
+                      },
+                      "end": {
+                        "line": 2,
+                        "column": 32
+                      }
+                    },
+                    "evidenceId": "evidence:1bb30a56cd6f500b288f65b2c02257a0754a97906e731bdcbd654660bbdf6ed4",
+                    "omission": null
+                  }
+                ]
+              }
+            ],
+            "serializedEvidenceBytes": 347
+          }
+        },
+        "selectedRules": [],
+        "policy": {
+          "sourceContent": "untrusted-review-data",
+          "instructions": "selected-rules-and-adapter-policy",
+          "findings": "evidence-bound-unverified-claims",
+          "maxFindings": 250,
+          "maxContextRequests": 50
+        }
+      },
+      "response": {
+        "schemaVersion": "reviewer-response/v1",
+        "requestId": "request:07caa32f77edd2c8bfe1894db102cf1100d49c80bb00b73ec643b95c801b2ff0",
+        "reviewer": {
+          "id": "synthetic-context-reviewer",
+          "version": "fixture-v1"
+        },
+        "status": "complete",
+        "reviewedRuleIds": [],
+        "findings": [
+          {
+            "ruleId": null,
+            "severity": "warning",
+            "title": "Zero guard was removed",
+            "description": "Synthetic reviewer claim for scoring-contract validation only.",
+            "evidenceIds": [
+              "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6"
+            ],
+            "location": {
+              "evidenceId": "evidence:7fe7be01d3d65a1a32e2ef15d2b83b6e7fe969b864f3c99e317de8f0a9fa77a6",
+              "side": "new",
+              "startLine": 1,
+              "endLine": 1
+            }
+          }
+        ],
+        "contextRequests": []
+      },
+      "judgments": [
+        {
+          "findingId": "finding:a4f39f6af141173a6ae7b0fad1ed775150895cb21128fae7967a5845db660d82",
+          "labelId": "zero-division"
+        }
+      ],
+      "measurements": null
+    }
+  ]
+}

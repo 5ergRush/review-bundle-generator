@@ -1,0 +1,40 @@
+{
+  "id": "dataset:b968cd2a4d25c011339ff196177a8e49b0b9bed174597d45ff97e9ed363a8912",
+  "schemaVersion": "review-dataset/v1",
+  "name": "synthetic-evaluation-contract",
+  "version": "1",
+  "labelProvenance": {
+    "kind": "synthetic",
+    "author": "fixture-maintainers",
+    "revision": "1"
+  },
+  "cases": [
+    {
+      "id": "comment-only",
+      "description": "Comment-only change preserves behavior; no seeded defect.",
+      "baseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+      "headCommit": "8e3ca8c2ae0866094a0c1364380ae142641c9140",
+      "comparison": "direct",
+      "labels": []
+    },
+    {
+      "id": "guard-removal",
+      "description": "Guard removal permits division by zero for the committed zero caller.",
+      "baseCommit": "5108345f1c715d432daee6184edf55e1b129090e",
+      "headCommit": "2a5da692aefe6fdad3c350bfd6b4b5be2cc771db",
+      "comparison": "direct",
+      "labels": [
+        {
+          "id": "zero-division",
+          "description": "Removing the zero guard changes the zero caller result from 0 to Infinity.",
+          "location": {
+            "side": "new",
+            "path": "rate.ts",
+            "startLine": 1,
+            "endLine": 1
+          }
+        }
+      ]
+    }
+  ]
+}

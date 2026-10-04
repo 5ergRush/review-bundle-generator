@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { ingestGitDiff, IngestionError, createReviewBundle, BundleError, RuleError, SemanticError,
-  createReviewerRequest, normalizeReviewerResponse, ReviewerError } from './index.js';
+  createReviewerRequest, normalizeReviewerResponse, ReviewerError,
+  compileEvaluationDataset, evaluateReviewRuns, EvaluationError } from './index.js';
 import { readRulesFile } from './rules.js';
 import { readJsonFile } from './json-file.js';
 
@@ -13,11 +14,15 @@ review-bundle packet --bundle PATH --reviewer-id ID --reviewer-version VERSION
   [--max-request-bytes N]
 review-bundle normalize --request PATH --response PATH
   [--max-response-bytes N] [--max-result-bytes N]
+review-bundle dataset --definition PATH [--max-dataset-bytes N]
+review-bundle evaluate --dataset PATH --runs PATH
+  [--max-input-bytes N] [--max-report-bytes N]
 
 Writes ingestion/v1, bundle/v1 (without rules), bundle/v2 (with rules), or bundle/v3 (with semantic analysis) JSON.
 Default head: HEAD. Default comparison: merge-base. Only committed changes.
 The bundle command compiles diff evidence and deterministic facts. No AI calls.
 Packet and normalize are offline JSON operations. No CLI command invokes a reviewer.
+Dataset and evaluate score frozen labels and explicitly adjudicated recorded runs offline.
 `;
 
 async function main(args) {
@@ -25,13 +30,15 @@ async function main(args) {
     process.stdout.write(help); return;
   }
   const command = args.shift();
-  if (!['ingest', 'bundle', 'packet', 'normalize'].includes(command)) throw new IngestionError('INVALID_INPUT', 'Expected ingest, bundle, packet or normalize. Use --help for usage.');
-  const names = new Map(command === 'packet' ? [['--bundle', 'bundleFile'], ['--reviewer-id', 'reviewerId'], ['--reviewer-version', 'reviewerVersion'], ['--max-request-bytes', 'maxRequestBytes']] :
+  if (!['ingest', 'bundle', 'packet', 'normalize', 'dataset', 'evaluate'].includes(command)) throw new IngestionError('INVALID_INPUT', 'Expected ingest, bundle, packet, normalize, dataset or evaluate. Use --help for usage.');
+  const names = new Map(command === 'dataset' ? [['--definition', 'definitionFile'], ['--max-dataset-bytes', 'maxDatasetBytes']] :
+    command === 'evaluate' ? [['--dataset', 'datasetFile'], ['--runs', 'runsFile'], ['--max-input-bytes', 'maxInputBytes'], ['--max-report-bytes', 'maxReportBytes']] :
+    command === 'packet' ? [['--bundle', 'bundleFile'], ['--reviewer-id', 'reviewerId'], ['--reviewer-version', 'reviewerVersion'], ['--max-request-bytes', 'maxRequestBytes']] :
     command === 'normalize' ? [['--request', 'requestFile'], ['--response', 'responseFile'], ['--max-response-bytes', 'maxResponseBytes'], ['--max-result-bytes', 'maxResultBytes']] :
     [['--repo', 'repo'], ['--base', 'base'], ['--head', 'head'],
     ['--comparison', 'comparison'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs'],
     ...(command === 'bundle' ? [['--max-bundle-bytes', 'maxBundleBytes'], ['--rules', 'rulesFile']] : [])]);
-  const numeric = ['maxBytes', 'timeoutMs', 'maxBundleBytes', 'maxRequestBytes', 'maxResponseBytes', 'maxResultBytes'];
+  const numeric = ['maxBytes', 'timeoutMs', 'maxBundleBytes', 'maxRequestBytes', 'maxResponseBytes', 'maxResultBytes', 'maxDatasetBytes', 'maxInputBytes', 'maxReportBytes'];
   const options = {};
   while (args.length) {
     const flag = args.shift();
@@ -57,7 +64,12 @@ async function main(args) {
     delete options.rulesFile;
   }
   let result;
-  if (command === 'packet') {
+  if (command === 'dataset') {
+    result = compileEvaluationDataset(await readJsonFile(options.definitionFile, options.maxDatasetBytes ?? 1024 * 1024), { maxDatasetBytes: options.maxDatasetBytes });
+  } else if (command === 'evaluate') {
+    result = evaluateReviewRuns(await readJsonFile(options.datasetFile), await readJsonFile(options.runsFile, options.maxInputBytes ?? 64 * 1024 * 1024),
+      { maxInputBytes: options.maxInputBytes, maxReportBytes: options.maxReportBytes });
+  } else if (command === 'packet') {
     result = createReviewerRequest(await readJsonFile(options.bundleFile),
       { id: options.reviewerId, version: options.reviewerVersion }, { maxRequestBytes: options.maxRequestBytes });
   } else if (command === 'normalize') {
@@ -71,7 +83,7 @@ async function main(args) {
 
 try { await main(process.argv.slice(2)); }
 catch (error) {
-  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError;
+  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError;
   process.stderr.write(`${JSON.stringify({ error: { code: known ? error.code : 'INTERNAL_ERROR',
     message: known ? error.message : 'Unexpected operation failure.' } })}\n`);
   process.exitCode = 1;
