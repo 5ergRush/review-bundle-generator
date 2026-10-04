@@ -4,3 +4,5 @@ export { parseRulesYaml, RuleError } from './rules.js';
 export { SemanticError } from './semantic.js';
 export { createReviewerRequest, normalizeReviewerResponse, runReviewerAdapter, ReviewerError } from './reviewer.js';
 export { compileEvaluationDataset, evaluateReviewRuns, EvaluationError } from './evaluation.js';
+export { normalizeGitLabMergeRequest, fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError } from './gitlab.js';
+export { checkRuntime } from './runtime.js';

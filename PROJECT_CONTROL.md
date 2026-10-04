@@ -3,16 +3,16 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #5 merged; offline frozen-label evaluation harness implemented on feat/evaluation-harness; local and Node 22/24 CI passed; PR #6 open.
+Phase: PR #6 merged; read-only GitLab metadata adapter and installed-package/runtime validation implemented on feat/gitlab-packaging; local syntax checks, all 101 tests, packaging dry-run and offline installed-package smoke passed. PR #7 is open; code-head Node 22/24 push and PR CI passed. Remote delivery checkpoint below.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
-2. PR #5 was verified merged on 2026-10-05 at b9f6f9eac6b5da3e6051a02e9415ac7658f319d3. Final-head push and PR CI passed before merge.
-3. Current branch: feat/evaluation-harness, based on that merge. Read docs/evaluation-contract.md: frozen independent labels, explicit adjudication, complete repeated-run matrix, quality/stability/failure coverage and externally supplied usage provenance.
-4. PR #6: https://github.com/5ergRush/review-bundle-generator/pull/6. Local syntax checks, all 86 tests and packaging check passed, as did Node 22/24 push and PR CI. Inspect final-head CI before merge. Merge remains a user action unless separately authorized.
-5. Next increment: GitLab adapter and operational packaging contracts. Real existing-reviewer transport/payload/authentication/model mapping remains unrecovered. Real GitLab deployment/authentication/project interface is also unrecovered; obtain these before claiming working production integration. Generic transport-independent plumbing can proceed separately.
-6. No actual reviewer quality, cost or latency was measured. Fixture labels/runs/judgments are synthetic. Real benchmark sources/labels and observed provider measurements must come from authorized curated data. Generator and CLI make no AI calls; only explicitly supplied external reviewer adapters may use AI.
+2. PR #6 was verified merged on 2026-10-05 at 7a6163fe91a586f9df4336f5906e97aa27031b26. Final-head push and PR CI passed before merge.
+3. Current branch: feat/gitlab-packaging, based on that merge. Read docs/gitlab-contract.md and docs/operations.md: API metadata normalization, pinned local direct diff envelope, explicit stale-snapshot check and installed-tarball/runtime tests.
+4. All 101 tests, syntax checks, packaging dry-run and offline installed-package smoke passed locally. PR #7 is open (https://github.com/5ergRush/review-bundle-generator/pull/7); code-head Node 22/24 push and PR CI passed. This documentation checkpoint triggers final-head CI; verify that head before merge. Merge remains a user action unless separately authorized.
+5. Next requires real integration inputs: approved GitLab instance/project/token policy and trusted checkout/history; existing-reviewer transport/authentication/payload/model/prompt contract; authorized real MR labels/observed usage. These are unrecovered. Do not silently replace the existing reviewer with a new model/provider or claim production readiness from mocks. Generic plumbing can be extended separately if needed.
+6. No live GitLab call, AI review, real reviewer quality/cost measurement or deployment was performed in this increment. Generator/CLI make no AI calls. Only explicit gitlab-snapshot without --metadata performs a metadata HTTPS GET; local commands remain offline. No GitLab writes or source-repository fetches.
 
 ## Objective and authorization
 
@@ -75,8 +75,8 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Merged as PR #3; final-head Node 22/24 CI passed |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Initial static subset merged as PR #4; final-head Node 22/24 CI passed |
 | 5 | Reviewer adapters and finding normalization | Versioned generic boundary; adapter failure handling; evidence/provenance preserved | Generic contract merged as PR #5; final-head Node 22/24 CI passed; actual existing-reviewer mapping pending |
-| 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; usage provenance | Offline harness implemented; local + Node 22/24 CI passed; PR #6 open; real reviewer evaluation pending |
-| 7 | GitLab adapter and operational packaging | Real integration validation; configuration/security docs; reproducible build and CI | Pending |
+| 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; usage provenance | Offline harness merged as PR #6; final-head Node 22/24 CI passed; real reviewer evaluation pending |
+| 7 | GitLab adapter and operational packaging | Metadata/pinned refs; configuration docs; installed artifact and CI | Read-only adapter and packaging implemented; live corporate integration/deployment still pending |
 
 These are implementation increments, not percentage-complete claims.
 Service transport and exact GitLab/reviewer interfaces remain to be established from integration requirements; do not add a dashboard.
@@ -112,7 +112,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 ## Current validation and Git state
 
 - Documentation bootstrap on main: 6c7c8a292d891742471689ad436fc0fb356662db.
-- Current implementation branch: feat/evaluation-harness, based on main merge b9f6f9eac6b5da3e6051a02e9415ac7658f319d3.
+- Current implementation branch: feat/gitlab-packaging, based on main merge 7a6163fe91a586f9df4336f5906e97aa27031b26.
 - PR #1: https://github.com/5ergRush/review-bundle-generator/pull/1, verified merged at eb1a0789a40042d9881c0b516dd43c0984ba0998.
 - Foundation code commit: 665844e679b81ed2d358c946eb2b8008af0097ac.
 - Runtime: JavaScript ESM; Node >=22 and Git >=2.43. Pinned runtime dependencies: yaml 2.9.1 and typescript 5.9.3, recorded in package-lock.json.
@@ -135,7 +135,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 
 ### Remaining boundaries
 
-- Bundles are explicitly partial. Without semantic opt-in, bundles remain diff-only; with opt-in, v3 adds partial static analysis and bounded requested callers. Rule selection is complete only when rules are supplied. Generic reviewer boundary and offline evaluation exist; real provider/GitLab integration and real labelled evaluation remain pending. Facts are not defect findings.
+- Bundles are explicitly partial. Without semantic opt-in, bundles remain diff-only; with opt-in, v3 adds partial static analysis and bounded requested callers. Rule selection is complete only when rules are supplied. Generic reviewer boundary, offline evaluation and read-only GitLab metadata/local bundle adapter exist; real provider/GitLab deployment and real labelled evaluation remain pending. Facts are not defect findings.
 - Binary and special-entry text counts are unavailable, not inferred zero. Filename language hints are not semantic evidence.
 - Bundle compilation accepts at most 10,000 change records; imported snapshot authenticity is the caller's responsibility.
 - Binary contents are omitted. Symlink/gitlink targets are not traversed. Rename detection is heuristic and capped.
@@ -174,7 +174,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 
 ### Reviewer-boundary increment
 
-- New library APIs: createReviewerRequest, normalizeReviewerResponse, runReviewerAdapter and ReviewerError. Offline CLI commands packet/normalize read bounded UTF-8 JSON regular files. No CLI network, provider invocation or comment posting.
+- New library APIs: createReviewerRequest, normalizeReviewerResponse, runReviewerAdapter and ReviewerError. Offline CLI commands packet/normalize read bounded UTF-8 JSON regular files. Those commands perform no network/provider invocation or comment posting.
 - Versioned reviewer-request/v1, reviewer-response/v1 and review-result/v1 are documented in docs/reviewer-contract.md. Request includes full bundle, matched selected rules, fixed boundary policy and reviewer ID/version; generated request/result data is cloned/frozen.
 - Imported packets validate content IDs, recompile Git evidence/facts, reselect YAML rules and check semantic/source references. Content hashes are not signatures and do not authenticate imported data against Git. Generated object-key order must be preserved.
 - Normalization rejects foreign request/reviewer identities, unknown evidence/rules, unreviewed rule claims, forged location fields, unavailable/gap lines and primary evidence outside a rule's matched changes. Caller evidence links through its target declaration. Derived commit/path/blob preserve source provenance.
@@ -197,7 +197,20 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Limits: 100 cases, 250 labels/case, 8 candidates, 10 repetitions, 500 total slots; JSON depth64/500000 values. Dataset default1MiB/input default64MiB/report default16MiB with 64MiB caps. Output IDs hash normalized content; inputs remain caller-owned, outputs cloned/frozen; failures emit no partial report.
 - Frozen public fixtures contain 2 synthetic cases, 2 scripted candidates and 2 repetitions (8 successful records) with no usage measurements. A separate maintainer authoring script uses temporary generic TypeScript/Git sources with fixed dates, no hooks and isolated configuration; it never invokes a reviewer. Fixture scores validate formulas only and do not establish real quality improvement.
 - Local Node 24/Git 2.51.1: syntax checks, all 86 tests and npm pack --dry-run passed. Seventeen new tests cover independent label identity, known confusion counts/deltas, repeatability/ordering, duplicate claims, explicit judgments, failures/incomplete coverage, complete frozen matrix, packet/revision validation, measurement provenance/paired deltas/overflow, undefined denominators, byte/plain-JSON limits and offline CLI.
-- PR #6: https://github.com/5ergRush/review-bundle-generator/pull/6, open and unmerged. Code commit 0c46a86f6daf4e99ae22e1554ad0d46365f7cbc4 passed Node 22/24 CI: push https://github.com/5ergRush/review-bundle-generator/actions/runs/37234234840 and PR https://github.com/5ergRush/review-bundle-generator/actions/runs/37234273026; both concluded success. This documentation checkpoint triggers final-head CI; inspect current PR head before merge. Actual reviewer/GitLab integration and human-labelled real MR benchmarks remain pending; no production readiness or actual performance claims.
+- PR #6: https://github.com/5ergRush/review-bundle-generator/pull/6, verified merged at 7a6163fe91a586f9df4336f5906e97aa27031b26. Code commit 0c46a86f6daf4e99ae22e1554ad0d46365f7cbc4 passed Node 22/24 CI: push https://github.com/5ergRush/review-bundle-generator/actions/runs/37234234840 and PR https://github.com/5ergRush/review-bundle-generator/actions/runs/37234273026; both concluded success. This documentation checkpoint triggers final-head CI; inspect current PR head before merge. Actual reviewer/GitLab integration and human-labelled real MR benchmarks remain pending; no production readiness or actual performance claims.
+
+### GitLab and packaging increment
+
+- New APIs normalizeGitLabMergeRequest/fetchGitLabMergeRequest/createGitLabReviewBundle/assertGitLabSnapshotCurrent/GitLabError and checkRuntime. Schemas gitlab-merge-request/v1, gitlab-review-bundle/v1 and review-runtime/v1; contracts/operations documented in docs/gitlab-contract.md and docs/operations.md.
+- Official GitLab API v4 single-MR fields and PRIVATE-TOKEN authentication were checked against primary docs. Normalization validates requested numeric project/IID/target/global identity, fork/source identity, state and full consistent base/head/start refs; sha must match diff head. Not-ready refs fail without retries. Untrusted title/description/branch/URL fields are discarded.
+- Metadata HTTP client makes one GET to explicitly configured HTTPS instance/base path, omits cookies, rejects redirects and uses optional token header only. Default timeout30s/cap300000ms and response1MiB/cap8MiB apply through streamed UTF-8 JSON read/normalization. Errors redact response bodies/transport details; timeout aborts/cancels/discards late responses. Injected Fetch transports remain trusted/cooperative code.
+- Snapshot hashes are not authenticity proofs. Imported snapshots preserve generated key order and are validated. Bundle generation requires opened MR/available source project and exact local recorded base/head objects, uses direct comparison, preserves recorded start and rejects revision overrides. No clone/fetch or GitLab writes. Inner ordinary bundle schema stays unchanged inside a bound envelope with separate default16MiB/cap64MiB budget.
+- Freshness comparison validates both normalized snapshots and rejects identity/state/ref changes. It is not an atomic live guarantee or authorization to publish. Real server async/concurrency behavior remains deployment-owned.
+- CLI gitlab-snapshot supports live GET or --metadata offline normalization; gitlab-bundle and gitlab-check are local. Only the explicit live metadata command performs HTTP, using optional REVIEW_BUNDLE_GITLAB_TOKEN from environment. No CLI/provider AI invocation, comment/status/approval posting or repository fetching.
+- Runtime doctor checks Node>=22/Git>=2.43 with bounded version process; runtime-ready means prerequisites only. Explicit package file list ships source/contracts/examples/synthetic fixtures/control while excluding dev tests/CI/maintainer scripts; private package is not published.
+- Installed-package smoke packs/installs tarball offline using cached dependencies, imports exports, exercises installed CLI/bin/doctor, a real synthetic local semantic Git bundle and shipped offline evaluation. New CI step runs this on Node22/24 after source validation.
+- Local GitLab/runtime tests (15 new cases) and installed-package smoke passed. Tests cover identity/forks/metadata filtering, not-ready/inconsistent refs, strict instance/token inputs, GET/auth/redirect/error/body/encoding/deadline contracts, stale snapshots, pinned dirty-isolated bundles/budgets/no overrides/no fetch, offline CLI and doctor version failures. HTTP fixtures are mocked; local Git/package checks are real.
+- Local validation passed: syntax checks, all 101 tests, packaging dry-run and offline installed-package smoke. PR #7: https://github.com/5ergRush/review-bundle-generator/pull/7. Code head c764c0abfa71bb21c38048c94eb01616fe983ff9 passed Node 22/24 push CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37236409652 and PR CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37236414095, including installed-package smoke. This documentation checkpoint triggers final-head CI; verify current head before merge. No actual corporate GitLab/reviewer access, provider review, deployment or real MR evaluation occurred. All live integration requirements remain explicit.
 
 ## Maintenance rule
 
@@ -226,3 +239,5 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-05: Verified PR #4 merged; implemented generic reviewer boundary and finding normalization on feat/reviewer-contracts. All 69 tests passed locally; PR #5 open. Code commit 813116cea5ae5a02058aca1d851fce84b53a4cf5 passed Node 22/24 push and PR CI.
 
 - 2026-10-05: Verified PR #5 merged; implemented offline evaluation and frozen synthetic fixtures on feat/evaluation-harness. All 86 tests and packaging checks passed locally; PR #6 open. Code commit 0c46a86f6daf4e99ae22e1554ad0d46365f7cbc4 passed Node 22/24 push and PR CI.
+
+- 2026-10-05: Verified PR #6 merged; implemented read-only GitLab metadata/local bundle adapter, runtime doctor and installed-package CI smoke on feat/gitlab-packaging. All 101 tests, syntax checks, packaging dry-run and offline installed-package smoke passed; PR #7 opened and code-head Node 22/24 push and PR CI passed. The initial CI smoke exposed missing registry metadata in an npm-ci-only cache; seeding the consumer with locked dependency URLs/integrities resolved it and the rerun passed.

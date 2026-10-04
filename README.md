@@ -2,13 +2,13 @@
 
 Deterministic context preparation for an existing AI MR reviewer. The generator will compile relevant changes, rules and bounded supporting context; the external reviewer performs the AI review.
 
-**Current increment:** JavaScript ESM library and CLI for committed Git ingestion, deterministic bundles, scoped YAML rules, static TypeScript/caller context, a generic reviewer boundary with normalized findings, and offline repeatable evaluation. Bundles and results preserve evidence and partial coverage. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
+**Current increment:** JavaScript ESM library and CLI for committed Git ingestion, deterministic bundles, scoped YAML rules, static TypeScript/caller context, a generic reviewer boundary with normalized findings, offline repeatable evaluation, and a read-only GitLab metadata adapter. Bundles and results preserve evidence and partial coverage. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
 
 ## Requirements and validation
 
 - Node.js 22 or newer; Git 2.43 or newer available on PATH (uses commit-scoped attributes).
 - A local Git working tree with the required commit history available.
-- After installing the pinned YAML and TypeScript dependencies, runtime operation needs no API key, network access or AI call.
+- After installing pinned dependencies, local generation/normalization/evaluation needs no API key, network access or AI call. The optional live GitLab metadata command uses a configured HTTPS instance and optional token.
 
 ```sh
 npm ci --ignore-scripts
@@ -58,7 +58,7 @@ const snapshot = await ingestGitDiff({
 
 Statuses include added (`A`), modified (`M`), deleted (`D`), renamed (`R`) and type-changed (`T`). Absent paths/objects are `null`. Paths are parsed from NUL-delimited Git metadata, including tabs, newlines and Unicode. Paths and patch bytes must be valid UTF-8; otherwise ingestion fails rather than silently corrupting evidence.
 
-Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. Opt-in static TypeScript analysis and direct-caller snippets are available. A generic injected reviewer adapter is available; real reviewer/GitLab transport and evaluations with real labelled MR data remain pending.
+Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. Opt-in static TypeScript analysis and direct-caller snippets are available. A generic injected reviewer adapter is available; a read-only GitLab metadata transport is available. Live GitLab/reviewer validation and evaluations with real labelled MR data remain pending.
 
 Diffs run in a disposable bare repository sharing the checkout's objects read-only. Repository configuration, local attributes, replace refs and uncommitted attributes do not affect patch generation. Attributes are read from the pinned head commit. Global/system attributes and external diff/textconv programs are disabled. The temporary repository is cleaned up on success or failure. Git alternates require the source object-directory path to have no newlines; changed filenames may contain newlines. Available object history remains the caller's responsibility.
 
@@ -105,8 +105,7 @@ function once with an AbortSignal and a deadline; no provider client is built in
 See [the reviewer contract](docs/reviewer-contract.md) for schemas and obligations.
 
 The `packet` and `normalize` CLI commands work on local JSON files without AI or
-network calls. Existing ingestion/bundle output is unchanged. Real reviewer and
-GitLab integration still require their actual interfaces.
+network calls. Existing ingestion/bundle output is unchanged. The concrete reviewer and live GitLab deployment still require validation.
 
 ## Offline evaluation
 
@@ -122,3 +121,21 @@ node src/cli.js evaluate --dataset fixtures/evaluation/dataset.json --runs fixtu
 ```
 
 The example tests scoring logic; no real reviewer performance has been measured.
+
+## GitLab and installation
+
+The [GitLab adapter](docs/gitlab-contract.md) reads MR metadata, validates identity
+and pins local generation to its recorded diff refs. It never fetches repositories
+or writes to GitLab. Saved snapshots support offline generation and freshness checks.
+Use the inner envelope `.bundle` at the reviewer boundary.
+
+```sh
+node src/cli.js doctor
+node src/cli.js gitlab-snapshot --instance https://gitlab.example.invalid --project-id 100 --mr-iid 7
+```
+
+The snapshot command without `--metadata` performs an HTTPS GET. Optional header
+authentication uses `REVIEW_BUNDLE_GITLAB_TOKEN` from the environment. All other CLI
+commands remain local and no command calls an AI reviewer. See [operations](docs/operations.md)
+for tarball installation, runtime checks, package smoke validation and remaining
+live integration requirements.

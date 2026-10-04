@@ -176,7 +176,7 @@ There are no timestamps or local checkout paths in generated reports.
 
 The [frozen example](../fixtures/evaluation/README.md) has two synthetic cases,
 two scripted candidates and two repetitions. Maintainers can regenerate it with
-`npm run fixtures:evaluation`; that separate authoring script uses an isolated
+`npm run fixtures:evaluation` from the source checkout; that separate authoring script uses an isolated
 temporary synthetic Git repository and never invokes a reviewer. Regeneration
 can change packet IDs when the Git/compiler version changes; review and commit
 the fixture changes. Real benchmark sources and labeled MR data are not included.
