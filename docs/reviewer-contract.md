@@ -156,3 +156,8 @@ node src/cli.js normalize --request request.json --response response.json > resu
 and `--max-result-bytes`. JSON files must be regular files with valid UTF-8 and are
 read with bounded nonblocking opens. Failure emits one JSON error on stderr,
 exit code 1 and no partial stdout. These commands neither call AI nor post comments.
+
+Current caller context is caller-context/v2, with direct-symbol/immutable-local-const
+resolution and bounded binding evidence. Legacy caller-context/v1 imports remain
+accepted. Both call and alias-binding omissions affect partial coverage. See
+[the semantic contract](semantic-contract.md) for provenance checks and supported flow.

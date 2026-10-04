@@ -47,17 +47,28 @@ try {
     GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@example.invalid' };
   const git = (...args) => run('git', ['-c', `core.hooksPath=${devNull}`, '-c', 'commit.gpgSign=false', ...args], repo, 'synthetic Git fixture', gitEnv).trim();
   git('init', '-q', '--template=', '--initial-branch=main');
-  await writeFile(join(repo, 'file.ts'), 'export const value = 1;\n'); git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
-  await writeFile(join(repo, 'file.ts'), 'export const value = 2;\n'); git('add', '-A'); git('commit', '-qm', 'head');
+  const before = "export function validate(amount: number) {\n  if (amount <= 0) throw new Error('invalid');\n  return true;\n}\n";
+  await writeFile(join(repo, 'file.ts'), before);
+  await writeFile(join(repo, 'caller.ts'), "import { validate } from './file';\nconst invoke = validate;\ninvoke(-1);\n");
+  git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
+  await writeFile(join(repo, 'file.ts'), before.replace("  if (amount <= 0) throw new Error('invalid');\n", '')); git('add', '-A'); git('commit', '-qm', 'head');
   const bundle = JSON.parse(run(process.execPath, [cli, 'bundle', '--repo', repo, '--base', base, '--semantic'], consumer, 'installed semantic bundle'));
   assert.equal(bundle.schemaVersion, 'review-bundle/v3'); assert.equal(bundle.summary.changedFiles, 1);
-  await writeFile(join(temporary, 'context-policy.json'), JSON.stringify([{ ruleId: 'authorization-invariant', kind: 'direct-callers', sides: ['old', 'new'] }]));
-  // A shipped v2 rule deliberately omits planning without nearest-scope provenance.
+  await writeFile(join(temporary, 'context-policy.json'), JSON.stringify([{ ruleId: 'amount', kind: 'direct-callers', sides: ['old', 'new'] }]));
+  await writeFile(join(temporary, 'rules.json'), JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'amount', title: 'Amount invariant', instruction: 'Check validation and actual callers.', scope: { paths: ['file.ts'] }, when: { changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'], within: 'validate' }] } }] }));
   const ruleContext = JSON.parse(run(process.execPath, [cli, 'rule-context-bundle', '--repo', repo, '--base', base,
-    '--rules', join(packageDirectory, 'examples', 'invariant-rules.yaml'), '--context-policy', join(temporary, 'context-policy.json')], consumer, 'installed rule context bundle'));
-  assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 0);
+    '--rules', join(temporary, 'rules.json'), '--context-policy', join(temporary, 'context-policy.json')], consumer, 'installed rule context bundle'));
+  assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 2);
+  assert.equal(ruleContext.bundle.contextExpansion.schemaVersion, 'caller-context/v2');
+  for (const decision of ruleContext.bundle.contextExpansion.decisions) {
+    assert.equal(decision.matches.length, 1); assert.equal(decision.matches[0].resolution.kind, 'local-const-alias');
+    assert.equal(decision.matches[0].resolution.aliases.length, 1);
+  }
+  await writeFile(join(temporary, 'bundle.json'), JSON.stringify(ruleContext.bundle));
+  const packet = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'bundle.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed alias provenance packet'));
+  assert.equal(packet.selectedRules[0].id, 'amount');
   const fixtureDirectory = join(packageDirectory, 'fixtures', 'evaluation');
   const report = JSON.parse(run(process.execPath, [cli, 'evaluate', '--dataset', join(fixtureDirectory, 'dataset.json'), '--runs', join(fixtureDirectory, 'runs.json')], consumer, 'installed offline evaluation'));
   assert.equal(report.schemaVersion, 'review-evaluation-report/v1'); assert.equal(report.evidenceKind, 'synthetic-or-mixed');
-  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle, rule context envelope and offline evaluation passed.\n');
+  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle, automatic alias context/provenance packet and offline evaluation passed.\n');
 } finally { await rm(temporary, { recursive: true, force: true }); }

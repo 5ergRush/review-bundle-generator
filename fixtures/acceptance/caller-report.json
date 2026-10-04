@@ -52,6 +52,30 @@
     },
     {
       "caseId": "indirect-variable-call",
+      "status": "passed",
+      "expectedStaticMatches": {
+        "old": 1,
+        "new": 1
+      },
+      "observedStaticMatches": {
+        "old": 1,
+        "new": 1
+      }
+    },
+    {
+      "caseId": "const-alias-chain",
+      "status": "passed",
+      "expectedStaticMatches": {
+        "old": 1,
+        "new": 1
+      },
+      "observedStaticMatches": {
+        "old": 1,
+        "new": 1
+      }
+    },
+    {
+      "caseId": "mutable-alias",
       "status": "limitation-confirmed",
       "expectedStaticMatches": {
         "old": 0,
@@ -61,7 +85,20 @@
         "old": 0,
         "new": 0
       },
-      "limitation": "Runtime caller exists but variable indirection is not resolved by this static subset; zero matches is not proof of no callers."
+      "limitation": "Mutable aliases are excluded even without an observed assignment; zero static matches does not prove no runtime caller."
+    },
+    {
+      "caseId": "computed-alias",
+      "status": "limitation-confirmed",
+      "expectedStaticMatches": {
+        "old": 0,
+        "new": 0
+      },
+      "observedStaticMatches": {
+        "old": 0,
+        "new": 0
+      },
+      "limitation": "Property-based function copies remain unsupported; zero static matches does not prove no runtime caller."
     }
   ],
   "contractChecksPassed": true,
@@ -70,7 +107,7 @@
     "No framework/runtime execution or real corporate MR.",
     "Rule selection is triggered by changed syntax, not by caller existence.",
     "Caller requests are planned from an explicit trusted rule policy and matched syntax anchors; path-only rules and unsupported anchors omit context.",
-    "Only statically resolved pinned local symbols are returned; zero matches is not a completeness guarantee."
+    "Local const identifier copies to named functions are bounded and carry binding evidence; mutable/property-based function copies remain unsupported. Zero matches is not a completeness guarantee."
   ],
   "reviewerImprovement": "not-measured"
 }

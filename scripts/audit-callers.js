@@ -14,7 +14,10 @@ const cases = [
   { id: 'aliased-import', before: alias, after: alias, old: 1, new: 1 },
   { id: 'new-caller', before: 'export const value = 1;\n', after: alias, old: 0, new: 1 },
   { id: 'same-name-only', before: 'function validate() { return true; }\nvalidate();\n', after: 'function validate() { return true; }\nvalidate();\n', old: 0, new: 0 },
-  { id: 'indirect-variable-call', before: "import { validate } from './target';\nconst invoke = validate;\ninvoke(-1);\n", after: "import { validate } from './target';\nconst invoke = validate;\ninvoke(-1);\n", old: 0, new: 0, limitation: 'Runtime caller exists but variable indirection is not resolved by this static subset; zero matches is not proof of no callers.' },
+  { id: 'indirect-variable-call', before: "import { validate } from './target';\nconst invoke = validate;\ninvoke(-1);\n", after: "import { validate } from './target';\nconst invoke = validate;\ninvoke(-1);\n", old: 1, new: 1, callLine: 3, callText: 'invoke(-1)', aliasCount: 1 },
+  { id: 'const-alias-chain', before: "import { validate } from './target';\nconst first = validate;\nconst invoke = first;\ninvoke(-1);\n", after: "import { validate } from './target';\nconst first = validate;\nconst invoke = first;\ninvoke(-1);\n", old: 1, new: 1, callLine: 4, callText: 'invoke(-1)', aliasCount: 2 },
+  { id: 'mutable-alias', before: "import { validate } from './target';\nlet invoke = validate;\ninvoke(-1);\n", after: "import { validate } from './target';\nlet invoke = validate;\ninvoke(-1);\n", old: 0, new: 0, limitation: 'Mutable aliases are excluded even without an observed assignment; zero static matches does not prove no runtime caller.' },
+  { id: 'computed-alias', before: "import { validate } from './target';\nconst box = { validate };\nconst invoke = box.validate;\ninvoke(-1);\n", after: "import { validate } from './target';\nconst box = { validate };\nconst invoke = box.validate;\ninvoke(-1);\n", old: 0, new: 0, limitation: 'Property-based function copies remain unsupported; zero static matches does not prove no runtime caller.' },
 ];
 const rulesYaml = stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'amount-invariant', title: 'Review amount enforcement at callers', instruction: 'Check whether callers can pass non-positive amounts after this changed validation. Require actual caller evidence and consider alternative enforcement.', scope: { paths: ['src/target.ts'] }, when: { changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'], within: 'validate' }] } }] });
 const results = [];
@@ -51,13 +54,19 @@ for (const item of cases) {
       const decision = bundle.contextExpansion.decisions.find(d => d.targetId === requests[side === 'old' ? 0 : 1].targetId);
       assert.equal(decision.status, 'complete-static-matches'); assert.equal(decision.matches.length, item[side]); counts[side] = decision.matches.length;
       for (const match of decision.matches) {
-        assert.equal(match.origin.path, 'src/caller.ts'); assert.equal(match.origin.commit, side === 'old' ? base : head); assert.equal(match.origin.start.line, 2); assert.equal(match.omission, null);
-        const evidence = bundle.evidence.find(e => e.id === match.evidenceId); assert(evidence); assert.equal(evidence.origin.commit, match.origin.commit); assert(evidence.content.includes('check(-1)')); assert(!evidence.content.includes('function validate'));
+        assert.equal(match.origin.path, 'src/caller.ts'); assert.equal(match.origin.commit, side === 'old' ? base : head); assert.equal(match.origin.start.line, item.callLine ?? 2); assert.equal(match.omission, null);
+        const evidence = bundle.evidence.find(e => e.id === match.evidenceId); assert(evidence); assert.equal(evidence.origin.commit, match.origin.commit); assert(evidence.content.includes(item.callText ?? 'check(-1)')); assert(!evidence.content.includes('function validate'));
+        assert.equal(match.resolution.kind, item.aliasCount ? 'local-const-alias' : 'direct-symbol');
+        assert.equal(match.resolution.aliases.length, item.aliasCount ?? 0);
+        for (const alias of match.resolution.aliases) {
+          assert.equal(alias.origin.commit, match.origin.commit); assert.equal(alias.origin.path, match.origin.path); assert.equal(alias.omission, null);
+          const binding = bundle.evidence.find(e => e.id === alias.evidenceId); assert(binding); assert(binding.content.startsWith('const ')); assert(binding.content.includes(alias.initializerName));
+        }
       }
     }
     results.push({ caseId: item.id, status: item.limitation ? 'limitation-confirmed' : 'passed', expectedStaticMatches: { old: item.old, new: item.new }, observedStaticMatches: counts, ...(item.limitation ? { limitation: item.limitation } : {}) });
     await writeFile(join(output, `${item.id}.packet.json`), JSON.stringify(packet, null, 2) + '\n');
   } finally { await rm(repo, { recursive: true, force: true }); }
 }
-const report = { schemaVersion: 'caller-acceptance/v1', evidenceKind: 'authored-synthetic-real-git-static-analysis', results, contractChecksPassed: true, completeCallerCoverage: false, limitations: ['No framework/runtime execution or real corporate MR.', 'Rule selection is triggered by changed syntax, not by caller existence.', 'Caller requests are planned from an explicit trusted rule policy and matched syntax anchors; path-only rules and unsupported anchors omit context.', 'Only statically resolved pinned local symbols are returned; zero matches is not a completeness guarantee.'], reviewerImprovement: 'not-measured' };
+const report = { schemaVersion: 'caller-acceptance/v1', evidenceKind: 'authored-synthetic-real-git-static-analysis', results, contractChecksPassed: true, completeCallerCoverage: false, limitations: ['No framework/runtime execution or real corporate MR.', 'Rule selection is triggered by changed syntax, not by caller existence.', 'Caller requests are planned from an explicit trusted rule policy and matched syntax anchors; path-only rules and unsupported anchors omit context.', 'Local const identifier copies to named functions are bounded and carry binding evidence; mutable/property-based function copies remain unsupported. Zero matches is not a completeness guarantee.'], reviewerImprovement: 'not-measured' };
 await writeFile(join(output, 'caller-report.json'), JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify(report, null, 2));

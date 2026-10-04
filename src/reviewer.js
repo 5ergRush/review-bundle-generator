@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { compileReviewBundle } from './bundle.js';
 import { parseRulesYaml, selectRules } from './rules.js';
+import ts from 'typescript';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BYTES = 16 * 1024 * 1024;
@@ -150,7 +151,7 @@ function validateBundle(bundle) {
   const contextChanges = new Map();
   if (bundle.schemaVersion === 'review-bundle/v3') {
     requireCondition(['typescript-analysis/v1', 'typescript-analysis/v2'].includes(bundle.semanticAnalysis?.schemaVersion) && Array.isArray(bundle.semanticAnalysis.declarations) &&
-      bundle.contextExpansion?.schemaVersion === 'caller-context/v1' && Array.isArray(bundle.contextExpansion.decisions) &&
+      ['caller-context/v1', 'caller-context/v2'].includes(bundle.contextExpansion?.schemaVersion) && Array.isArray(bundle.contextExpansion.decisions) &&
       bundle.contextExpansion.decisions.length <= 50, code, 'Missing or oversized semantic/context sections.');
     const declarations = new Map();
     for (const declaration of bundle.semanticAnalysis.declarations) {
@@ -190,6 +191,45 @@ function validateBundle(bundle) {
       }
       for (const declaration of declarations.values()) if (declaration.basis === 'structural-counterpart') requireCondition(linked.has(declaration.id), code, 'Unreferenced structural counterpart.');
     }
+    const contextV2 = bundle.contextExpansion.schemaVersion === 'caller-context/v2';
+    const contextPolicy = bundle.contextExpansion.policy;
+    requireCondition(contextPolicy?.maxRequests === 50 && contextPolicy.maxSnippets === 10 && contextPolicy.maxLinesPerSnippet === 80 && contextPolicy.maxBytes === 64 * 1024 &&
+      (!contextV2 || contextPolicy.maxAliasDepth === 8), code, 'Unsupported caller context policy.');
+    const contains = (outer, inner) => (inner.start.line > outer.start.line || (inner.start.line === outer.start.line && inner.start.column >= outer.start.column)) &&
+      (inner.end.line < outer.end.line || (inner.end.line === outer.end.line && inner.end.column <= outer.end.column));
+    const linkEvidence = (record, target) => {
+      sourceOrigin(record.origin, commits, code);
+      requireCondition(record.origin.commit === target.origin.commit, code, 'Caller evidence belongs to a different target revision.');
+      if (record.evidenceId === null) { requireCondition(['snippet-line-limit', 'snippet-count-limit', 'context-byte-limit'].includes(record.omission), code, 'Unmarked context omission.'); return null; }
+      const evidence = evidenceById.get(record.evidenceId);
+      requireCondition(evidence?.type === 'typescript-source' && evidence.origin.commit === record.origin.commit && evidence.origin.path === record.origin.path &&
+        evidence.origin.object === record.origin.object && record.omission === null && contains(evidence.origin, record.origin), code, 'Invalid caller evidence reference.');
+      if (!contextChanges.has(evidence.id)) contextChanges.set(evidence.id, new Set());
+      contextChanges.get(evidence.id).add(target.changeId); return evidence;
+    };
+    const parsedEvidence = new Map();
+    const syntaxNodes = evidence => {
+      if (!parsedEvidence.has(evidence.id)) {
+        let file; try { file = ts.createSourceFile(evidence.origin.path, evidence.content, ts.ScriptTarget.ESNext, true); }
+        catch { throw new ReviewerError(code, 'Caller provenance snippet could not be parsed.'); }
+        requireCondition(!file.parseDiagnostics.length, code, 'Malformed caller provenance snippet.');
+        const bindings = new Map(); const calls = new Map(); const pending = [file]; let count = 0;
+        while (pending.length) {
+          const node = pending.pop(); requireCondition(++count <= 25000, code, 'Caller provenance snippet exceeds AST limit.');
+          if (ts.isVariableDeclaration(node)) bindings.set(JSON.stringify(nodeOrigin(evidence, file, node)), node);
+          if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) calls.set(JSON.stringify(nodeOrigin(evidence, file, node)), node.expression.text);
+          ts.forEachChild(node, child => { pending.push(child); });
+        }
+        parsedEvidence.set(evidence.id, { file, bindings, calls });
+      }
+      return parsedEvidence.get(evidence.id);
+    };
+    const nodeOrigin = (evidence, file, node) => {
+      const position = offset => { const p = file.getLineAndCharacterOfPosition(offset); return { line: evidence.origin.start.line + p.line,
+        column: p.line === 0 ? evidence.origin.start.column + p.character : p.character + 1 }; };
+      return { ...evidence.origin, start: position(node.getStart(file)), end: position(node.end) };
+    };
+    const partialMatch = match => match.omission || (contextV2 && match.resolution.aliases.some(alias => alias.omission));
     const targets = new Set();
     for (const decision of bundle.contextExpansion.decisions) {
       requireCondition(object(decision), code, 'Invalid caller context decision.');
@@ -197,22 +237,40 @@ function validateBundle(bundle) {
       requireCondition(target && !targets.has(decision.targetId) && decision.kind === 'direct-callers' && Array.isArray(decision.matches), code, 'Invalid caller context target.');
       targets.add(decision.targetId);
       for (const match of decision.matches) {
-        requireCondition(object(match), code, 'Invalid caller context match.');
-        sourceOrigin(match.origin, commits, code);
-        if (match.evidenceId === null) { requireCondition(['snippet-line-limit', 'snippet-count-limit', 'context-byte-limit'].includes(match.omission), code, 'Unmarked context omission.'); continue; }
-        const evidence = evidenceById.get(match.evidenceId);
-        requireCondition(evidence?.type === 'typescript-source' && evidence.origin.commit === target.origin.commit &&
-          match.origin?.commit === evidence.origin.commit && match.origin?.path === evidence.origin.path && match.origin?.object === evidence.origin.object && match.omission === null &&
-          match.origin.start.line >= evidence.origin.start.line && match.origin.end.line <= evidence.origin.end.line,
-        code, 'Invalid caller evidence reference.');
-        if (!contextChanges.has(evidence.id)) contextChanges.set(evidence.id, new Set());
-        contextChanges.get(evidence.id).add(target.changeId);
+        keys(match, ['origin', 'evidenceId', 'omission', ...(contextV2 ? ['resolution'] : [])], code);
+        const callEvidence = linkEvidence(match, target);
+        if (contextV2) {
+          keys(match.resolution, ['kind', 'aliases'], code);
+          const { kind, aliases } = match.resolution;
+          requireCondition(Array.isArray(aliases) && (kind === 'direct-symbol' ? aliases.length === 0 : kind === 'local-const-alias' && aliases.length >= 1 && aliases.length <= 8), code, 'Invalid caller resolution.');
+          for (let index = 0; index < aliases.length; index++) {
+            const alias = aliases[index]; keys(alias, ['name', 'initializerName', 'origin', 'evidenceId', 'omission'], code);
+            requireCondition(typeof alias.name === 'string' && alias.name.length > 0 && typeof alias.initializerName === 'string' && alias.initializerName.length > 0 &&
+              alias.origin?.path === match.origin.path && alias.origin?.object === match.origin.object &&
+              (index === aliases.length - 1 || alias.initializerName === aliases[index + 1]?.name), code, 'Invalid alias chain provenance.');
+            sourceOrigin(alias.origin, commits, code);
+            const use = index === 0 ? match.origin : aliases[index - 1].origin;
+            requireCondition(alias.origin.end.line < use.start.line || (alias.origin.end.line === use.start.line && alias.origin.end.column <= use.start.column), code, 'Alias initialization must precede its use.');
+            const evidence = linkEvidence(alias, target);
+            if (evidence) {
+              const { file, bindings } = syntaxNodes(evidence);
+              requireCondition(file.statements.length === 1 && ts.isVariableStatement(file.statements[0]) && (file.statements[0].declarationList.flags & ts.NodeFlags.Const), code, 'Alias evidence is not a const declaration.');
+              const node = bindings.get(JSON.stringify(alias.origin));
+              requireCondition(node?.parent === file.statements[0].declarationList && ts.isIdentifier(node.name) && node.name.text === alias.name &&
+                node.initializer && ts.isIdentifier(node.initializer) && node.initializer.text === alias.initializerName, code, 'Alias binding and source evidence disagree.');
+            }
+          }
+          if (aliases.length && callEvidence) {
+            const { calls } = syntaxNodes(callEvidence);
+            requireCondition(calls.get(JSON.stringify(match.origin)) === aliases[0].name, code, 'Alias call and source evidence disagree.');
+          }
+        }
       }
-      requireCondition(decision.status === (decision.matches.some(match => match.omission) ? 'partial' : 'complete-static-matches'), code, 'Invalid context decision coverage.');
+      requireCondition(decision.status === (decision.matches.some(partialMatch) ? 'partial' : 'complete-static-matches'), code, 'Invalid context decision coverage.');
     }
     requireCondition(bundle.evidence.filter(item => item.type === 'typescript-source').every(item => contextChanges.has(item.id)), code, 'Unreferenced source context.');
     const expectedContextCoverage = !bundle.contextExpansion.decisions.length ? 'not-requested' :
-      bundle.contextExpansion.decisions.some(item => item.matches.some(match => match.omission)) ? 'partial' : 'complete-static-matches';
+      bundle.contextExpansion.decisions.some(item => item.matches.some(partialMatch)) ? 'partial' : 'complete-static-matches';
     requireCondition(bundle.coverage.stages.contextExpansion === expectedContextCoverage, code, 'Invalid caller context coverage.');
     requireCondition(bundle.contextExpansion.serializedEvidenceBytes === sourceBytes, code, 'Invalid context byte accounting.');
   } else requireCondition(!bundle.semanticAnalysis && !bundle.contextExpansion && bundle.coverage.stages.contextExpansion === 'not-run', code, 'Semantic sections require bundle v3.');

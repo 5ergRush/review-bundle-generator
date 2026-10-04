@@ -164,3 +164,8 @@ omissions remain explicit. Pass the envelope's `.bundle` to the existing reviewe
 packet boundary. See [the contract](docs/rule-context-contract.md) and
 [example policy](examples/context-policy.json). No AI calls or measured reviewer
 benefit are introduced.
+
+Caller context also resolves bounded local const identifier copies to named functions.
+The packet includes both call and alias-binding evidence under the shared source
+budget. Mutable and complex function-value flow remain unsupported; see
+[the semantic contract](docs/semantic-contract.md).

@@ -55,7 +55,7 @@ maximum 64 MiB via `maxEnvelopeBytes`; ordinary bundle budgets still apply.
 
 Caller expansion separately records static matches and snippet omissions under its
 10-snippet/80-line/64-KiB limits. No requests or zero static matches do not prove no
-callers. Indirect variable calls, runtime dispatch, Angular templates and external
+callers. Function-value flow beyond bounded local const identifier copies, runtime dispatch, Angular templates and external
 packages remain unsupported. Synthetic contract checks do not measure reviewer gains.
 
 The initial operation resolves base/head once; the expansion pass uses those full
