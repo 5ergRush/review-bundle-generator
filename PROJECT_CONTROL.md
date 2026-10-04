@@ -3,14 +3,14 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #4 merged; generic reviewer packets, response normalization and injected adapter execution implemented on feat/reviewer-contracts; local validation passed. Remote delivery checkpoint below.
+Phase: PR #4 merged; generic reviewer packets, response normalization and injected adapter execution implemented on feat/reviewer-contracts; local and Node 22/24 CI passed; PR #5 open.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
 2. PR #4 was verified merged on 2026-10-05 at e2b819553ccf5485c2d76c9c86e28fd4311a1f96. Final-head push and PR CI passed before merge.
 3. Current branch: feat/reviewer-contracts, based on that merge. Read docs/reviewer-contract.md: packet preparation, evidence-bound normalization, explicit pending-rule/context coverage and injected single-call adapter execution.
-4. Local syntax checks, all 69 tests and packaging check passed. Inspect the delivery checkpoint for PR and remote CI. Merge remains a user action unless separately authorized.
+4. PR #5: https://github.com/5ergRush/review-bundle-generator/pull/5. Local syntax checks, all 69 tests and packaging check passed, as did Node 22/24 push and PR CI. Inspect final-head CI before merge. Merge remains a user action unless separately authorized.
 5. Next independent increment: repeatable evaluation harness using synthetic frozen cases and human-maintained labels; do not report actual reviewer quality or cost from mocks. Real existing-reviewer transport/payload/authentication remains unrecovered and must be provided before wiring real integration. GitLab interface/deployment is also pending.
 6. Generator and CLI make no AI calls. Library adapter execution only invokes an application-supplied function; that external reviewer may use AI. Keep the generator/reviewer boundary explicit and include this control file in every PR.
 
@@ -74,7 +74,7 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Merged as PR #2; final-head Node 22/24 CI passed |
 | 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Merged as PR #3; final-head Node 22/24 CI passed |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Initial static subset merged as PR #4; final-head Node 22/24 CI passed |
-| 5 | Reviewer adapters and finding normalization | Versioned generic boundary; adapter failure handling; evidence/provenance preserved | Generic contract implemented; 69 local tests passed; actual existing-reviewer mapping pending |
+| 5 | Reviewer adapters and finding normalization | Versioned generic boundary; adapter failure handling; evidence/provenance preserved | Generic contract implemented; local + Node 22/24 CI passed; PR #5 open; actual existing-reviewer mapping pending |
 | 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; actual usage metrics when exposed | Pending |
 | 7 | GitLab adapter and operational packaging | Real integration validation; configuration/security docs; reproducible build and CI | Pending |
 
@@ -184,7 +184,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Limits: request/result default 16 MiB, response default 1 MiB, configurable caps 64 MiB; 500000 JSON values/depth64; 250 findings/reviewed rules; 32 evidence IDs per finding; title512/description16384 characters; 50 context requests. Full source/context limits remain from the preceding contract. Provider transport/tokens/cancellation and usage instrumentation belong to the concrete adapter.
 - Local Node 24/Git 2.51.1: all 69 tests and syntax checks passed. Nineteen new tests cover packet immutability/selection, normalized provenance/order/dedup, identity/scope/location errors, coverage, generic v1 findings, semantic context/two-round stale response handling, tamper checks, limits/plain JSON, failures, asynchronous/synchronous deadlines and offline CLI.
 - Actual reviewer transport, credentials, payload mapping and model configuration have not been supplied. This is a generic tested boundary; all reviewer execution fixtures are synthetic. No real AI review or production integration was performed.
-- Delivery PR and CI will be recorded after remote validation.
+- PR #5: https://github.com/5ergRush/review-bundle-generator/pull/5, open and unmerged. Code commit 813116cea5ae5a02058aca1d851fce84b53a4cf5 passed Node 22/24 CI: push https://github.com/5ergRush/review-bundle-generator/actions/runs/37232508407 and PR https://github.com/5ergRush/review-bundle-generator/actions/runs/37232540208; both concluded success. This documentation checkpoint triggers final-head CI; inspect current PR head before merge.
 
 ## Maintenance rule
 
@@ -210,4 +210,4 @@ A new conversation must inspect GitHub's current state before relying on this ch
 
 - 2026-10-04: Verified PR #3 merged; implemented the initial static TypeScript and bounded direct-caller increment on feat/typescript-context. Local clean-install validation passed all 50 tests and packaging checks; PR #4 open; code commit 5d7e9de50ca57865715497ca4499a0ab81e7743d passed Node 22/24 push and PR CI.
 
-- 2026-10-05: Verified PR #4 merged; implemented generic reviewer boundary and finding normalization on feat/reviewer-contracts. All 69 tests passed locally; remote delivery pending.
+- 2026-10-05: Verified PR #4 merged; implemented generic reviewer boundary and finding normalization on feat/reviewer-contracts. All 69 tests passed locally; PR #5 open. Code commit 813116cea5ae5a02058aca1d851fce84b53a4cf5 passed Node 22/24 push and PR CI.
