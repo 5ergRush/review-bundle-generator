@@ -16,6 +16,6 @@ measured reviewer quality.
 See `docs/validation-plan.md` for the next implementation and Gemini experiment.
 
 `npm run audit:callers` reproduces `caller-report.json` with aliased-import,
-new-caller and same-name exclusion checks. It also confirms two known gaps: indirect
-variable calls and deletion-only new-side targets. Contract checks passing do not
+new-caller and same-name exclusion checks. It confirms the deletion-only target fix with explicit structural provenance,
+while indirect-variable calls remain a known gap. Contract checks passing do not
 mean complete caller coverage. Both audits use synthetic TypeScript sources.

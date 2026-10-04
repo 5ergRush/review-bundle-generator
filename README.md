@@ -150,3 +150,7 @@ Opt-in `review-rules/v3` adds enclosing-method qualifiers, literal `this` calls 
 simple member assignments; see [contextual examples](examples/angular-invariant-rules.yaml).
 `npm run audit:callers` checks static caller provenance and reproduces known indexing
 limits. These acceptance checks do not demonstrate AI reviewer improvement.
+
+Semantic analysis v2 exposes unique new-revision structural counterparts for
+deletion-only edits, with separate provenance and explicit missing/ambiguous
+outcomes. See [the semantic contract](docs/semantic-contract.md).

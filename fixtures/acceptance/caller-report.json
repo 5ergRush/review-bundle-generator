@@ -4,16 +4,15 @@
   "results": [
     {
       "caseId": "deletion-only-target",
-      "status": "limitation-confirmed",
+      "status": "passed",
       "expectedStaticMatches": {
         "old": 1,
-        "new": null
+        "new": 1
       },
       "observedStaticMatches": {
         "old": 1,
-        "new": null
-      },
-      "limitation": "Pure deletion creates no new changed lines; the current declaration index exposes only the old target even though the new function still exists."
+        "new": 1
+      }
     },
     {
       "caseId": "aliased-import",

@@ -149,7 +149,7 @@ function validateBundle(bundle) {
   }
   const contextChanges = new Map();
   if (bundle.schemaVersion === 'review-bundle/v3') {
-    requireCondition(bundle.semanticAnalysis?.schemaVersion === 'typescript-analysis/v1' && Array.isArray(bundle.semanticAnalysis.declarations) &&
+    requireCondition(['typescript-analysis/v1', 'typescript-analysis/v2'].includes(bundle.semanticAnalysis?.schemaVersion) && Array.isArray(bundle.semanticAnalysis.declarations) &&
       bundle.contextExpansion?.schemaVersion === 'caller-context/v1' && Array.isArray(bundle.contextExpansion.decisions) &&
       bundle.contextExpansion.decisions.length <= 50, code, 'Missing or oversized semantic/context sections.');
     const declarations = new Map();
@@ -162,6 +162,33 @@ function validateBundle(bundle) {
         declaration.origin?.commit === bundle.provenance.revisions[side === 'old' ? 'effectiveBaseCommit' : 'headCommit'] &&
         JSON.stringify(declaration.evidenceIds) === JSON.stringify(change.evidenceIds) && !declarations.has(declaration.id), code, 'Invalid declaration provenance.');
       declarations.set(declaration.id, declaration);
+    }
+    const version2 = bundle.semanticAnalysis.schemaVersion === 'typescript-analysis/v2';
+    for (const declaration of declarations.values()) {
+      if (declaration.basis !== undefined || declaration.counterpartOf !== undefined) {
+        const old = declarations.get(declaration.counterpartOf);
+        requireCondition(version2 && declaration.basis === 'structural-counterpart' && declaration.side === 'new' && old?.side === 'old' &&
+          old.basis === undefined && old.changeId === declaration.changeId && old.kind === declaration.kind && old.qualifiedName === declaration.qualifiedName,
+        code, 'Invalid structural counterpart provenance.');
+      }
+    }
+    if (!version2) requireCondition(bundle.semanticAnalysis.counterparts === undefined, code, 'Legacy analysis cannot contain counterpart decisions.');
+    if (version2) {
+      requireCondition(Array.isArray(bundle.semanticAnalysis.counterparts) && bundle.semanticAnalysis.counterparts.length === [...declarations.values()].filter(d => d.side === 'old').length,
+        code, 'Missing counterpart decisions.');
+      const seen = new Set(); const linked = new Set();
+      for (const decision of bundle.semanticAnalysis.counterparts) {
+        keys(decision, ['oldTargetId', 'status', 'newTargetId'], code);
+        const old = declarations.get(decision.oldTargetId); const next = declarations.get(decision.newTargetId);
+        requireCondition(old?.side === 'old' && !seen.has(old.id) && ['matched', 'already-indexed', 'missing', 'ambiguous', 'parse-unavailable', 'source-unavailable', 'unsupported-scope'].includes(decision.status), code, 'Invalid counterpart decision.');
+        seen.add(old.id);
+        if (['matched', 'already-indexed'].includes(decision.status)) {
+          requireCondition(next?.side === 'new' && next.changeId === old.changeId && next.kind === old.kind && next.qualifiedName === old.qualifiedName &&
+            (decision.status === 'matched' ? next.basis === 'structural-counterpart' && next.counterpartOf === old.id : next.basis === undefined), code, 'Invalid counterpart target.');
+          requireCondition(!linked.has(next.id), code, 'Duplicate counterpart target.'); linked.add(next.id);
+        } else requireCondition(decision.newTargetId === null, code, 'Unavailable counterpart must have a null target.');
+      }
+      for (const declaration of declarations.values()) if (declaration.basis === 'structural-counterpart') requireCondition(linked.has(declaration.id), code, 'Unreferenced structural counterpart.');
     }
     const targets = new Set();
     for (const decision of bundle.contextExpansion.decisions) {
