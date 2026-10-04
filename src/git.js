@@ -99,6 +99,38 @@ async function commit(cwd, ref, limits) {
   return value;
 }
 
+// Internal source reader: immutable regular blobs only, with aggregate bounds.
+export async function readTypeScriptSources(repo, revisions) {
+  const limits = { maxBytes: 8 * 1024 * 1024, timeoutMs: 30_000 };
+  const deadline = Date.now() + 30_000;
+  let bytes = 0;
+  const cache = new Map();
+  return isolatedObjects(resolve(repo), limits, async cwd => {
+    const result = [];
+    for (const revision of revisions) {
+      const entries = decode(await git(cwd, ['ls-tree', '-rz', '--full-tree', revision], limits), 'Source paths').split('\0').filter(Boolean);
+      const sources = [];
+      for (const entry of entries) {
+        const match = /^([0-7]{6}) blob ([a-f0-9]+)\t([\s\S]+)$/u.exec(entry);
+        if (!match || !/^100(?:644|755)$/u.test(match[1]) || !/\.(?:ts|tsx|mts|cts)$/u.test(match[3])) continue;
+        if (sources.length >= 1000) throw new IngestionError('SOURCE_LIMIT', 'More than 1000 TypeScript files in a revision.');
+        if (Date.now() > deadline) throw new IngestionError('TIMEOUT', 'TypeScript source read exceeded 30 seconds.');
+        let content = cache.get(match[2]);
+        if (content === undefined) {
+          const raw = await git(cwd, ['cat-file', 'blob', match[2]], { maxBytes: 512 * 1024, timeoutMs: Math.max(1, deadline - Date.now()) });
+          bytes += raw.length;
+          if (bytes > limits.maxBytes) throw new IngestionError('SOURCE_LIMIT', 'TypeScript source bytes exceed 8 MiB.');
+          content = decode(raw, 'TypeScript source'); cache.set(match[2], content);
+        }
+        sources.push({ path: match[3], object: match[2], content });
+      }
+      sources.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+      result.push({ commit: revision, sources });
+    }
+    return result;
+  });
+}
+
 function entryKind(mode) {
   return mode === '000000' ? null : mode === '160000' ? 'gitlink' : mode === '120000' ? 'symlink' : 'file';
 }

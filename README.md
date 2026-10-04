@@ -2,13 +2,13 @@
 
 Deterministic context preparation for an existing AI MR reviewer. The generator will compile relevant changes, rules and bounded supporting context; the external reviewer performs the AI review.
 
-**Current increment:** JavaScript ESM library and CLI for committed Git ingestion, diff-only bundles and scoped YAML rule selection. Bundles contain deterministic facts, evidence, matched/skipped rule decisions and explicit partial coverage; semantic analysis and context expansion are still pending. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
+**Current increment:** JavaScript ESM library and CLI for committed Git ingestion, deterministic bundles, scoped YAML rule selection, and opt-in static TypeScript analysis with bounded direct-caller context. Bundles preserve evidence and explicit partial coverage. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
 
 ## Requirements and validation
 
 - Node.js 22 or newer; Git 2.43 or newer available on PATH (uses commit-scoped attributes).
 - A local Git working tree with the required commit history available.
-- After installing the pinned YAML parser dependency, runtime operation needs no API key, network access or AI call.
+- After installing the pinned YAML and TypeScript dependencies, runtime operation needs no API key, network access or AI call.
 
 ```sh
 npm ci --ignore-scripts
@@ -58,7 +58,7 @@ const snapshot = await ingestGitDiff({
 
 Statuses include added (`A`), modified (`M`), deleted (`D`), renamed (`R`) and type-changed (`T`). Absent paths/objects are `null`. Paths are parsed from NUL-delimited Git metadata, including tabs, newlines and Unicode. Paths and patch bytes must be valid UTF-8; otherwise ingestion fails rather than silently corrupting evidence.
 
-Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. No semantic analysis, adaptive context, reviewer integration or evaluation harness is implemented yet.
+Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. Opt-in static TypeScript analysis and direct-caller snippets are available; reviewer integration and evaluation remain pending.
 
 Diffs run in a disposable bare repository sharing the checkout's objects read-only. Repository configuration, local attributes, replace refs and uncommitted attributes do not affect patch generation. Attributes are read from the pinned head commit. Global/system attributes and external diff/textconv programs are disabled. The temporary repository is cleaned up on success or failure. Git alternates require the source object-directory path to have no newlines; changed filenames may contain newlines. Available object history remains the caller's responsibility.
 
@@ -84,3 +84,13 @@ With rules, output becomes `review-bundle/v2`: normalized instructions/configura
 ## Delivery
 
 Implementation changes go through review branches. Every increment updates the project control file with its actual validation and remaining limitations. The public repository contains generic source and synthetic fixtures only.
+
+## Static TypeScript context
+
+Use `review-bundle bundle --repo . --base BASE_SHA --head HEAD_SHA --semantic`
+to add pinned TypeScript declarations and static-resolution coverage. Request
+callers with `--callers declaration:SHA256` using an ID from that bundle and the
+same commits. This produces bundle v3; source snippets are bounded and omissions
+are explicit. See [the semantic contract](docs/semantic-contract.md) for supported
+declarations, compiler limits and the API. Full project type checking, runtime
+dispatch and installed dependencies are outside this increment.
