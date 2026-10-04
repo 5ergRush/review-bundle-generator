@@ -3,14 +3,14 @@
 Last updated: 2026-10-04
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: foundation and bundle facts merged; scoped YAML rule selection implemented locally; PR/CI review pending.
+Phase: foundation and bundle facts merged; scoped YAML rule selection passed local and Node 22/24 CI validation; PR #3 open.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
 2. PR #2 was verified merged on 2026-10-04 at 8f993e5f36a96416855976c61b8ec461e672522e. Final-head Node 22/24 CI passed before merge.
 3. Current work is on feat/scoped-yaml-rules: strict review-rules/v1 YAML, deterministic scope/condition matching, evidence-linked matched/skipped decisions and review-bundle/v2 output when rules are supplied.
-4. Inspect the rules PR and current-head Node 22/24 CI before merging. Merge remains a user action unless separately authorized.
+4. Review PR #3 (https://github.com/5ergRush/review-bundle-generator/pull/3) and final-head CI. Code commit bd8dda2ecd27fb508e125be0e9b7e25da26caa6e passed Node 22/24 CI. Merge remains a user action unless separately authorized.
 5. Next increment: TypeScript semantic analysis and bounded adaptive context. Define the semantic/evidence contract first; preserve explicit incomplete-analysis markers.
 6. The pipeline still makes no AI calls. Selected review instructions have not been executed. Include this control file in every implementation PR.
 
@@ -72,7 +72,7 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Committed to main |
 | 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Merged as PR #1; final-head Node 22/24 CI passed |
 | 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Merged as PR #2; final-head Node 22/24 CI passed |
-| 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Locally validated; PR/CI pending |
+| 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Local + Node 22/24 CI passed; PR #3 open |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Pending |
 | 5 | Reviewer adapters and finding normalization | Documented existing-reviewer contract; adapter failure handling; evidence/provenance preserved | Pending |
 | 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; actual usage metrics when exposed | Pending |
@@ -155,7 +155,9 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Config IDs hash normalized rules. Comments/order/default spelling do not change semantic identity. Selected instructions and normalized configuration are embedded for provenance.
 - No-rules compilation preserves review-bundle/v1 output. Supplied rules produce review-bundle/v2 with rule-selection/v1 and updated stage coverage; selection is not execution of review instructions.
 - Examples in examples/review-rules.yaml are generic and opt-in, not adopted team policy. Rule sources must be trusted review configuration.
-- Local Node 24 / Git 2.51.1 validation: syntax checks and all 41 tests passed; clean npm ci and packaging dry-run passed. Rules PR/CI evidence pending at this checkpoint.
+- Local Node 24 / Git 2.51.1 validation: syntax checks and all 41 tests passed; clean npm ci and packaging dry-run passed.
+- PR #3: https://github.com/5ergRush/review-bundle-generator/pull/3, open and unmerged. Code commit bd8dda2ecd27fb508e125be0e9b7e25da26caa6e passed Node 22/24 CI: push run #13 https://github.com/5ergRush/review-bundle-generator/actions/runs/37229934817 and PR run #14 https://github.com/5ergRush/review-bundle-generator/actions/runs/37229943484. Both concluded success.
+- This documentation checkpoint records the tested code revision; inspect final-head CI before merge.
 - Limits: 256 KiB YAML; 250 rules; 32 items per selector list; 10,000 AST nodes; depth 12; 5,000,000 counted selection operations; 4,096 string-unit changed-path limit during selection. Exceeding limits returns no partial selection/bundle.
 
 ## Maintenance rule
@@ -177,3 +179,5 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-04: Opened PR #2. Bundle compilation and facts passed Node 22/24 push and PR CI at 3a2c7728673c0401bf25c6db184dbabc021ecad8. Recorded run URLs and review handoff; next increment is scoped YAML rule selection.
 
 - 2026-10-04: Verified PR #2 merged; implemented scoped YAML rule selection, strict parser limits, rule provenance, explicit decisions and rules-enabled bundle v2. Local clean install, syntax checks, all 41 tests and packaging dry-run passed. Next increment is TypeScript semantic analysis and bounded adaptive context.
+
+- 2026-10-04: Opened PR #3; code passed Node 22/24 push and PR CI at bd8dda2ecd27fb508e125be0e9b7e25da26caa6e. Recorded rule selection delivery evidence and next semantic/context increment.
