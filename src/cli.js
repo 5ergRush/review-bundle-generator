@@ -2,7 +2,8 @@
 import { ingestGitDiff, IngestionError, createReviewBundle, BundleError, RuleError, SemanticError,
   createReviewerRequest, normalizeReviewerResponse, ReviewerError,
   compileEvaluationDataset, evaluateReviewRuns, EvaluationError, normalizeGitLabMergeRequest,
-  fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError, checkRuntime } from './index.js';
+  fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError, checkRuntime,
+  createRuleContextBundle, RuleContextError } from './index.js';
 import { readRulesFile } from './rules.js';
 import { readJsonFile } from './json-file.js';
 
@@ -25,8 +26,12 @@ review-bundle gitlab-bundle --repo PATH --snapshot PATH
   [--rules PATH] [--semantic] [--callers declaration:SHA256]
   [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N] [--max-envelope-bytes N]
 review-bundle gitlab-check --snapshot PATH --current PATH
+review-bundle rule-context-bundle --repo PATH --base REV [--head REV]
+  --rules PATH --context-policy PATH [--max-targets N] [--max-envelope-bytes N]
+  [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
 
 Writes ingestion/v1, bundle/v1 (without rules), bundle/v2 (with rules), or bundle/v3 (with semantic analysis) JSON.
+Rule-context-bundle writes rule-context-bundle/v1 containing the ordinary .bundle and explicit plan.
 Default head: HEAD. Default comparison: merge-base. Only committed changes.
 The bundle command compiles diff evidence and deterministic facts. No AI calls.
 Packet and normalize are offline JSON operations. No CLI command invokes a reviewer.
@@ -44,7 +49,7 @@ async function main(args) {
     if (args.length) throw new IngestionError('INVALID_INPUT', 'Doctor accepts no options.');
     process.stdout.write(`${JSON.stringify(await checkRuntime())}\n`); return;
   }
-  if (!['ingest', 'bundle', 'packet', 'normalize', 'dataset', 'evaluate', 'gitlab-snapshot', 'gitlab-bundle', 'gitlab-check'].includes(command)) throw new IngestionError('INVALID_INPUT', 'Unknown command. Use --help for usage.');
+  if (!['ingest', 'bundle', 'packet', 'normalize', 'dataset', 'evaluate', 'gitlab-snapshot', 'gitlab-bundle', 'gitlab-check', 'rule-context-bundle'].includes(command)) throw new IngestionError('INVALID_INPUT', 'Unknown command. Use --help for usage.');
   const bundleCommand = ['bundle', 'gitlab-bundle'].includes(command);
   const names = new Map(command === 'gitlab-snapshot' ? [['--instance', 'instanceUrl'], ['--project-id', 'projectId'], ['--mr-iid', 'mergeRequestIid'], ['--metadata', 'metadataFile'], ['--timeout-ms', 'timeoutMs'], ['--max-response-bytes', 'maxResponseBytes']] :
     command === 'gitlab-check' ? [['--snapshot', 'snapshotFile'], ['--current', 'currentFile']] :
@@ -55,8 +60,9 @@ async function main(args) {
     command === 'normalize' ? [['--request', 'requestFile'], ['--response', 'responseFile'], ['--max-response-bytes', 'maxResponseBytes'], ['--max-result-bytes', 'maxResultBytes']] :
     [['--repo', 'repo'], ['--base', 'base'], ['--head', 'head'],
     ['--comparison', 'comparison'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs'],
-    ...(command === 'bundle' ? [['--max-bundle-bytes', 'maxBundleBytes'], ['--rules', 'rulesFile']] : [])]);
-  const numeric = ['maxBytes', 'timeoutMs', 'maxBundleBytes', 'maxRequestBytes', 'maxResponseBytes', 'maxResultBytes', 'maxDatasetBytes', 'maxInputBytes', 'maxReportBytes', 'projectId', 'mergeRequestIid', 'maxEnvelopeBytes'];
+    ...(['bundle', 'rule-context-bundle'].includes(command) ? [['--max-bundle-bytes', 'maxBundleBytes'], ['--rules', 'rulesFile']] : []),
+    ...(command === 'rule-context-bundle' ? [['--context-policy', 'contextPolicyFile'], ['--max-targets', 'maxTargets'], ['--max-envelope-bytes', 'maxEnvelopeBytes']] : [])]);
+  const numeric = ['maxBytes', 'timeoutMs', 'maxBundleBytes', 'maxRequestBytes', 'maxResponseBytes', 'maxResultBytes', 'maxDatasetBytes', 'maxInputBytes', 'maxReportBytes', 'projectId', 'mergeRequestIid', 'maxEnvelopeBytes', 'maxTargets'];
   const options = {};
   while (args.length) {
     const flag = args.shift();
@@ -82,7 +88,10 @@ async function main(args) {
     delete options.rulesFile;
   }
   let result;
-  if (command === 'gitlab-snapshot') {
+  if (command === 'rule-context-bundle') {
+    const { contextPolicyFile, ...config } = options;
+    result = await createRuleContextBundle({ ...config, contextPolicy: await readJsonFile(contextPolicyFile, 256 * 1024) });
+  } else if (command === 'gitlab-snapshot') {
     const { metadataFile, ...config } = options;
     if (metadataFile !== undefined) {
       if (config.timeoutMs !== undefined || config.maxResponseBytes !== undefined) throw new GitLabError('INVALID_GITLAB_INPUT', 'Offline metadata mode does not accept network limits.');
@@ -112,7 +121,7 @@ async function main(args) {
 
 try { await main(process.argv.slice(2)); }
 catch (error) {
-  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError || error instanceof GitLabError;
+  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError || error instanceof GitLabError || error instanceof RuleContextError;
   process.stderr.write(`${JSON.stringify({ error: { code: known ? error.code : 'INTERNAL_ERROR',
     message: known ? error.message : 'Unexpected operation failure.' } })}\n`);
   process.exitCode = 1;

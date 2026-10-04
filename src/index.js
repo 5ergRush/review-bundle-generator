@@ -6,3 +6,4 @@ export { createReviewerRequest, normalizeReviewerResponse, runReviewerAdapter, R
 export { compileEvaluationDataset, evaluateReviewRuns, EvaluationError } from './evaluation.js';
 export { normalizeGitLabMergeRequest, fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError } from './gitlab.js';
 export { checkRuntime } from './runtime.js';
+export { createRuleContextBundle, RuleContextError } from './rule-context.js';
