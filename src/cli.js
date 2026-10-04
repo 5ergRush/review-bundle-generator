@@ -1,21 +1,24 @@
 #!/usr/bin/env node
-import { ingestGitDiff, IngestionError } from './index.js';
+import { ingestGitDiff, IngestionError, createReviewBundle, BundleError } from './index.js';
 
-const help = `Usage: review-bundle ingest --repo PATH --base REV [--head REV]
+const help = `Usage: review-bundle ingest|bundle --repo PATH --base REV [--head REV]
   [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N]
+  [--max-bundle-bytes N (bundle only)]
 
-Writes a git-ingestion/v1 JSON snapshot to stdout; errors go to stderr.
+Writes git-ingestion/v1 or review-bundle/v1 JSON to stdout; errors go to stderr.
 Default head: HEAD. Default comparison: merge-base. Only committed changes.
-This command does not yet compile a reviewer bundle or call an AI reviewer.
+The bundle command compiles diff evidence and deterministic facts. No AI calls.
 `;
 
 async function main(args) {
   if (args.length === 1 && ['--help', '-h'].includes(args[0])) {
     process.stdout.write(help); return;
   }
-  if (args.shift() !== 'ingest') throw new IngestionError('INVALID_INPUT', 'Expected ingest. Use --help for usage.');
+  const command = args.shift();
+  if (!['ingest', 'bundle'].includes(command)) throw new IngestionError('INVALID_INPUT', 'Expected ingest or bundle. Use --help for usage.');
   const names = new Map([['--repo', 'repo'], ['--base', 'base'], ['--head', 'head'],
-    ['--comparison', 'comparison'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs']]);
+    ['--comparison', 'comparison'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs'],
+    ...(command === 'bundle' ? [['--max-bundle-bytes', 'maxBundleBytes']] : [])]);
   const options = {};
   while (args.length) {
     const flag = args.shift();
@@ -23,17 +26,19 @@ async function main(args) {
     if (!key || Object.hasOwn(options, key)) throw new IngestionError('INVALID_INPUT', `Unknown or duplicate option: ${flag}`);
     const value = args.shift();
     if (!value || value.startsWith('--')) throw new IngestionError('INVALID_INPUT', `Missing value for ${flag}`);
-    if (['maxBytes', 'timeoutMs'].includes(key) && !/^[0-9]+$/u.test(value)) {
+    if (['maxBytes', 'timeoutMs', 'maxBundleBytes'].includes(key) && !/^[0-9]+$/u.test(value)) {
       throw new IngestionError('INVALID_INPUT', `${flag} requires a positive integer.`);
     }
-    options[key] = ['maxBytes', 'timeoutMs'].includes(key) ? Number(value) : value;
+    options[key] = ['maxBytes', 'timeoutMs', 'maxBundleBytes'].includes(key) ? Number(value) : value;
   }
-  process.stdout.write(`${JSON.stringify(await ingestGitDiff(options), null, 2)}\n`);
+  const result = await (command === 'bundle' ? createReviewBundle(options) : ingestGitDiff(options));
+  // Bundle budgets include the exact compact JSON emitted below (excluding trailing newline).
+  process.stdout.write(`${JSON.stringify(result)}\n`);
 }
 
 try { await main(process.argv.slice(2)); }
 catch (error) {
-  const known = error instanceof IngestionError;
+  const known = error instanceof IngestionError || error instanceof BundleError;
   process.stderr.write(`${JSON.stringify({ error: { code: known ? error.code : 'INTERNAL_ERROR',
     message: known ? error.message : 'Unexpected ingestion failure.' } })}\n`);
   process.exitCode = 1;

@@ -9,7 +9,7 @@
   "bin": { "review-bundle": "./src/cli.js" },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/git.js && node --check src/cli.js",
+    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/cli.js",
     "validate": "npm run check && npm test"
   }
 }

@@ -2,7 +2,7 @@
 
 Deterministic context preparation for an existing AI MR reviewer. The generator will compile relevant changes, rules and bounded supporting context; the external reviewer performs the AI review.
 
-**Current increment:** dependency-free JavaScript ESM library and CLI for committed Git diff ingestion. This is not yet a compiled reviewer bundle or a production release. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
+**Current increment:** dependency-free JavaScript ESM library and CLI for committed Git diff ingestion and diff-only bundle compilation. Bundles contain deterministic facts, evidence and explicit partial coverage; semantic analysis and rule/context stages are still pending. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
 
 ## Requirements and validation
 
@@ -21,9 +21,10 @@ node src/cli.js --help
 ```sh
 node src/cli.js ingest --repo /path/to/checkout --base origin/main --head HEAD
 node src/cli.js ingest --repo /path/to/checkout --base COMMIT --head COMMIT --comparison direct
+node src/cli.js bundle --repo /path/to/checkout --base origin/main --head HEAD
 ```
 
-Success writes one JSON document to stdout. Failure writes a bounded JSON error to stderr, returns exit code 1, and emits no partial snapshot. Redirect output to a location outside the analyzed checkout if you want to retain it.
+Success writes one compact JSON document to stdout. Failure writes a JSON error to stderr, returns exit code 1, and emits no partial snapshot or bundle. Redirect output to a location outside the analyzed checkout if you want to retain it.
 
 Defaults: head `HEAD`, comparison `merge-base`, maximum raw diff output 8 MiB, timeout 30 seconds per Git command. Override with `--max-bytes` (up to 64 MiB) and `--timeout-ms` (up to 300,000). The size limit applies to each Git stdout/stderr stream and to combined raw metadata plus patch bytes; JSON serialization overhead is additional.
 
@@ -56,9 +57,22 @@ const snapshot = await ingestGitDiff({
 
 Statuses include added (`A`), modified (`M`), deleted (`D`), renamed (`R`) and type-changed (`T`). Absent paths/objects are `null`. Paths are parsed from NUL-delimited Git metadata, including tabs, newlines and Unicode. Paths and patch bytes must be valid UTF-8; otherwise ingestion fails rather than silently corrupting evidence.
 
-Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. No semantic facts, YAML selection, adaptive context, reviewer integration or evaluation harness are implemented yet.
+Rename detection uses 50% similarity and a 1,000-candidate exhaustive-search limit. Binary files receive Git's binary marker without blob contents. Symlinks and submodules are entries, not traversed repositories. No semantic analysis, YAML selection, adaptive context, reviewer integration or evaluation harness is implemented yet.
 
 Diffs run in a disposable bare repository sharing the checkout's objects read-only. Repository configuration, local attributes, replace refs and uncommitted attributes do not affect patch generation. Attributes are read from the pinned head commit. Global/system attributes and external diff/textconv programs are disabled. The temporary repository is cleaned up on success or failure. Git alternates require the source object-directory path to have no newlines; changed filenames may contain newlines. Available object history remains the caller's responsibility.
+
+## Bundle compilation
+
+```js
+import { createReviewBundle, compileReviewBundle } from './src/index.js';
+
+const bundle = await createReviewBundle({ repo: '/checkout', base: 'origin/main' });
+const fromSnapshot = compileReviewBundle(snapshot);
+```
+
+The versioned [review-bundle/v1 contract](docs/bundle-contract.md) defines stable IDs, per-file evidence, revision/line provenance, deterministic facts and stage coverage. These are diff observations, not defect findings. Imported snapshots are structurally checked, but their authenticity must be established by the caller.
+
+Default compact bundle budget is 16 MiB; use `--max-bundle-bytes` (bundle command only) or `maxBundleBytes` in the library, up to 64 MiB. This includes JSON serialization overhead and is separate from ingestion's raw diff budget. Compilation does not truncate evidence to fit.
 
 ## Delivery
 
