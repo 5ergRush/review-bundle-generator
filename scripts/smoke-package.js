@@ -18,7 +18,15 @@ try {
   assert(packed.files.some(file => file.path === 'src/gitlab.js'));
   assert(!packed.files.some(file => file.path.startsWith('test/') || file.path.startsWith('.github/') || file.path.startsWith('scripts/')));
   const consumer = join(temporary, 'consumer'); await mkdir(consumer);
-  await writeFile(join(consumer, 'package.json'), JSON.stringify({ name: 'package-smoke-consumer', private: true, type: 'module' }));
+  // npm ci caches locked tarballs, but may not cache registry packuments. Seed the
+  // consumer lock with those same resolved URLs/integrities so install stays offline.
+  const sourceManifest = JSON.parse(await readFile(join(source, 'package.json'), 'utf8'));
+  const consumerManifest = { name: 'package-smoke-consumer', version: '1.0.0', private: true, type: 'module', dependencies: sourceManifest.dependencies };
+  const consumerLock = JSON.parse(await readFile(join(source, 'package-lock.json'), 'utf8'));
+  consumerLock.name = consumerManifest.name; consumerLock.version = consumerManifest.version;
+  consumerLock.packages[''] = { name: consumerManifest.name, version: consumerManifest.version, dependencies: consumerManifest.dependencies };
+  await writeFile(join(consumer, 'package.json'), JSON.stringify(consumerManifest));
+  await writeFile(join(consumer, 'package-lock.json'), JSON.stringify(consumerLock));
   run(npm, ['install', '--offline', '--ignore-scripts', '--no-audit', '--no-fund', join(temporary, packed.filename)], consumer, 'offline install');
   const packageDirectory = join(consumer, 'node_modules', 'review-bundle-generator');
   const cli = join(packageDirectory, 'src', 'cli.js');
