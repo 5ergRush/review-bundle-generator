@@ -94,3 +94,23 @@ Semantic coverage remains `partial`. Context coverage is `not-requested`,
 zero static callers is not proof of no callers. The final compact bundle budget
 is enforced after semantic/context records are added and fails without output.
 Rules remain selected instructions, not executed reviews; facts are not findings.
+
+## Additional acceptance coverage and known gaps
+
+`npm run audit:callers` creates real pinned Git examples and checks old/new caller
+counts, aliased imports, unrelated same-name symbols, exact caller lines/revisions,
+source snippet content, rule preservation and reviewer-packet validation. It records
+contract checks separately from completeness. Two known gaps are reproduced:
+
+- Variable indirection (`const invoke = validate; invoke(...)`) is not followed.
+- A pure deletion can leave a function present in the new revision without any
+  added lines intersecting it; that side receives no changed declaration target.
+
+The audit's limitation-confirmed cases are not passing completeness claims. Existing
+analysis uses edited-line intersection per revision, not cross-revision counterpart
+mapping. Rule selection currently uses changed syntax; caller snippets require
+explicit requests and do not automatically determine rule relevance. These gaps
+are stated in semantic bundle limitations. Future work should add an explicit,
+provenance-preserving counterpart contract before extending caller indexing;
+marking the next line after every deletion would wrongly attribute edits to
+unrelated adjacent declarations. No runtime/framework analysis is performed.

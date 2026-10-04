@@ -20,5 +20,6 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run validate
       - run: npm run audit:acceptance
+      - run: npm run audit:callers
       - run: npm pack --dry-run
       - run: npm run smoke:package

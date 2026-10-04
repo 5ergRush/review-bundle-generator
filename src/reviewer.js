@@ -118,7 +118,7 @@ function validateBundle(bundle) {
       const rules = bundle.ruleSelection.rules.map(rule => ({ ...rule,
         scope: Object.fromEntries(Object.entries(rule.scope).filter(([, value]) => value !== null)),
         when: Object.fromEntries(Object.entries(rule.when).filter(([, value]) => value !== null)) }));
-      const config = parseRulesYaml(JSON.stringify({ schemaVersion: bundle.ruleSelection.schemaVersion === 'rule-selection/v2' ? 'review-rules/v2' : 'review-rules/v1', rules }));
+      const config = parseRulesYaml(JSON.stringify({ schemaVersion: bundle.ruleSelection.schemaVersion === 'rule-selection/v3' ? 'review-rules/v3' : bundle.ruleSelection.schemaVersion === 'rule-selection/v2' ? 'review-rules/v2' : 'review-rules/v1', rules }));
       const expected = selectRules(config, baseline.changes, baseline.facts, baseline.evidence);
       requireCondition(JSON.stringify(bundle.ruleSelection) === JSON.stringify(expected), code, 'Invalid rule selection.');
       for (const decision of expected.decisions.filter(item => item.status === 'matched')) {

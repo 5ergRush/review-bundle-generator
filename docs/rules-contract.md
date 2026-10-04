@@ -142,3 +142,37 @@ can be incomplete; nodes moved across separate hunks can appear changed. No whol
 control-flow equivalence, imported alias binding, Angular template relationship,
 transitive calls or proof of missing enforcement is inferred. Rules must ask the
 reviewer to verify the domain invariant using the available evidence.
+
+## Context-qualified syntax: review-rules/v3
+
+Version 3 is opt-in and preserves v1/v2 selection contracts. It emits
+`rule-selection/v3`, adds `within` to syntax predicates, and adds two kinds:
+
+| Predicate | Required fields | Observation |
+| --- | --- | --- |
+| `member-call` | `callee: this.member.chain` | Literal property access call rooted at `this` |
+| `assignment` | `target: this.member.chain` | Simple `=` assignment to a literal `this` property chain |
+| `within` qualifier | Optional literal ASCII name | Nearest named function/method containing the syntax node |
+
+Other predicate fields/limits remain as in v2. Callee/target fields are exclusive
+to their applicable kinds. Computed receivers, variable aliases and compound
+assignment operators are outside these patterns. Anonymous callbacks do not inherit
+an outer lifecycle method's name; constructors/anonymous functions have no supported
+name. If a structurally matching observation lacks the requested enclosing name,
+the qualifier is reported unavailable, rather than asserting it is outside scope.
+A different known name is a non-match.
+
+Observations add `within`, `withinLine` and an assignment `target` where relevant.
+The enclosing name participates in pairing across hunk sides; renaming a method
+can therefore change contextual scope even with unchanged call tokens. Either an
+edited node token or edited enclosing-name token is required. Coordinates retain
+both the observed call/assignment and the enclosing-name evidence line. All
+observations/decisions are recomputed by imported reviewer-packet validation.
+
+See [Angular-style examples](../examples/angular-invariant-rules.yaml): changed
+subscription teardown in `ngOnDestroy`, and changed loading assignments in `load`,
+with the same syntax in unrelated methods excluded. These examples are authored
+policy triggers, not proof the class is an Angular component, that OnPush applies,
+that teardown is absent elsewhere, or that loading transitions are defective.
+Template bindings, framework metadata, equivalent cleanup and caller predicates
+remain outside this syntax subset. No rules are loaded from the analyzed checkout.
