@@ -3,16 +3,16 @@
 Last updated: 2026-10-04
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: foundation and bundle facts merged; scoped YAML rule selection passed local and Node 22/24 CI validation; PR #3 open.
+Phase: PR #3 merged; static TypeScript analysis and bounded direct-caller context implemented on feat/typescript-context; local validation passed. PR/CI checkpoint follows below.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
-2. PR #2 was verified merged on 2026-10-04 at 8f993e5f36a96416855976c61b8ec461e672522e. Final-head Node 22/24 CI passed before merge.
-3. Current work is on feat/scoped-yaml-rules: strict review-rules/v1 YAML, deterministic scope/condition matching, evidence-linked matched/skipped decisions and review-bundle/v2 output when rules are supplied.
-4. Review PR #3 (https://github.com/5ergRush/review-bundle-generator/pull/3) and final-head CI. Code commit bd8dda2ecd27fb508e125be0e9b7e25da26caa6e passed Node 22/24 CI. Merge remains a user action unless separately authorized.
-5. Next increment: TypeScript semantic analysis and bounded adaptive context. Define the semantic/evidence contract first; preserve explicit incomplete-analysis markers.
-6. The pipeline still makes no AI calls. Selected review instructions have not been executed. Include this control file in every implementation PR.
+2. PR #3 was verified merged at 34ff701eb89c3cb419e4e211ad415cd87bfefea1. Its final-head push and PR CI passed before merge.
+3. Current branch: feat/typescript-context, based on that merge. Adds opt-in bundle v3, pinned compiler-backed declarations, old/new symbol resolution and requested direct callers. Read docs/semantic-contract.md before extending.
+4. Local clean install, syntax checks, all 50 tests and packaging dry-run passed. Inspect the delivery checkpoint below for PR and remote CI. Merge remains a user action unless separately authorized.
+5. Next increment: reviewer adapter and finding normalization contracts. The real existing-reviewer request/response interface is not recovered; obtain that contract before claiming real integration. A generic transport-independent adapter can be designed first.
+6. No AI calls in the generator. Full project/Angular analysis, recursive context, installed package and tsconfig support remain future extensions. Include this control file in every PR.
 
 ## Objective and authorization
 
@@ -72,8 +72,8 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Committed to main |
 | 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Merged as PR #1; final-head Node 22/24 CI passed |
 | 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Merged as PR #2; final-head Node 22/24 CI passed |
-| 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Local + Node 22/24 CI passed; PR #3 open |
-| 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Pending |
+| 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Merged as PR #3; final-head Node 22/24 CI passed |
+| 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Initial static subset implemented; 50 local tests passed; remote delivery checkpoint below |
 | 5 | Reviewer adapters and finding normalization | Documented existing-reviewer contract; adapter failure handling; evidence/provenance preserved | Pending |
 | 6 | Repeatable evaluation harness | Frozen fixtures/labels; baseline comparisons; precision/recall/stability; actual usage metrics when exposed | Pending |
 | 7 | GitLab adapter and operational packaging | Real integration validation; configuration/security docs; reproducible build and CI | Pending |
@@ -112,10 +112,10 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 ## Current validation and Git state
 
 - Documentation bootstrap on main: 6c7c8a292d891742471689ad436fc0fb356662db.
-- Current implementation branch: feat/scoped-yaml-rules, based on main merge 8f993e5f36a96416855976c61b8ec461e672522e.
+- Current implementation branch: feat/typescript-context, based on main merge 34ff701eb89c3cb419e4e211ad415cd87bfefea1.
 - PR #1: https://github.com/5ergRush/review-bundle-generator/pull/1, verified merged at eb1a0789a40042d9881c0b516dd43c0984ba0998.
 - Foundation code commit: 665844e679b81ed2d358c946eb2b8008af0097ac.
-- Runtime: JavaScript ESM; Node >=22 and Git >=2.43. One pinned runtime dependency: yaml 2.9.1, recorded in package-lock.json. TypeScript semantic analysis remains a later increment.
+- Runtime: JavaScript ESM; Node >=22 and Git >=2.43. Pinned runtime dependencies: yaml 2.9.1 and typescript 5.9.3, recorded in package-lock.json.
 - Public library APIs: ingestGitDiff, compileReviewBundle, createReviewBundle; error classes IngestionError, BundleError and RuleError; parseRulesYaml normalizes explicit rule configuration. CLI commands: review-bundle ingest and review-bundle bundle.
 - Versioned ingestion/v1 output records Git version, requested/effective base and head IDs, comparison semantics, rename policy, change metadata, unified patch and explicit limitations.
 - Default comparison is unique merge-base; direct comparison is explicit. Unrelated and ambiguous histories fail closed.
@@ -135,7 +135,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 
 ### Remaining boundaries
 
-- Bundles are diff-only and explicitly partial. Rule selection is complete only when rules are supplied; semantic analysis and context expansion are not-run. Reviewer/evaluation integrations remain absent. Facts are not defect findings.
+- Bundles are explicitly partial. Without semantic opt-in, bundles remain diff-only; with opt-in, v3 adds partial static analysis and bounded requested callers. Rule selection is complete only when rules are supplied. Reviewer/evaluation integrations remain absent. Facts are not defect findings.
 - Binary and special-entry text counts are unavailable, not inferred zero. Filename language hints are not semantic evidence.
 - Bundle compilation accepts at most 10,000 change records; imported snapshot authenticity is the caller's responsibility.
 - Binary contents are omitted. Symlink/gitlink targets are not traversed. Rename detection is heuristic and capped.
@@ -156,9 +156,21 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - No-rules compilation preserves review-bundle/v1 output. Supplied rules produce review-bundle/v2 with rule-selection/v1 and updated stage coverage; selection is not execution of review instructions.
 - Examples in examples/review-rules.yaml are generic and opt-in, not adopted team policy. Rule sources must be trusted review configuration.
 - Local Node 24 / Git 2.51.1 validation: syntax checks and all 41 tests passed; clean npm ci and packaging dry-run passed.
-- PR #3: https://github.com/5ergRush/review-bundle-generator/pull/3, open and unmerged. Code commit bd8dda2ecd27fb508e125be0e9b7e25da26caa6e passed Node 22/24 CI: push run #13 https://github.com/5ergRush/review-bundle-generator/actions/runs/37229934817 and PR run #14 https://github.com/5ergRush/review-bundle-generator/actions/runs/37229943484. Both concluded success.
+- PR #3: https://github.com/5ergRush/review-bundle-generator/pull/3, verified merged at 34ff701eb89c3cb419e4e211ad415cd87bfefea1. Code commit bd8dda2ecd27fb508e125be0e9b7e25da26caa6e passed Node 22/24 CI: push run #13 https://github.com/5ergRush/review-bundle-generator/actions/runs/37229934817 and PR run #14 https://github.com/5ergRush/review-bundle-generator/actions/runs/37229943484. Both concluded success.
 - This documentation checkpoint records the tested code revision; inspect final-head CI before merge.
 - Limits: 256 KiB YAML; 250 rules; 32 items per selector list; 10,000 AST nodes; depth 12; 5,000,000 counted selection operations; 4,096 string-unit changed-path limit during selection. Exceeding limits returns no partial selection/bundle.
+
+### Static TypeScript/context increment
+
+- Opt-in `semantic: true` / CLI `--semantic` produces review-bundle/v3. Pure diff compilation and no-opt-in v1/v2 remain unchanged. Rule matching is not yet semantic.
+- Committed regular TypeScript blobs are read for effective base and head in an isolated Git repository; no worktree, symlink, gitlink, tsconfig, installed dependency or plugin execution.
+- Compiler host is entirely source-backed with fixed ESNext/Bundler/JSX-preserve/noLib options. Named changed declarations link exact patch evidence and source commit/blob/ranges. Actual edited lines determine declaration overlap; hunk context alone does not.
+- Requested direct callers resolve symbols/import aliases and declaration-node identities. Old targets search old sources, new targets search new sources. Context snippets have immutable source provenance and deterministic IDs.
+- Invalid/duplicate/stale target requests fail closed. Whole-snippet omissions are explicit for count/line/byte budgets; shared snippets deduplicate. Semantic and overall coverage remain partial; complete-static-matches only describes resolved matches and budget coverage.
+- Source limits: 1000 files per revision; 512 KiB per blob; 8 MiB unique source bytes; 30-second aggregate read deadline plus Git command bounds. Per revision: 250000 AST nodes, 10000 calls; per file: 10000 changed lines. Context: 50 requests, 10 snippets, 80 lines per snippet, 64 KiB serialized evidence bytes. Overall bundle limit still enforced.
+- Local clean npm ci, syntax checks, all 50 tests and npm pack --dry-run passed on Node 24 / Git 2.51.1. Nine new integration tests cover declarations, aliases/same names, methods/arrow functions, deleted targets, both revisions, deterministic IDs/dirty isolation, parse/missing imports, special entries, request errors, source/bundle limits, all context budgets and CLI JSON behavior.
+- Remaining semantic boundaries: no full project type check, standard libraries, tsconfig/path aliases, Angular templates, dynamic dispatch/function-value flow or recursive call expansion. Parse recovery and unresolved references mean caller absence cannot be proven. Compiler work uses source/node bounds, not a preemptive CPU timeout.
+- Delivery PR and CI will be recorded after remote validation.
 
 ## Maintenance rule
 
@@ -181,3 +193,5 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-04: Verified PR #2 merged; implemented scoped YAML rule selection, strict parser limits, rule provenance, explicit decisions and rules-enabled bundle v2. Local clean install, syntax checks, all 41 tests and packaging dry-run passed. Next increment is TypeScript semantic analysis and bounded adaptive context.
 
 - 2026-10-04: Opened PR #3; code passed Node 22/24 push and PR CI at bd8dda2ecd27fb508e125be0e9b7e25da26caa6e. Recorded rule selection delivery evidence and next semantic/context increment.
+
+- 2026-10-04: Verified PR #3 merged; implemented the initial static TypeScript and bounded direct-caller increment on feat/typescript-context. Local clean-install validation passed all 50 tests and packaging checks; remote delivery pending.

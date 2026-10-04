@@ -2,7 +2,7 @@
 
 Supplying `rulesYaml` now produces **review-bundle/v2**, adding the versioned [rule-selection section](rules-contract.md) and marking rule selection complete. All base change/evidence/fact/provenance semantics below are preserved. Without rules, v1 output is unchanged. Rule selection is instruction preparation, not completed review; overall coverage remains partial.
 
-This increment compiles a **diff-only bundle**. Facts are observations about Git changes, not AI findings. Every bundle explicitly states that semantic analysis, rule selection and context expansion have not run.
+The base contract compiles a **diff-only bundle**. Facts are observations about Git changes, not AI findings. Opt-in `semantic: true` through `createReviewBundle` produces **review-bundle/v3** with the [static TypeScript and caller-context contract](semantic-contract.md). Pure snapshot compilation retains v1/v2.
 
 ## Public APIs
 
@@ -70,7 +70,7 @@ Text metrics count only added/removed content lines. Patch headers, context line
 
 ## Coverage and limits
 
-Current stages: `gitDiff: complete`, `deterministicFacts: complete`; `semanticAnalysis`, `ruleSelection` and `contextExpansion` are `not-run`. Top-level coverage is always `partial` in this increment, even for an empty diff.
+Base stages: `gitDiff: complete`, `deterministicFacts: complete`; semantic/context stages are `not-run` without opt-in. Rule selection is `complete` when rules are supplied. Semantic v3 reports partial static analysis and separate caller-context budget coverage. Top-level coverage remains `partial`, even for an empty diff.
 
 Compilation accepts at most 10,000 changed records and a patch bounded by the ingestion policy (at most 64 MiB). Default serialized bundle limit is 16 MiB, configurable up to 64 MiB. The limit measures compact JSON UTF-8 bytes including IDs and evidence; the CLI emits this exact encoding plus one trailing newline. Exceeding it throws `BundleError` with `BUNDLE_LIMIT` and returns no partial output. This is a byte budget, not an LLM token estimate. Ingestion retains its separate raw-output budget and timeouts.
 

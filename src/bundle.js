@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { ingestGitDiff } from './git.js';
 import { parseRulesYaml, selectRules } from './rules.js';
+import { expandTypeScriptContext, SemanticError } from './semantic.js';
 
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BUNDLE_BYTES = 16 * 1024 * 1024;
@@ -214,6 +215,28 @@ export function compileReviewBundle(input, options = {}) {
 
 export async function createReviewBundle(options) {
   if (!object(options)) throw new BundleError('INVALID_INPUT', 'An options object is required.');
-  const { maxBundleBytes, rulesYaml, ...gitOptions } = options;
-  return compileReviewBundle(await ingestGitDiff(gitOptions), { maxBundleBytes, rulesYaml });
+  const { maxBundleBytes, rulesYaml, semantic = false, contextRequests = [], ...gitOptions } = options;
+  if (typeof semantic !== 'boolean' || (!semantic && (!Array.isArray(contextRequests) || contextRequests.length))) {
+    throw new SemanticError('INVALID_INPUT', 'Context requests require semantic: true; semantic must be boolean.');
+  }
+  const bundle = compileReviewBundle(await ingestGitDiff(gitOptions), { maxBundleBytes, rulesYaml });
+  if (!semantic) return bundle;
+  const extension = await expandTypeScriptContext(gitOptions.repo, bundle, contextRequests);
+  const { id, ...payload } = bundle;
+  payload.schemaVersion = 'review-bundle/v3';
+  payload.semanticAnalysis = extension.semanticAnalysis;
+  payload.contextExpansion = extension.contextExpansion;
+  payload.evidence.push(...extension.evidence);
+  payload.coverage.stages.semanticAnalysis = 'partial';
+  payload.coverage.stages.contextExpansion = contextRequests.length ?
+    (extension.contextExpansion.decisions.some(item => item.status === 'partial') ? 'partial' : 'complete-static-matches') : 'not-requested';
+  payload.coverage.limitations = payload.coverage.limitations.filter(item => !item.includes('have not run'));
+  payload.coverage.limitations.push('Static TypeScript analysis uses fixed compiler options, no standard libraries, no tsconfig, no installed packages, and no runtime dispatch. Only pinned TypeScript files can resolve. Parse diagnostics and unresolved references are reported; zero static callers is not proof of no callers.');
+  if (payload.ruleSelection) payload.coverage.limitations.push('Selected rules have not been reviewed.');
+  payload.coverage.limitations.sort(compare);
+  const result = { id: `bundle:${hash(payload)}`, ...payload };
+  if (Buffer.byteLength(JSON.stringify(result)) > (maxBundleBytes ?? DEFAULT_BUNDLE_BYTES)) {
+    throw new BundleError('BUNDLE_LIMIT', 'Serialized semantic bundle exceeds maxBundleBytes; no partial bundle returned.');
+  }
+  return result;
 }

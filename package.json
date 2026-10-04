@@ -15,10 +15,11 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/rules.js && node --check src/cli.js",
+    "check": "node --check src/index.js && node --check src/git.js && node --check src/bundle.js && node --check src/rules.js && node --check src/semantic.js && node --check src/cli.js",
     "validate": "npm run check && npm test"
   },
   "dependencies": {
+    "typescript": "5.9.3",
     "yaml": "2.9.1"
   }
 }
