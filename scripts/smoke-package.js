@@ -1,0 +1,50 @@
+// Checks the distributed tarball and installed CLI, not the source checkout imports.
+import { mkdtemp, mkdir, writeFile, readFile, access, rm } from 'node:fs/promises';
+import { tmpdir, devNull } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
+import assert from 'node:assert/strict';
+
+const source = fileURLToPath(new URL('../', import.meta.url));
+const temporary = await mkdtemp(join(tmpdir(), 'review-package-'));
+const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+function run(executable, args, cwd, label, env = process.env) {
+  try { return execFileSync(executable, args, { cwd, env, encoding: 'utf8', timeout: 60_000, maxBuffer: 1024 * 1024, windowsHide: true }); }
+  catch { throw new Error(`Installed-package smoke failed during ${label}.`); }
+}
+try {
+  const packed = JSON.parse(run(npm, ['pack', '--json', '--ignore-scripts', '--pack-destination', temporary], source, 'pack'))[0];
+  assert(packed.files.some(file => file.path === 'src/gitlab.js'));
+  assert(!packed.files.some(file => file.path.startsWith('test/') || file.path.startsWith('.github/') || file.path.startsWith('scripts/')));
+  const consumer = join(temporary, 'consumer'); await mkdir(consumer);
+  await writeFile(join(consumer, 'package.json'), JSON.stringify({ name: 'package-smoke-consumer', private: true, type: 'module' }));
+  run(npm, ['install', '--offline', '--ignore-scripts', '--no-audit', '--no-fund', join(temporary, packed.filename)], consumer, 'offline install');
+  const packageDirectory = join(consumer, 'node_modules', 'review-bundle-generator');
+  const cli = join(packageDirectory, 'src', 'cli.js');
+  const imported = run(process.execPath, ['--input-type=module', '-e',
+    "import * as api from 'review-bundle-generator'; if (!['createReviewBundle','createReviewerRequest','evaluateReviewRuns','fetchGitLabMergeRequest','checkRuntime'].every(name => typeof api[name] === 'function')) process.exit(1); console.log('exports-ready');"], consumer, 'package exports');
+  assert.equal(imported.trim(), 'exports-ready');
+  const doctor = JSON.parse(run(process.execPath, [cli, 'doctor'], consumer, 'installed doctor')); assert.equal(doctor.status, 'runtime-ready');
+  const manifest = JSON.parse(await readFile(join(packageDirectory, 'package.json'), 'utf8'));
+  assert.match(manifest.bin['review-bundle'], /^(?:\.\/)?src\/cli\.js$/u);
+  await access(join(consumer, 'node_modules', '.bin', process.platform === 'win32' ? 'review-bundle.cmd' : 'review-bundle'));
+  if (process.platform !== 'win32') {
+    const binDoctor = JSON.parse(run(join(consumer, 'node_modules', '.bin', 'review-bundle'), ['doctor'], consumer, 'installed bin'));
+    assert.equal(binDoctor.status, 'runtime-ready');
+  }
+  const repo = join(temporary, 'source-repo'); await mkdir(repo);
+  const gitEnv = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))),
+    GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: devNull, GIT_AUTHOR_NAME: 'Fixture', GIT_AUTHOR_EMAIL: 'fixture@example.invalid',
+    GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@example.invalid' };
+  const git = (...args) => run('git', ['-c', `core.hooksPath=${devNull}`, '-c', 'commit.gpgSign=false', ...args], repo, 'synthetic Git fixture', gitEnv).trim();
+  git('init', '-q', '--template=', '--initial-branch=main');
+  await writeFile(join(repo, 'file.ts'), 'export const value = 1;\n'); git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
+  await writeFile(join(repo, 'file.ts'), 'export const value = 2;\n'); git('add', '-A'); git('commit', '-qm', 'head');
+  const bundle = JSON.parse(run(process.execPath, [cli, 'bundle', '--repo', repo, '--base', base, '--semantic'], consumer, 'installed semantic bundle'));
+  assert.equal(bundle.schemaVersion, 'review-bundle/v3'); assert.equal(bundle.summary.changedFiles, 1);
+  const fixtureDirectory = join(packageDirectory, 'fixtures', 'evaluation');
+  const report = JSON.parse(run(process.execPath, [cli, 'evaluate', '--dataset', join(fixtureDirectory, 'dataset.json'), '--runs', join(fixtureDirectory, 'runs.json')], consumer, 'installed offline evaluation'));
+  assert.equal(report.schemaVersion, 'review-evaluation-report/v1'); assert.equal(report.evidenceKind, 'synthetic-or-mixed');
+  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle and offline evaluation passed.\n');
+} finally { await rm(temporary, { recursive: true, force: true }); }
