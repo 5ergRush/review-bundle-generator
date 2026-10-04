@@ -3,16 +3,17 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #7 verified merged; all seven planned core increments are in main. Live integration is awaiting actual GitLab and existing-reviewer contracts. Continuation checkpoint on feat/live-integration-checkpoint.
+Phase: PR #7 merged; validation priority revised by the user. Facts and meaningful rule specificity are the first gate; independent reviewer benefit is the second. Acceptance audit implemented on feat/live-integration-checkpoint.
 
 ## Resume here
 
-1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
-2. PR #7 was verified merged on 2026-10-05 at fa78409e757f11878f30751d7786ca2b16ea1377. Final head f0c1c2b20af8167f0e451c4163c2ddc62f4d89d9 passed Node 22/24 push CI (37236522357) and PR CI (37236524381), including all 101 tests and installed-package smoke.
-3. Current continuation branch: feat/live-integration-checkpoint, based on that merge. This checkpoint changes documentation only; no new implementation PR is open. Read docs/gitlab-contract.md and docs/operations.md for the merged contracts.
-4. Core code, syntax checks, all 101 tests, packaging dry-run and installed-package smoke are validated. Runtime prerequisites and mocked HTTP tests do not establish live production readiness.
-5. Next requires real integration inputs: approved GitLab instance/project/token policy and trusted checkout/history; existing-reviewer transport/authentication/payload/model/prompt contract; authorized real MR labels/observed usage. These are unrecovered. Ask for the reviewer code/configuration or a redacted request/response example and GitLab instance/project plus intended execution environment. Do not request secret tokens in chat. Do not silently replace the existing reviewer with a new model/provider. Generic plumbing can be extended separately if needed.
-6. No live GitLab call, AI review, real reviewer quality/cost measurement or deployment was performed. Generator/CLI make no AI calls. Only explicit gitlab-snapshot without --metadata performs a metadata HTTPS GET; local commands remain offline. No GitLab writes or source-repository fetches.
+1. Inspect main, this branch, open PRs and current CI. PR #7 merged at fa78409e757f11878f30751d7786ca2b16ea1377; final-head Node 22/24 CI passed.
+2. The user clarified there is no supplied reviewer implementation yet (likely a skill). Exact transport/input-output mapping is deferred. ChatGPT may review provisionally; Gemini is available through the user for independent fresh-session trials. Do not block acceptance validation on production integrations or invent API access.
+3. First priority: correct facts and specific relevant rules. Run npm run audit:acceptance and read docs/validation-plan.md. Five real-Git authored synthetic cases pass factual/provenance/packet checks, but both same-path comment-only controls receive irrelevant rules. specificityPassed is false. Existing path/status/line-count selectors do not meet the requested behavioral specificity.
+4. Next implementation: bounded, evidence-based behavioral selectors with positive and same-path negative controls, explicit unsupported/unknown handling and provenance. Preserve existing v1 contracts or version new behavior. Then expand to Angular/caller cases and approved real MRs.
+5. Second priority: fresh-session, fixed-model, paired baseline versus generated-context reviewer trials, with hidden pre-frozen expectations, negative cases and repetitions. No actual reviewer gain has been measured. Existing scripted evaluation records demonstrate formulas only. Rules may be tuned on development cases; compare held-out cases separately.
+6. Future dashboard requirement: manually add/remove selected rules before final bundle generation. Preserve automatic decisions and explicit overrides, regenerate bundle/packet identities, and record effective rule versions. See docs/validation-plan.md. Dashboard is future scope.
+7. Generator remains deterministic with no AI calls. Production GitLab/reviewer configuration is needed later for deployment, not for this validation work. No Gemini session, live GitLab call or real MR reviewer experiment has been executed here.
 
 
 ## Objective and authorization
@@ -244,3 +245,7 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-05: Verified PR #6 merged; implemented read-only GitLab metadata/local bundle adapter, runtime doctor and installed-package CI smoke on feat/gitlab-packaging. All 101 tests, syntax checks, packaging dry-run and offline installed-package smoke passed; PR #7 opened and code-head Node 22/24 push and PR CI passed. The initial CI smoke exposed missing registry metadata in an npm-ci-only cache; seeding the consumer with locked dependency URLs/integrities resolved it and the rerun passed.
 
 - 2026-10-05: Verified PR #7 merged at fa78409e757f11878f30751d7786ca2b16ea1377 and final-head CI success. Saved continuation checkpoint on feat/live-integration-checkpoint. Actual reviewer/GitLab configuration is the next dependency; no new runtime scope was invented.
+
+- 2026-10-05: User reprioritized acceptance: meaningful facts/rules first, measured reviewer benefit second; production reviewer format deferred. Added five-case independent-expectation audit: factual/packet checks pass, two same-file negative controls fail rule specificity. Recorded Gemini fresh-session comparison protocol and future dashboard manual rule overrides.
+
+Validation checkpoint: all 101 regression tests and syntax checks passed locally; acceptance audit fact/packet assertions passed and reports specificity failure explicitly. CI now reproduces the audit; this green execution must not be described as full behavioral acceptance.

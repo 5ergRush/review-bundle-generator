@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "acceptance-audit/v1",
+  "evidenceKind": "authored-synthetic-cases-with-real-git-and-compiler",
+  "priority": "facts-and-rule-specificity-first",
+  "results": [
+    {
+      "caseId": "access-guard-removal",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "authorization-guard"
+      ],
+      "selectedRules": [
+        "authorization-guard"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    },
+    {
+      "caseId": "access-comment-only",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [
+        "authorization-guard"
+      ],
+      "falseSelections": [
+        "authorization-guard"
+      ],
+      "missedRules": [],
+      "specificity": "failed"
+    },
+    {
+      "caseId": "payment-guard-removal",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "money-boundary"
+      ],
+      "selectedRules": [
+        "money-boundary"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    },
+    {
+      "caseId": "payment-comment-only",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [
+        "money-boundary"
+      ],
+      "falseSelections": [
+        "money-boundary"
+      ],
+      "missedRules": [],
+      "specificity": "failed"
+    },
+    {
+      "caseId": "unrelated-source",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed"
+    }
+  ],
+  "factsPassed": true,
+  "packetIntegrityPassed": true,
+  "specificityPassed": false,
+  "reviewerImprovement": "not-measured",
+  "limitations": [
+    "Not real corporate MRs or Angular runtime validation.",
+    "Expected relevance is authored policy, not proof of a defect.",
+    "No AI reviewer responses or quality deltas are fabricated.",
+    "Same-author unblinded reviews cannot establish independent improvement."
+  ]
+}
