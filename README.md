@@ -139,3 +139,9 @@ authentication uses `REVIEW_BUNDLE_GITLAB_TOKEN` from the environment. All other
 commands remain local and no command calls an AI reviewer. See [operations](docs/operations.md)
 for tarball installation, runtime checks, package smoke validation and remaining
 live integration requirements.
+
+Changed-code rule conditions are available through opt-in `review-rules/v2`; see
+[the rule contract](docs/rules-contract.md), [invariant examples](examples/invariant-rules.yaml)
+and [validation plan](docs/validation-plan.md). `npm run audit:acceptance` reproduces
+the authored facts/rule audit from the source checkout. These syntax predicates
+do not prove runtime defects or measured AI reviewer improvement.

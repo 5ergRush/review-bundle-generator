@@ -65,5 +65,59 @@
       "+export const label = \"new\";"
     ],
     "expectedRules": []
+  },
+  {
+    "id": "access-guard-comment",
+    "path": "src/access.ts",
+    "before": "export function perform(role: string) {\n  if (role !== 'admin') throw new Error('denied');\n  return true;\n}\n",
+    "after": "export function perform(role: string) {\n  if (role !== 'admin') throw new Error('denied'); // equivalent\n  return true;\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  if (role !== 'admin') throw new Error('denied');",
+      "+  if (role !== 'admin') throw new Error('denied'); // equivalent"
+    ],
+    "expectedRules": []
+  },
+  {
+    "id": "access-guard-condition-change",
+    "path": "src/access.ts",
+    "before": "export function perform(role: string) {\n  if (role !== 'admin') throw new Error('denied');\n  return true;\n}\n",
+    "after": "export function perform(role: string) {\n  if (role !== 'guest') throw new Error('denied');\n  return true;\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  if (role !== 'admin') throw new Error('denied');",
+      "+  if (role !== 'guest') throw new Error('denied');"
+    ],
+    "expectedRules": [
+      "authorization-guard"
+    ]
+  },
+  {
+    "id": "access-misleading-string",
+    "path": "src/access.ts",
+    "before": "export function label() {\n  const text = \"if (role) throw new Error();\";\n}\n",
+    "after": "export function label() {\n  const text = \"label\";\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  const text = \"if (role) throw new Error();\";",
+      "+  const text = \"label\";"
+    ],
+    "expectedRules": []
+  },
+  {
+    "id": "access-misleading-comment",
+    "path": "src/access.ts",
+    "before": "export function label() {\n  // if (role) throw new Error();\n}\n",
+    "after": "export function label() {\n  // updated documentation\n}\n",
+    "expectedAdded": 1,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  // if (role) throw new Error();",
+      "+  // updated documentation"
+    ],
+    "expectedRules": []
   }
 ]

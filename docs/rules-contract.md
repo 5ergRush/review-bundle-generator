@@ -78,3 +78,67 @@ Config IDs and resulting bundle IDs are unaffected by comments, rule/list orderi
 Rule selection coverage is `complete` once supplied rules are successfully evaluated, including an empty rule set. The bundle remains `partial`: semantic analysis/context expansion have not run, and selected review instructions have not been reviewed by AI or a human. Full bundle byte limits include the configuration and all decisions/matches.
 
 Errors: `INVALID_YAML`, `INVALID_RULES`, `RULE_INPUT_LIMIT`, `INVALID_RULE_FILE`, `SELECTION_LIMIT`. No rule files are silently skipped and no automatic fallback selection is used.
+
+## Opt-in changed syntax: review-rules/v2
+
+Version 1 remains unchanged. Version 2 adds `when.changedSyntax` (0–8 predicates,
+all required on the same change). Empty/omitted predicates retain scoped selection.
+Version 2 emits `rule-selection/v2` inside the existing bundle envelope. Packet
+validation reparses the configuration and recomputes observations from patch evidence.
+
+```yaml
+schemaVersion: review-rules/v2
+rules:
+  - id: authorization-invariant
+    title: Check authorization enforcement
+    instruction: >-
+      Verify that unauthorized roles cannot reach the protected operation.
+      A changed guard needs equivalent enforcement; request caller evidence
+      before assuming this change is a defect.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: throw-guard
+          identifiers: [role]
+```
+
+Each predicate has `side: added|removed`, `kind: throw-guard|call`, optional
+`identifiers` (0–32 literal ASCII identifier spellings, all required) and, for calls,
+a required literal dotted `callee` such as `Number.isInteger`. Guards reject callee.
+Unknown keys/versions/kinds/expressions are rejected. Predicates are sorted/deduplicated
+for stable configuration IDs. No arbitrary regexes or executable expressions.
+
+The selector parses old/new hunk projections with TypeScript 5.9.3, compares AST
+token fingerprints with occurrence counts, and requires a token to occupy an edited
+line. Comments/trivia are excluded; strings containing code are not parsed as code.
+Unchanged fingerprints do not trigger on formatting/comment changes. A throw guard
+is an `if` without `else`, whose sole consequent statement is `throw` (optionally in
+a block). Calls are syntactic identifier/property-access callees; dynamic/computed
+callees are unsupported. Identifier spelling includes property names; it is not
+symbol binding, alias resolution or type analysis. Same-hunk unchanged nodes pair
+across sides, so removing one of two identical nodes is still detected.
+
+Only regular text `.ts` changes are supported. Other kinds/extensions, missing
+patch evidence, parse errors and hunk resource limits yield explicit
+`syntax-evidence-unavailable` when a required observation cannot be obtained.
+A valid supported hunk without the requested observation yields
+`changed-syntax-not-matched`. Rejection counters distinguish these outcomes.
+Known matches from available hunks may select even if other hunks are unavailable;
+selection is positive evidence, not a completeness claim. Mixed extension renames
+are unavailable. A removed predicate must match a scoped old path; an added
+predicate must match a scoped new path. Criteria cannot mix rename sides.
+
+Each hunk side is limited to 128 KiB and 25,000 lexical/AST nodes. Traversal,
+comparison and token work consume the existing shared deterministic 5,000,000
+operation budget. Exceeding that overall budget fails without a partial bundle.
+Observations retain kind, side, identifier/callee spelling, evidence ID, hunk index
+and absolute start/end lines. Matches contain `syntaxMatches`, one observation list
+per normalized predicate; all references point to the patch evidence.
+
+These are bounded syntax observations, not runtime invariant facts. Patch fragments
+can be incomplete; nodes moved across separate hunks can appear changed. No whole-file
+control-flow equivalence, imported alias binding, Angular template relationship,
+transitive calls or proof of missing enforcement is inferred. Rules must ask the
+reviewer to verify the domain invariant using the available evidence.
