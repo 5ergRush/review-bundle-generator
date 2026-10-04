@@ -154,3 +154,13 @@ limits. These acceptance checks do not demonstrate AI reviewer improvement.
 Semantic analysis v2 exposes unique new-revision structural counterparts for
 deletion-only edits, with separate provenance and explicit missing/ambiguous
 outcomes. See [the semantic contract](docs/semantic-contract.md).
+
+## Rule-directed caller context
+
+`createRuleContextBundle` and `review-bundle rule-context-bundle` accept a trusted
+per-rule JSON policy and generate caller requests from selected v3 syntax anchors.
+Targets keep rule/evidence/revision provenance; unsupported anchors and target-limit
+omissions remain explicit. Pass the envelope's `.bundle` to the existing reviewer
+packet boundary. See [the contract](docs/rule-context-contract.md) and
+[example policy](examples/context-policy.json). No AI calls or measured reviewer
+benefit are introduced.

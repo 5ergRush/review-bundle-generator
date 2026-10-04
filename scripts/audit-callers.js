@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { tmpdir, devNull } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { stringify } from 'yaml';
-import { createReviewBundle, createReviewerRequest } from '../src/index.js';
+import { createReviewBundle, createReviewerRequest, createRuleContextBundle } from '../src/index.js';
 
 const output = resolve(process.argv[2] ?? 'fixtures/acceptance'); await mkdir(output, { recursive: true });
 const alias = "import { validate as check } from './target';\nexport function caller() { return check(-1); }\nfunction validate() { return true; }\nvalidate();\n";
@@ -37,7 +37,12 @@ for (const item of cases) {
       if (item.pureDeletion && side === 'new') { assert.equal(declaration?.basis, 'structural-counterpart'); assert(initial.semanticAnalysis.counterparts.some(d => d.status === 'matched' && d.newTargetId === declaration.id)); }
       assert(declaration); return { kind: 'direct-callers', targetId: declaration.id };
     });
-    const bundle = await createReviewBundle({ ...options, contextRequests: requests.filter(Boolean) });
+    const { semantic, ...automaticOptions } = options;
+    const envelope = await createRuleContextBundle({ ...automaticOptions, contextPolicy: [{ ruleId: 'amount-invariant', kind: 'direct-callers', sides: ['old', 'new'] }] });
+    assert.deepEqual(envelope.contextPlan.requests.map(item => item.targetId).sort(), requests.map(item => item.targetId).sort());
+    assert(envelope.contextPlan.decisions[0].targets.every(item => item.status === 'requested'));
+    assert.equal(envelope.contextPlan.decisions[0].omissions.length, 0);
+    const bundle = envelope.bundle;
     const packet = createReviewerRequest(bundle, { id: 'chatgpt-provisional', version: 'caller-acceptance-v1' });
     assert.equal(packet.selectedRules[0].id, 'amount-invariant'); assert.deepEqual(bundle.ruleSelection, initial.ruleSelection);
     const counts = {};
@@ -54,5 +59,5 @@ for (const item of cases) {
     await writeFile(join(output, `${item.id}.packet.json`), JSON.stringify(packet, null, 2) + '\n');
   } finally { await rm(repo, { recursive: true, force: true }); }
 }
-const report = { schemaVersion: 'caller-acceptance/v1', evidenceKind: 'authored-synthetic-real-git-static-analysis', results, contractChecksPassed: true, completeCallerCoverage: false, limitations: ['No framework/runtime execution or real corporate MR.', 'Rule selection is triggered by changed syntax, not by caller existence.', 'Caller evidence requires explicit requests; no automatic rule-directed expansion is implemented.', 'Only statically resolved pinned local symbols are returned; zero matches is not a completeness guarantee.'], reviewerImprovement: 'not-measured' };
+const report = { schemaVersion: 'caller-acceptance/v1', evidenceKind: 'authored-synthetic-real-git-static-analysis', results, contractChecksPassed: true, completeCallerCoverage: false, limitations: ['No framework/runtime execution or real corporate MR.', 'Rule selection is triggered by changed syntax, not by caller existence.', 'Caller requests are planned from an explicit trusted rule policy and matched syntax anchors; path-only rules and unsupported anchors omit context.', 'Only statically resolved pinned local symbols are returned; zero matches is not a completeness guarantee.'], reviewerImprovement: 'not-measured' };
 await writeFile(join(output, 'caller-report.json'), JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify(report, null, 2));

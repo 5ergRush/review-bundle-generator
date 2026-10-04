@@ -1,0 +1,4 @@
+[
+  { "ruleId": "teardown-invariant", "kind": "direct-callers", "sides": ["old", "new"] },
+  { "ruleId": "loading-state-invariant", "kind": "direct-callers", "sides": ["old", "new"] }
+]

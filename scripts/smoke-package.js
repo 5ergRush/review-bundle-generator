@@ -31,7 +31,7 @@ try {
   const packageDirectory = join(consumer, 'node_modules', 'review-bundle-generator');
   const cli = join(packageDirectory, 'src', 'cli.js');
   const imported = run(process.execPath, ['--input-type=module', '-e',
-    "import * as api from 'review-bundle-generator'; if (!['createReviewBundle','createReviewerRequest','evaluateReviewRuns','fetchGitLabMergeRequest','checkRuntime'].every(name => typeof api[name] === 'function')) process.exit(1); console.log('exports-ready');"], consumer, 'package exports');
+    "import * as api from 'review-bundle-generator'; if (!['createReviewBundle','createRuleContextBundle','createReviewerRequest','evaluateReviewRuns','fetchGitLabMergeRequest','checkRuntime'].every(name => typeof api[name] === 'function')) process.exit(1); console.log('exports-ready');"], consumer, 'package exports');
   assert.equal(imported.trim(), 'exports-ready');
   const doctor = JSON.parse(run(process.execPath, [cli, 'doctor'], consumer, 'installed doctor')); assert.equal(doctor.status, 'runtime-ready');
   const manifest = JSON.parse(await readFile(join(packageDirectory, 'package.json'), 'utf8'));
@@ -51,8 +51,13 @@ try {
   await writeFile(join(repo, 'file.ts'), 'export const value = 2;\n'); git('add', '-A'); git('commit', '-qm', 'head');
   const bundle = JSON.parse(run(process.execPath, [cli, 'bundle', '--repo', repo, '--base', base, '--semantic'], consumer, 'installed semantic bundle'));
   assert.equal(bundle.schemaVersion, 'review-bundle/v3'); assert.equal(bundle.summary.changedFiles, 1);
+  await writeFile(join(temporary, 'context-policy.json'), JSON.stringify([{ ruleId: 'authorization-invariant', kind: 'direct-callers', sides: ['old', 'new'] }]));
+  // A shipped v2 rule deliberately omits planning without nearest-scope provenance.
+  const ruleContext = JSON.parse(run(process.execPath, [cli, 'rule-context-bundle', '--repo', repo, '--base', base,
+    '--rules', join(packageDirectory, 'examples', 'invariant-rules.yaml'), '--context-policy', join(temporary, 'context-policy.json')], consumer, 'installed rule context bundle'));
+  assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 0);
   const fixtureDirectory = join(packageDirectory, 'fixtures', 'evaluation');
   const report = JSON.parse(run(process.execPath, [cli, 'evaluate', '--dataset', join(fixtureDirectory, 'dataset.json'), '--runs', join(fixtureDirectory, 'runs.json')], consumer, 'installed offline evaluation'));
   assert.equal(report.schemaVersion, 'review-evaluation-report/v1'); assert.equal(report.evidenceKind, 'synthetic-or-mixed');
-  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle and offline evaluation passed.\n');
+  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle, rule context envelope and offline evaluation passed.\n');
 } finally { await rm(temporary, { recursive: true, force: true }); }

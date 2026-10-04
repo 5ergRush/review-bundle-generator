@@ -69,7 +69,7 @@
   "limitations": [
     "No framework/runtime execution or real corporate MR.",
     "Rule selection is triggered by changed syntax, not by caller existence.",
-    "Caller evidence requires explicit requests; no automatic rule-directed expansion is implemented.",
+    "Caller requests are planned from an explicit trusted rule policy and matched syntax anchors; path-only rules and unsupported anchors omit context.",
     "Only statically resolved pinned local symbols are returned; zero matches is not a completeness guarantee."
   ],
   "reviewerImprovement": "not-measured"
