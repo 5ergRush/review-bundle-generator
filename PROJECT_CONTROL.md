@@ -3,16 +3,16 @@
 Last updated: 2026-10-04
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: production foundation implementation starting; no production release.
+Phase: first production increment implemented; code validation passed locally and in CI; PR #1 open for review.
 
 ## Resume here
 
-1. Read this file, inspect the default branch, open PRs, and CI before changing anything.
-2. The repository was empty on 2026-10-04; this document is its initial bootstrap. No production code or production test results were recovered.
-3. GitHub rejected the initial documentation commit with HTTP 403: Resource not accessible by integration. The user reports permissions were updated on 2026-10-04. Retry the documentation commit, then proceed on a review branch.
-   Next implementation: library/CLI foundation and immutable local Git diff ingestion, with a documented bundle contract and meaningful integration tests.
-4. Work on review branches after this initial documentation bootstrap. Include control-file updates in every implementation PR. Report validation and limitations; do not claim production readiness from prototype checks.
-5. Continue through the roadmap below. Existing MR Reviewer integration requires its actual interface contract before implementing its adapter.
+1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
+2. Main was bootstrapped with this control file in commit 6c7c8a292d891742471689ad436fc0fb356662db after the user updated GitHub permissions.
+3. Foundation work is on feat/git-ingestion-foundation: local Git ingestion library/CLI, isolated attribute/config handling, versioned ingestion snapshot and 17 integration tests.
+4. Review PR #1 (https://github.com/5ergRush/review-bundle-generator/pull/1) and current-head CI. Foundation code commit 665844e679b81ed2d358c946eb2b8008af0097ac passed Node 22/24 CI. Merge remains a user action unless separately authorized.
+5. Next increment: full reviewer-bundle contract and deterministic facts, building on git-ingestion/v1. The ingestion snapshot is not a compiled reviewer bundle.
+6. Keep this file in every implementation PR and record actual validation, limitations and repository state.
 
 ## Objective and authorization
 
@@ -69,8 +69,8 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 
 | Increment | Deliverable | Exit evidence | Current state |
 | --- | --- | --- | --- |
-| 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Document bootstrap |
-| 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Pending |
+| 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Committed to main |
+| 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Local + Node 22/24 CI passed; PR #1 open |
 | 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Pending |
 | 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Pending |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Pending |
@@ -110,9 +110,30 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 
 ## Current validation and Git state
 
-At initial recovery there were no commits, branches with source, PRs or CI runs to validate.
-This checkpoint adds documentation only. No production tests have been run and no product release exists.
-The initial commit failed with HTTP 403: Resource not accessible by integration. The repository remains empty; this control file is available separately and has not been committed. Repository metadata reports push permission, but integration write access is not proven. Implementation work is still pending.
+- Documentation bootstrap on main: 6c7c8a292d891742471689ad436fc0fb356662db.
+- Implementation branch: feat/git-ingestion-foundation.
+- PR #1: https://github.com/5ergRush/review-bundle-generator/pull/1 (open, unmerged at this checkpoint).
+- Foundation code commit: 665844e679b81ed2d358c946eb2b8008af0097ac.
+- Runtime: dependency-free JavaScript ESM; Node >=22 and Git >=2.43. TypeScript semantic analysis is a later increment, not implemented by this foundation.
+- Public library API: ingestGitDiff(options), IngestionError. CLI: review-bundle ingest (or node src/cli.js ingest).
+- Versioned ingestion/v1 output records Git version, requested/effective base and head IDs, comparison semantics, rename policy, change metadata, unified patch and explicit limitations.
+- Default comparison is unique merge-base; direct comparison is explicit. Unrelated and ambiguous histories fail closed.
+- Diff computation uses a temporary bare repository with read-only object alternates; pinned head attributes and isolated configuration. Temporary data is removed after success/failure.
+- Inherited Git environment selectors and replace refs are disabled. External diff/textconv programs are never executed.
+- Tests cover modifications, additions, deletions, renames, Unicode/tab/newline paths, empty/invalid ranges, divergent/unrelated/ambiguous histories, binary entries, symlinks/gitlinks, mode changes, aggregate/output limits, dirty/local attribute isolation, replace refs, invalid UTF-8 and CLI contracts.
+- Local validation on Node v24.19.0 / Git 2.51.1: syntax checks and all 17 integration tests passed; npm pack --dry-run passed.
+- Ubuntu 24.04 CI passed for Node 22 and 24 at foundation code commit 665844e679b81ed2d358c946eb2b8008af0097ac: push run #1 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227828125 and PR run #2 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227835872. Both concluded success.
+- This final documentation checkpoint records that evidence and triggers a fresh CI run; inspect the current PR head before merging.
+
+### Remaining boundaries
+
+- This is an ingestion snapshot, not a compiled reviewer bundle; no AI calls or semantic/rule/context/reviewer/evaluation features are implemented.
+- Binary contents are omitted. Symlink/gitlink targets are not traversed. Rename detection is heuristic and capped.
+- Invalid UTF-8 evidence fails explicitly. Source object-directory paths with newlines are unsupported; changed filenames with newlines are supported.
+- Per-command timeout defaults to 30 seconds; default raw+patch budget is 8 MiB (JSON overhead additional). Limits fail without partial output.
+- Working-tree/index changes are excluded. Missing shallow history must be supplied by the caller; ingestion never fetches.
+- Byte-level reproducibility requires the recorded Git version and policy, not commit IDs alone.
+- No production release or real GitLab/reviewer integration exists yet.
 
 ## Maintenance rule
 
@@ -124,3 +145,6 @@ A new conversation must inspect GitHub's current state before relying on this ch
 ## Change log
 
 - 2026-10-04: Recovered prior scope, verified the new empty repository, and prepared the canonical control document. GitHub rejected the initial write with HTTP 403; no commit was created. No production implementation artifact was recovered.
+
+- 2026-10-04: GitHub permissions restored; committed control bootstrap and implemented the first foundation increment on feat/git-ingestion-foundation. Local syntax checks, 17 integration tests and packaging dry-run passed; remote PR/CI review pending.
+- 2026-10-04: Opened PR #1. Foundation code passed Node 22/24 push and PR CI; recorded immutable code revision and run URLs. Next implementation increment is the reviewer-bundle contract and deterministic facts.
