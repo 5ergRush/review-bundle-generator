@@ -3,14 +3,14 @@
 Last updated: 2026-10-04
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: first production increment implemented and locally validated; pending PR/CI review.
+Phase: first production increment implemented; code validation passed locally and in CI; PR #1 open for review.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
 2. Main was bootstrapped with this control file in commit 6c7c8a292d891742471689ad436fc0fb356662db after the user updated GitHub permissions.
 3. Foundation work is on feat/git-ingestion-foundation: local Git ingestion library/CLI, isolated attribute/config handling, versioned ingestion snapshot and 17 integration tests.
-4. Check the foundation PR and Node 22/24 CI; do not treat local Node 24 validation as Node 22 CI evidence. Merge remains a user action unless separately authorized.
+4. Review PR #1 (https://github.com/5ergRush/review-bundle-generator/pull/1) and current-head CI. Foundation code commit 665844e679b81ed2d358c946eb2b8008af0097ac passed Node 22/24 CI. Merge remains a user action unless separately authorized.
 5. Next increment: full reviewer-bundle contract and deterministic facts, building on git-ingestion/v1. The ingestion snapshot is not a compiled reviewer bundle.
 6. Keep this file in every implementation PR and record actual validation, limitations and repository state.
 
@@ -70,7 +70,7 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | Increment | Deliverable | Exit evidence | Current state |
 | --- | --- | --- | --- |
 | 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Committed to main |
-| 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Locally validated; PR/CI review pending |
+| 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Local + Node 22/24 CI passed; PR #1 open |
 | 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Pending |
 | 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Pending |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Pending |
@@ -112,6 +112,8 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 
 - Documentation bootstrap on main: 6c7c8a292d891742471689ad436fc0fb356662db.
 - Implementation branch: feat/git-ingestion-foundation.
+- PR #1: https://github.com/5ergRush/review-bundle-generator/pull/1 (open, unmerged at this checkpoint).
+- Foundation code commit: 665844e679b81ed2d358c946eb2b8008af0097ac.
 - Runtime: dependency-free JavaScript ESM; Node >=22 and Git >=2.43. TypeScript semantic analysis is a later increment, not implemented by this foundation.
 - Public library API: ingestGitDiff(options), IngestionError. CLI: review-bundle ingest (or node src/cli.js ingest).
 - Versioned ingestion/v1 output records Git version, requested/effective base and head IDs, comparison semantics, rename policy, change metadata, unified patch and explicit limitations.
@@ -120,7 +122,8 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Inherited Git environment selectors and replace refs are disabled. External diff/textconv programs are never executed.
 - Tests cover modifications, additions, deletions, renames, Unicode/tab/newline paths, empty/invalid ranges, divergent/unrelated/ambiguous histories, binary entries, symlinks/gitlinks, mode changes, aggregate/output limits, dirty/local attribute isolation, replace refs, invalid UTF-8 and CLI contracts.
 - Local validation on Node v24.19.0 / Git 2.51.1: syntax checks and all 17 integration tests passed; npm pack --dry-run passed.
-- CI configuration added for Ubuntu 24.04 with Node 22 and 24. Current-head remote CI evidence is pending at this checkpoint.
+- Ubuntu 24.04 CI passed for Node 22 and 24 at foundation code commit 665844e679b81ed2d358c946eb2b8008af0097ac: push run #1 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227828125 and PR run #2 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227835872. Both concluded success.
+- This final documentation checkpoint records that evidence and triggers a fresh CI run; inspect the current PR head before merging.
 
 ### Remaining boundaries
 
@@ -144,3 +147,4 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-04: Recovered prior scope, verified the new empty repository, and prepared the canonical control document. GitHub rejected the initial write with HTTP 403; no commit was created. No production implementation artifact was recovered.
 
 - 2026-10-04: GitHub permissions restored; committed control bootstrap and implemented the first foundation increment on feat/git-ingestion-foundation. Local syntax checks, 17 integration tests and packaging dry-run passed; remote PR/CI review pending.
+- 2026-10-04: Opened PR #1. Foundation code passed Node 22/24 push and PR CI; recorded immutable code revision and run URLs. Next implementation increment is the reviewer-bundle contract and deterministic facts.
