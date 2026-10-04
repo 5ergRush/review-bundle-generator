@@ -3,14 +3,14 @@
 Last updated: 2026-10-04
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: foundation merged; bundle contract and deterministic facts implemented locally; next PR/CI validation pending.
+Phase: foundation merged; diff-only bundle compilation and facts passed local and Node 22/24 CI validation; PR #2 open.
 
 ## Resume here
 
 1. Read this file and inspect GitHub main, open PRs and current-head CI before changing anything.
 2. PR #1 was verified merged on 2026-10-04 at eb1a0789a40042d9881c0b516dd43c0984ba0998. Foundation final-head CI passed Node 22/24.
 3. The next increment is on feat/bundle-contract-facts: diff-only review-bundle/v1 compilation, per-change patch evidence, deterministic facts, stable IDs and explicit partial coverage.
-4. Check the bundle-contract PR and current-head Node 22/24 CI. Merge remains a user action unless separately authorized.
+4. Review PR #2 (https://github.com/5ergRush/review-bundle-generator/pull/2) and current-head CI. Bundle code commit 3a2c7728673c0401bf25c6db184dbabc021ecad8 passed Node 22/24 CI. Merge remains a user action unless separately authorized.
 5. Next implementation increment after merge: validated scoped YAML rules, deterministic selection and matched/skipped reasons. Semantic analysis and adaptive context remain later stages.
 6. Include this control file in every implementation PR; separate completed evidence from planned work.
 
@@ -71,7 +71,7 @@ Unrelated arcade, Zaebot, Twinby feature fixes, and business research are separa
 | --- | --- | --- | --- |
 | 0 | Project recovery and canonical control file | Repository access and initial state verified; control file committed | Committed to main |
 | 1 | Library/CLI foundation and local Git ingestion | Frozen base/head revisions; explicit diff semantics; integration tests for changes, renames, deletions and invalid inputs | Merged as PR #1; final-head Node 22/24 CI passed |
-| 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Locally validated; PR/CI pending |
+| 2 | Bundle contract and deterministic facts | Versioned schema; stable ordering; source provenance; honest unsupported/partial analysis markers | Local + Node 22/24 CI passed; PR #2 open |
 | 3 | Scoped YAML rules and selection | Validated rule input; matched/skipped reasons; tests against representative changes | Pending |
 | 4 | TypeScript semantic analysis and adaptive context | Semantic evidence and bounded expansion; context budgets; unresolved references reported | Pending |
 | 5 | Reviewer adapters and finding normalization | Documented existing-reviewer contract; adapter failure handling; evidence/provenance preserved | Pending |
@@ -124,7 +124,9 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 - Local validation on Node v24.19.0 / Git 2.51.1: syntax checks and all 17 integration tests passed; npm pack --dry-run passed.
 - Ubuntu 24.04 CI passed for Node 22 and 24 at foundation code commit 665844e679b81ed2d358c946eb2b8008af0097ac: push run #1 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227828125 and PR run #2 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227835872. Both concluded success.
 - Foundation final documentation head a6704ceccec00343d3562688a3e3ab27dcf5f013 also passed push run #3 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227909577 and PR run #4 https://github.com/5ergRush/review-bundle-generator/actions/runs/37227914409 before merge.
-- Bundle increment local validation: 28 integration tests and syntax checks passed on Node 24 / Git 2.51.1; npm pack --dry-run passed. Remote bundle PR/CI pending at this checkpoint.
+- Bundle increment local validation: 28 integration tests and syntax checks passed on Node 24 / Git 2.51.1; npm pack --dry-run passed.
+- PR #2: https://github.com/5ergRush/review-bundle-generator/pull/2, open and unmerged. Code commit 3a2c7728673c0401bf25c6db184dbabc021ecad8 passed Node 22/24 CI: push run #7 https://github.com/5ergRush/review-bundle-generator/actions/runs/37228958916 and PR run #8 https://github.com/5ergRush/review-bundle-generator/actions/runs/37228967546. Both concluded success.
+- This documentation checkpoint records those runs; inspect final-head CI before merging.
 - review-bundle/v1 contract is documented in docs/bundle-contract.md. Bundle IDs hash normalized payloads; changes/facts/evidence carry stable references.
 - Facts cover Git metadata, text additions/removals and explicit filename-based language hints. Evidence includes exact per-change patches and old/new revision/path/object/hunk coordinates.
 - Imported snapshots are structurally checked, not authenticated against Git objects. createReviewBundle derives evidence directly from the checkout.
@@ -157,3 +159,5 @@ A new conversation must inspect GitHub's current state before relying on this ch
 - 2026-10-04: Opened PR #1. Foundation code passed Node 22/24 push and PR CI; recorded immutable code revision and run URLs. Next implementation increment is the reviewer-bundle contract and deterministic facts.
 
 - 2026-10-04: Verified PR #1 merged. Implemented review-bundle/v1, deterministic metadata/text/path-hint facts, per-change evidence with hunk coordinates, structural validation, stable content IDs and separate serialization budget; 28 tests and package dry-run passed locally.
+
+- 2026-10-04: Opened PR #2. Bundle compilation and facts passed Node 22/24 push and PR CI at 3a2c7728673c0401bf25c6db184dbabc021ecad8. Recorded run URLs and review handoff; next increment is scoped YAML rule selection.
