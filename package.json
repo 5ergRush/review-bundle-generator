@@ -1,0 +1,15 @@
+{
+  "name": "review-bundle-generator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic review context compiler for an existing MR reviewer",
+  "engines": { "node": ">=22" },
+  "exports": { ".": "./src/index.js" },
+  "bin": { "review-bundle": "./src/cli.js" },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/git.js && node --check src/cli.js",
+    "validate": "npm run check && npm test"
+  }
+}
