@@ -9,3 +9,4 @@ export { checkRuntime } from './runtime.js';
 export { createRuleContextBundle, RuleContextError } from './rule-context.js';
 export { RuleSourceError } from './source-rules.js';
 export { compileAcceptanceExpectations, auditReviewBundle, AcceptanceError } from './acceptance.js';
+export { AngularContextError } from './angular-context.js';

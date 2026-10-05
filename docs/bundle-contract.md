@@ -77,3 +77,7 @@ Compilation accepts at most 10,000 changed records and a patch bounded by the in
 Malformed snapshots fail with `INVALID_SNAPSHOT`; malformed compiler options fail with `INVALID_INPUT`. Bundles never silently drop changed files to fit a budget.
 
 Future contract changes must preserve existing semantics or use a new schema version. A future reviewer adapter must interpret coverage markers and avoid treating not-run stages as completed review.
+
+## Angular template opt-in
+
+createReviewBundle with angularTemplates: true and pinned v3 rules extends the ordinary bundle to v5. Facts/changes/rule selection retain their identities; optional semantic/caller context remains independent. See [Angular template context](angular-template-context.md). The pure diff compiler performs no template reads.

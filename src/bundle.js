@@ -4,6 +4,7 @@ import { ingestGitDiff } from './git.js';
 import { parseRulesYaml, selectRules } from './rules.js';
 import { expandTypeScriptContext, SemanticError } from './semantic.js';
 import { readRuleSourceEvidence, validateRuleSources } from './source-rules.js';
+import { expandAngularTemplateContext } from './angular-context.js';
 
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BUNDLE_BYTES = 16 * 1024 * 1024;
@@ -221,11 +222,24 @@ export function compileReviewBundle(input, options = {}) {
 
 export async function createReviewBundle(options) {
   if (!object(options)) throw new BundleError('INVALID_INPUT', 'An options object is required.');
-  const { maxBundleBytes, rulesYaml, ruleSource = 'patch', semantic = false, contextRequests = [], ...gitOptions } = options;
+  const { maxBundleBytes, rulesYaml, ruleSource = 'patch', angularTemplates = false, semantic = false, contextRequests = [], ...gitOptions } = options;
   if (typeof semantic !== 'boolean' || (!semantic && (!Array.isArray(contextRequests) || contextRequests.length))) {
     throw new SemanticError('INVALID_INPUT', 'Context requests require semantic: true; semantic must be boolean.');
   }
   if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && (rulesYaml === undefined || parseRulesYaml(rulesYaml).schemaVersion !== 'review-rules/v3'))) throw new BundleError('INVALID_INPUT', 'ruleSource must be patch or pinned; pinned mode requires review-rules/v3.');
+  if (typeof angularTemplates !== 'boolean' || (angularTemplates && ruleSource !== 'pinned')) throw new BundleError('INVALID_INPUT', 'angularTemplates must be boolean and requires pinned rule source.');
+  if (angularTemplates) {
+    const ordinary = await createReviewBundle({ ...options, angularTemplates: false });
+    const extension = await expandAngularTemplateContext(gitOptions.repo, ordinary);
+    const { id, ...payload } = ordinary;
+    payload.schemaVersion = 'review-bundle/v5'; payload.angularTemplateContext = extension.angularTemplateContext;
+    payload.evidence.push(...extension.evidence); payload.coverage.stages.angularTemplates = 'partial';
+    payload.coverage.limitations.push('Angular template context follows only selected-rule syntax inside a named class with an imported @angular/core Component decorator and explicit literal metadata. Dynamic/ambiguous/custom metadata and HTML-only changes are unsupported. External templates are bounded pinned regular UTF-8 blobs; inline templates are decoded metadata values. No template binding, runtime behavior, custom resource loader or framework correctness is inferred.');
+    payload.coverage.limitations.sort(compare);
+    const result = { id: `bundle:${hash(payload)}`, ...payload };
+    if (Buffer.byteLength(JSON.stringify(result)) > (maxBundleBytes ?? DEFAULT_BUNDLE_BYTES)) throw new BundleError('BUNDLE_LIMIT', 'Serialized Angular template bundle exceeds maxBundleBytes; no partial bundle returned.');
+    return result;
+  }
   const snapshot = await ingestGitDiff(gitOptions);
   const ruleSourceEvidence = ruleSource === 'pinned' ? await readRuleSourceEvidence(gitOptions.repo, compileReviewBundle(snapshot, { maxBundleBytes })) : undefined;
   const bundle = compileReviewBundle(snapshot, { maxBundleBytes, rulesYaml, ruleSource, ...(ruleSourceEvidence ? { ruleSourceEvidence } : {}) });

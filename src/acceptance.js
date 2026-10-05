@@ -84,7 +84,7 @@ export function auditReviewBundle(inputBundle, inputExpectations, options = {}) 
   catch (error) { throw new AcceptanceError(error.code === 'REVIEW_LIMIT' ? 'ACCEPTANCE_LIMIT' : 'INVALID_ACCEPTANCE_BUNDLE', 'Acceptance requires a valid ordinary review bundle.'); }
   const mismatches = [];
   for (const field of Object.keys(expectations.revisions)) if (bundle.provenance.revisions[field] !== expectations.revisions[field]) mismatches.push({ field, expected: expectations.revisions[field], actual: bundle.provenance.revisions[field] });
-  const configId = bundle.ruleSelection?.configId ?? null; const ruleSource = bundle.schemaVersion === 'review-bundle/v4' ? 'pinned' : 'patch';
+  const configId = bundle.ruleSelection?.configId ?? null; const ruleSource = ['review-bundle/v4', 'review-bundle/v5'].includes(bundle.schemaVersion) ? 'pinned' : 'patch';
   for (const [field, actual] of [['ruleConfigId', configId], ['ruleSource', ruleSource]]) if (expectations[field] !== actual) mismatches.push({ field, expected: expectations[field], actual });
   const byPath = new Map(bundle.changes.map(change => [pair(change), change]));
   const textFacts = new Map(bundle.facts.filter(fact => fact.type === 'text-change').map(fact => [fact.changeId, fact.value]));

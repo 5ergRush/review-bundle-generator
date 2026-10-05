@@ -47,7 +47,8 @@ Eight caller cases cover import/const/chain matches and mutable/property-copy li
 General function-value flow, templates/framework ownership and runtime behavior remain
 unverified. Opt-in pinned source mode now recovers long-method scope beyond patch fragments,
 with byte-verified sources and eighteen fact/rule cases including paired controls.
-Next: independently authored held-out/real MR coverage and template relationships. Cover positive and
+Opt-in Angular component/template context now follows explicit imported Component metadata from selected-rule syntax, with pinned template bytes and authored positive/negative ownership tests. HTML-only owner discovery, template bindings and runtime correctness remain unverified. See docs/angular-template-context.md.
+Next: independently authored held-out/real MR coverage, HTML-only ownership and parsed template relationships. Cover positive and
 same-path negative examples, misleading comments/strings, indirect calls, import
 aliases, validation modifications and Angular state/lifecycle/template relationships.
 Do not substitute filename suffixes or keyword counts for semantic proof. No single

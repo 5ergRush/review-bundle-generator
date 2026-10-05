@@ -1,5 +1,9 @@
 # Review Bundle Generator
 
+Opt-in [Angular template context](docs/angular-template-context.md) follows explicit
+component metadata from selected-rule syntax:
+`--rule-source pinned --angular-templates` emits bundle v5.
+
 For approved MR fact/rule checks against pre-authored expectations, use the
 [offline acceptance command](docs/offline-acceptance.md):
 `review-bundle audit --bundle bundle.json --expectations expectations.json`.

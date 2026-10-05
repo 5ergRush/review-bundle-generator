@@ -82,3 +82,7 @@ authenticated planning claim, and no separate envelope-import validator is suppl
 With `ruleSource: 'pinned'`, v3 syntax predicates select from full changed .ts sources
 and emit selection/v4 inside bundle/v4. The planner retains `sourceEvidenceId` and
 pinned AST origin alongside its patch anchor. See [pinned rule evidence](pinned-rule-evidence.md).
+
+## Angular templates
+
+The operation forwards angularTemplates: true / --angular-templates to bundle generation. The unchanged outer plan still governs direct callers; the inner v5 bundle follows component metadata from selected-rule syntax independently. See [Angular template context](angular-template-context.md). No extra rules or caller targets are inferred from templates.

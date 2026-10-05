@@ -3,7 +3,7 @@ import { ingestGitDiff, IngestionError, createReviewBundle, BundleError, RuleErr
   createReviewerRequest, normalizeReviewerResponse, ReviewerError,
   compileEvaluationDataset, evaluateReviewRuns, EvaluationError, normalizeGitLabMergeRequest,
   fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError, checkRuntime,
-  createRuleContextBundle, RuleContextError, RuleSourceError, auditReviewBundle, AcceptanceError } from './index.js';
+  createRuleContextBundle, RuleContextError, RuleSourceError, auditReviewBundle, AcceptanceError, AngularContextError } from './index.js';
 import { readRulesFile } from './rules.js';
 import { readJsonFile } from './json-file.js';
 
@@ -12,6 +12,7 @@ const help = `Usage: review-bundle ingest|bundle --repo PATH --base REV [--head 
   [--max-bundle-bytes N (bundle only)]
   [--rules PATH (bundle only)]
   [--rule-source patch|pinned (pinned requires v3 rules)]
+  [--angular-templates (bundle only; requires pinned rules)]
   [--semantic] [--callers declaration:SHA256 (repeatable, bundle only)]
 review-bundle packet --bundle PATH --reviewer-id ID --reviewer-version VERSION
   [--max-request-bytes N]
@@ -26,16 +27,17 @@ review-bundle audit --bundle PATH --expectations PATH
 review-bundle gitlab-snapshot --instance HTTPS_URL --project-id N --mr-iid N
   [--metadata PATH (offline)] [--timeout-ms N] [--max-response-bytes N]
 review-bundle gitlab-bundle --repo PATH --snapshot PATH
-  [--rules PATH] [--rule-source patch|pinned] [--semantic] [--callers declaration:SHA256]
+  [--rules PATH] [--rule-source patch|pinned] [--angular-templates] [--semantic] [--callers declaration:SHA256]
   [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N] [--max-envelope-bytes N]
 review-bundle gitlab-check --snapshot PATH --current PATH
 review-bundle rule-context-bundle --repo PATH --base REV [--head REV]
   --rules PATH --context-policy PATH [--max-targets N] [--max-envelope-bytes N]
-  [--rule-source patch|pinned] [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
+  [--rule-source patch|pinned] [--angular-templates] [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
 
 Writes ingestion/v1, bundle/v1 (without rules), bundle/v2 (with rules), or bundle/v3 (with semantic analysis) JSON.
 Rule-context-bundle writes rule-context-bundle/v1 containing the ordinary .bundle and explicit plan.
 Pinned rule-source writes bundle/v4 with complete bounded changed .ts files and selection/v4.
+Angular template opt-in writes bundle/v5 with explicit component/template context.
 Default head: HEAD. Default comparison: merge-base. Only committed changes.
 The bundle command compiles diff evidence and deterministic facts. No AI calls.
 Packet and normalize are offline JSON operations. No CLI command invokes a reviewer.
@@ -73,6 +75,10 @@ async function main(args) {
   const options = {};
   while (args.length) {
     const flag = args.shift();
+    if (['bundle', 'gitlab-bundle', 'rule-context-bundle'].includes(command) && flag === '--angular-templates') {
+      if (options.angularTemplates) throw new IngestionError('INVALID_INPUT', 'Duplicate --angular-templates.');
+      options.angularTemplates = true; continue;
+    }
     if (bundleCommand && flag === '--semantic') {
       if (options.semantic) throw new IngestionError('INVALID_INPUT', 'Duplicate --semantic.');
       options.semantic = true; continue;
@@ -133,7 +139,7 @@ async function main(args) {
 
 try { await main(process.argv.slice(2)); }
 catch (error) {
-  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError || error instanceof GitLabError || error instanceof RuleContextError || error instanceof RuleSourceError || error instanceof AcceptanceError;
+  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError || error instanceof GitLabError || error instanceof RuleContextError || error instanceof RuleSourceError || error instanceof AcceptanceError || error instanceof AngularContextError;
   process.stderr.write(`${JSON.stringify({ error: { code: known ? error.code : 'INTERNAL_ERROR',
     message: known ? error.message : 'Unexpected operation failure.' } })}\n`);
   process.exitCode = 1;

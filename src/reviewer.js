@@ -3,6 +3,7 @@ import { compileReviewBundle } from './bundle.js';
 import { parseRulesYaml, selectRules } from './rules.js';
 import ts from 'typescript';
 import { validateRuleSources } from './source-rules.js';
+import { compileAngularTemplateContext } from './angular-context.js';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BYTES = 16 * 1024 * 1024;
@@ -89,13 +90,14 @@ function sourceOrigin(origin, commits, code) {
 
 function validateBundle(bundle) {
   const code = 'INVALID_REVIEW_BUNDLE';
-  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1, v2, v3 or v4.');
-  const pinnedRules = bundle.schemaVersion === 'review-bundle/v4';
+  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4', 'review-bundle/v5'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1 through v5.');
+  const angularTemplates = bundle.schemaVersion === 'review-bundle/v5';
+  const pinnedRules = ['review-bundle/v4', 'review-bundle/v5'].includes(bundle.schemaVersion);
   const semantic = bundle.schemaVersion === 'review-bundle/v3' || (pinnedRules && bundle.semanticAnalysis !== undefined);
-  requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4 and selection v4.');
+  requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4/v5 and selection v4.');
   keys(bundle, ['id', 'schemaVersion', 'provenance', 'summary', 'changes', 'evidence', 'facts', 'coverage',
     ...(bundle.ruleSelection !== undefined ? ['ruleSelection'] : []),
-    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : [])], code);
+    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : []), ...(angularTemplates ? ['angularTemplateContext'] : [])], code);
   contentId(bundle, 'bundle', code);
   requireCondition(Array.isArray(bundle.changes) && Array.isArray(bundle.evidence) && Array.isArray(bundle.facts) && object(bundle.provenance), code, 'Missing bundle records.');
   const patches = bundle.evidence.filter(item => item?.type === 'git-patch');
@@ -112,7 +114,8 @@ function validateBundle(bundle) {
   }
   requireCondition(object(bundle.coverage) && bundle.coverage.status === 'partial' && object(bundle.coverage.stages) && Array.isArray(bundle.coverage.limitations), code, 'Missing partial coverage contract.');
   keys(bundle.coverage, ['status', 'stages', 'limitations'], code);
-  keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion'], code);
+  keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion', ...(angularTemplates ? ['angularTemplates'] : [])], code);
+  requireCondition(!angularTemplates || bundle.coverage.stages.angularTemplates === 'partial', code, 'Angular template coverage must be partial.');
   requireCondition(bundle.coverage.stages.gitDiff === 'complete' && bundle.coverage.stages.deterministicFacts === 'complete' &&
     bundle.coverage.stages.ruleSelection === (bundle.ruleSelection ? 'complete' : 'not-run') &&
     bundle.coverage.stages.semanticAnalysis === (semantic ? 'partial' : 'not-run') &&
@@ -122,7 +125,7 @@ function validateBundle(bundle) {
   if (pinnedRules) {
     try { validateRuleSources(ruleSources, bundle.changes, bundle.provenance.revisions); }
     catch { throw new ReviewerError(code, 'Invalid pinned rule source evidence.'); }
-  } else requireCondition(ruleSources.length === 0, code, 'Rule source evidence requires bundle v4.');
+  } else requireCondition(ruleSources.length === 0, code, 'Rule source evidence requires bundle v4/v5.');
   if (bundle.ruleSelection !== undefined) {
     try {
       const rules = bundle.ruleSelection.rules.map(rule => ({ ...rule,
@@ -140,6 +143,11 @@ function validateBundle(bundle) {
   requireCondition((bundle.schemaVersion !== 'review-bundle/v1' || !bundle.ruleSelection) &&
     (bundle.schemaVersion !== 'review-bundle/v2' || bundle.ruleSelection), code, 'Bundle version and rule selection disagree.');
   const evidenceById = new Map();
+  const templateSources = bundle.evidence.filter(item => item?.type === 'angular-template-source');
+  if (angularTemplates) {
+    try { requireCondition(JSON.stringify(bundle.angularTemplateContext) === JSON.stringify(compileAngularTemplateContext(bundle, templateSources)), code, 'Invalid Angular template context.'); }
+    catch { throw new ReviewerError(code, 'Angular ownership or template evidence is inconsistent.'); }
+  } else requireCondition(templateSources.length === 0, code, 'Angular template sources require bundle v5.');
   const commits = [bundle.provenance.revisions.effectiveBaseCommit, bundle.provenance.revisions.headCommit];
   let sourceBytes = 0; let sourceCount = 0;
   for (const evidence of bundle.evidence) {
@@ -147,6 +155,7 @@ function validateBundle(bundle) {
     contentId(evidence, 'evidence', code); evidenceById.set(evidence.id, evidence);
     if (evidence.type === 'git-patch') continue;
     if (evidence.type === 'typescript-rule-source') continue;
+    if (evidence.type === 'angular-template-source') continue;
     keys(evidence, ['id', 'type', 'origin', 'content'], code);
     requireCondition(semantic && evidence.type === 'typescript-source' &&
       typeof evidence.content === 'string' && evidence.content.length > 0, code, 'Unsupported source evidence.');
@@ -159,6 +168,10 @@ function validateBundle(bundle) {
     requireCondition(sourceCount <= 10 && sourceBytes <= 64 * 1024 && origin.end.line - origin.start.line + 1 <= 80, code, 'Source evidence exceeds caller context budgets.');
   }
   const contextChanges = new Map();
+  for (const decision of bundle.angularTemplateContext?.decisions ?? []) if (decision.template?.kind === 'external') {
+    const id = decision.template.evidenceId; if (!contextChanges.has(id)) contextChanges.set(id, new Set());
+    contextChanges.get(id).add(decision.anchor.changeId);
+  }
   if (semantic) {
     requireCondition(['typescript-analysis/v1', 'typescript-analysis/v2'].includes(bundle.semanticAnalysis?.schemaVersion) && Array.isArray(bundle.semanticAnalysis.declarations) &&
       ['caller-context/v1', 'caller-context/v2'].includes(bundle.contextExpansion?.schemaVersion) && Array.isArray(bundle.contextExpansion.decisions) &&
@@ -283,7 +296,7 @@ function validateBundle(bundle) {
       bundle.contextExpansion.decisions.some(item => item.matches.some(partialMatch)) ? 'partial' : 'complete-static-matches';
     requireCondition(bundle.coverage.stages.contextExpansion === expectedContextCoverage, code, 'Invalid caller context coverage.');
     requireCondition(bundle.contextExpansion.serializedEvidenceBytes === sourceBytes, code, 'Invalid context byte accounting.');
-  } else requireCondition(!bundle.semanticAnalysis && !bundle.contextExpansion && bundle.coverage.stages.contextExpansion === 'not-run', code, 'Semantic sections require bundle v3 or v4.');
+  } else requireCondition(!bundle.semanticAnalysis && !bundle.contextExpansion && bundle.coverage.stages.contextExpansion === 'not-run', code, 'Semantic sections require bundle v3/v4/v5.');
   return { selectedRules, evidenceById, contextChanges };
 }
 
@@ -358,6 +371,8 @@ export function normalizeReviewerResponse(inputRequest, inputResponse, options =
     }
     if (finding.ruleId !== null) {
       const matched = new Set(selected.get(finding.ruleId).matches.map(match => match.changeId));
+      if (evidence.type === 'angular-template-source') requireCondition(request.bundle.angularTemplateContext.decisions.some(decision =>
+        decision.ruleId === finding.ruleId && decision.template?.evidenceId === evidence.id), code, 'Primary template evidence is outside the cited rule ownership.');
       requireCondition(['git-patch', 'typescript-rule-source'].includes(evidence.type) ? matched.has(evidence.changeId) :
         [...(contextChanges.get(evidence.id) ?? [])].some(id => matched.has(id)), code, 'Primary evidence is outside the selected rule scope.');
     }
