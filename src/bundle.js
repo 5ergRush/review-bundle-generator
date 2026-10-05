@@ -3,6 +3,7 @@ import { posix } from 'node:path';
 import { ingestGitDiff } from './git.js';
 import { parseRulesYaml, selectRules } from './rules.js';
 import { expandTypeScriptContext, SemanticError } from './semantic.js';
+import { readRuleSourceEvidence, validateRuleSources } from './source-rules.js';
 
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BUNDLE_BYTES = 16 * 1024 * 1024;
@@ -145,14 +146,17 @@ const languageHints = new Map([['.ts', 'typescript'], ['.tsx', 'typescript'], ['
 
 /** Compile bounded, deterministic facts and evidence; this performs no AI calls. */
 export function compileReviewBundle(input, options = {}) {
-  if (!object(options) || Object.keys(options).some(key => !['maxBundleBytes', 'rulesYaml'].includes(key))) {
-    throw new BundleError('INVALID_INPUT', 'Expected options with optional maxBundleBytes and rulesYaml.');
+  if (!object(options) || Object.keys(options).some(key => !['maxBundleBytes', 'rulesYaml', 'ruleSource', 'ruleSourceEvidence'].includes(key))) {
+    throw new BundleError('INVALID_INPUT', 'Expected maxBundleBytes, rulesYaml, ruleSource and/or ruleSourceEvidence options.');
   }
   const maxBundleBytes = options.maxBundleBytes ?? DEFAULT_BUNDLE_BYTES;
   if (!Number.isSafeInteger(maxBundleBytes) || maxBundleBytes < 1 || maxBundleBytes > MAX_INPUT_BYTES) {
     throw new BundleError('INVALID_INPUT', `maxBundleBytes must be from 1 to ${MAX_INPUT_BYTES}.`);
   }
   const ruleConfig = options.rulesYaml === undefined ? null : parseRulesYaml(options.rulesYaml);
+  const ruleSource = options.ruleSource ?? 'patch';
+  if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && ruleConfig?.schemaVersion !== 'review-rules/v3') ||
+    (ruleSource !== 'pinned' && options.ruleSourceEvidence !== undefined)) throw new BundleError('INVALID_INPUT', 'Pinned ruleSource requires v3 rules and explicit source evidence; source evidence is forbidden in patch mode.');
   const snapshot = normalizeSnapshot(input);
   const sections = splitPatches(snapshot);
   const changes = [], evidence = [], facts = [];
@@ -189,9 +193,10 @@ export function compileReviewBundle(input, options = {}) {
     if (binary) binaryFiles++;
     if (special) specialEntries++;
   }
-  const ruleSelection = ruleConfig === null ? null : selectRules(ruleConfig, changes, facts, evidence);
+  if (ruleSource === 'pinned') { validateRuleSources(options.ruleSourceEvidence, changes, snapshot.revisions); evidence.push(...JSON.parse(JSON.stringify(options.ruleSourceEvidence))); }
+  const ruleSelection = ruleConfig === null ? null : selectRules(ruleConfig, changes, facts, evidence, ruleSource);
   const payload = {
-    schemaVersion: ruleSelection === null ? 'review-bundle/v1' : 'review-bundle/v2',
+    schemaVersion: ruleSource === 'pinned' ? 'review-bundle/v4' : ruleSelection === null ? 'review-bundle/v1' : 'review-bundle/v2',
     provenance: { ingestionSchemaVersion: 'git-ingestion/v1', tool: snapshot.tool,
       revisions: snapshot.revisions, policy: snapshot.policy },
     summary: { changedFiles: changes.length, addedLines, removedLines, binaryFiles, specialEntries,
@@ -206,6 +211,7 @@ export function compileReviewBundle(input, options = {}) {
       ruleSelection === null ? 'Semantic analysis, rule selection and adaptive context have not run.' :
         'Semantic analysis and adaptive context have not run; selected rules have not been reviewed.'])].sort(compare) },
   };
+  if (ruleSource === 'pinned') payload.coverage.limitations.push('Pinned rule evidence contains complete changed regular .ts source sides within explicit file/byte/AST/operation bounds. Rule observations still require actual edited tokens or enclosing named-function edits. Parsing/scope failures are explicit; no binding, Angular template or runtime correctness is inferred.');
   const bundle = { id: `bundle:${hash(payload)}`, ...payload };
   if (Buffer.byteLength(JSON.stringify(bundle)) > maxBundleBytes) {
     throw new BundleError('BUNDLE_LIMIT', `Serialized bundle exceeds maxBundleBytes (${maxBundleBytes}); no partial bundle returned.`);
@@ -215,15 +221,18 @@ export function compileReviewBundle(input, options = {}) {
 
 export async function createReviewBundle(options) {
   if (!object(options)) throw new BundleError('INVALID_INPUT', 'An options object is required.');
-  const { maxBundleBytes, rulesYaml, semantic = false, contextRequests = [], ...gitOptions } = options;
+  const { maxBundleBytes, rulesYaml, ruleSource = 'patch', semantic = false, contextRequests = [], ...gitOptions } = options;
   if (typeof semantic !== 'boolean' || (!semantic && (!Array.isArray(contextRequests) || contextRequests.length))) {
     throw new SemanticError('INVALID_INPUT', 'Context requests require semantic: true; semantic must be boolean.');
   }
-  const bundle = compileReviewBundle(await ingestGitDiff(gitOptions), { maxBundleBytes, rulesYaml });
+  if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && (rulesYaml === undefined || parseRulesYaml(rulesYaml).schemaVersion !== 'review-rules/v3'))) throw new BundleError('INVALID_INPUT', 'ruleSource must be patch or pinned; pinned mode requires review-rules/v3.');
+  const snapshot = await ingestGitDiff(gitOptions);
+  const ruleSourceEvidence = ruleSource === 'pinned' ? await readRuleSourceEvidence(gitOptions.repo, compileReviewBundle(snapshot, { maxBundleBytes })) : undefined;
+  const bundle = compileReviewBundle(snapshot, { maxBundleBytes, rulesYaml, ruleSource, ...(ruleSourceEvidence ? { ruleSourceEvidence } : {}) });
   if (!semantic) return bundle;
   const extension = await expandTypeScriptContext(gitOptions.repo, bundle, contextRequests);
   const { id, ...payload } = bundle;
-  payload.schemaVersion = 'review-bundle/v3';
+  payload.schemaVersion = ruleSource === 'pinned' ? 'review-bundle/v4' : 'review-bundle/v3';
   payload.semanticAnalysis = extension.semanticAnalysis;
   payload.contextExpansion = extension.contextExpansion;
   payload.evidence.push(...extension.evidence);

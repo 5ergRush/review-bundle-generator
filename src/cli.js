@@ -3,7 +3,7 @@ import { ingestGitDiff, IngestionError, createReviewBundle, BundleError, RuleErr
   createReviewerRequest, normalizeReviewerResponse, ReviewerError,
   compileEvaluationDataset, evaluateReviewRuns, EvaluationError, normalizeGitLabMergeRequest,
   fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError, checkRuntime,
-  createRuleContextBundle, RuleContextError } from './index.js';
+  createRuleContextBundle, RuleContextError, RuleSourceError } from './index.js';
 import { readRulesFile } from './rules.js';
 import { readJsonFile } from './json-file.js';
 
@@ -11,6 +11,7 @@ const help = `Usage: review-bundle ingest|bundle --repo PATH --base REV [--head 
   [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N]
   [--max-bundle-bytes N (bundle only)]
   [--rules PATH (bundle only)]
+  [--rule-source patch|pinned (pinned requires v3 rules)]
   [--semantic] [--callers declaration:SHA256 (repeatable, bundle only)]
 review-bundle packet --bundle PATH --reviewer-id ID --reviewer-version VERSION
   [--max-request-bytes N]
@@ -23,15 +24,16 @@ review-bundle doctor
 review-bundle gitlab-snapshot --instance HTTPS_URL --project-id N --mr-iid N
   [--metadata PATH (offline)] [--timeout-ms N] [--max-response-bytes N]
 review-bundle gitlab-bundle --repo PATH --snapshot PATH
-  [--rules PATH] [--semantic] [--callers declaration:SHA256]
+  [--rules PATH] [--rule-source patch|pinned] [--semantic] [--callers declaration:SHA256]
   [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N] [--max-envelope-bytes N]
 review-bundle gitlab-check --snapshot PATH --current PATH
 review-bundle rule-context-bundle --repo PATH --base REV [--head REV]
   --rules PATH --context-policy PATH [--max-targets N] [--max-envelope-bytes N]
-  [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
+  [--rule-source patch|pinned] [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
 
 Writes ingestion/v1, bundle/v1 (without rules), bundle/v2 (with rules), or bundle/v3 (with semantic analysis) JSON.
 Rule-context-bundle writes rule-context-bundle/v1 containing the ordinary .bundle and explicit plan.
+Pinned rule-source writes bundle/v4 with complete bounded changed .ts files and selection/v4.
 Default head: HEAD. Default comparison: merge-base. Only committed changes.
 The bundle command compiles diff evidence and deterministic facts. No AI calls.
 Packet and normalize are offline JSON operations. No CLI command invokes a reviewer.
@@ -53,14 +55,14 @@ async function main(args) {
   const bundleCommand = ['bundle', 'gitlab-bundle'].includes(command);
   const names = new Map(command === 'gitlab-snapshot' ? [['--instance', 'instanceUrl'], ['--project-id', 'projectId'], ['--mr-iid', 'mergeRequestIid'], ['--metadata', 'metadataFile'], ['--timeout-ms', 'timeoutMs'], ['--max-response-bytes', 'maxResponseBytes']] :
     command === 'gitlab-check' ? [['--snapshot', 'snapshotFile'], ['--current', 'currentFile']] :
-    command === 'gitlab-bundle' ? [['--repo', 'repo'], ['--snapshot', 'snapshotFile'], ['--rules', 'rulesFile'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs'], ['--max-bundle-bytes', 'maxBundleBytes'], ['--max-envelope-bytes', 'maxEnvelopeBytes']] :
+    command === 'gitlab-bundle' ? [['--repo', 'repo'], ['--snapshot', 'snapshotFile'], ['--rules', 'rulesFile'], ['--rule-source', 'ruleSource'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs'], ['--max-bundle-bytes', 'maxBundleBytes'], ['--max-envelope-bytes', 'maxEnvelopeBytes']] :
     command === 'dataset' ? [['--definition', 'definitionFile'], ['--max-dataset-bytes', 'maxDatasetBytes']] :
     command === 'evaluate' ? [['--dataset', 'datasetFile'], ['--runs', 'runsFile'], ['--max-input-bytes', 'maxInputBytes'], ['--max-report-bytes', 'maxReportBytes']] :
     command === 'packet' ? [['--bundle', 'bundleFile'], ['--reviewer-id', 'reviewerId'], ['--reviewer-version', 'reviewerVersion'], ['--max-request-bytes', 'maxRequestBytes']] :
     command === 'normalize' ? [['--request', 'requestFile'], ['--response', 'responseFile'], ['--max-response-bytes', 'maxResponseBytes'], ['--max-result-bytes', 'maxResultBytes']] :
     [['--repo', 'repo'], ['--base', 'base'], ['--head', 'head'],
     ['--comparison', 'comparison'], ['--max-bytes', 'maxBytes'], ['--timeout-ms', 'timeoutMs'],
-    ...(['bundle', 'rule-context-bundle'].includes(command) ? [['--max-bundle-bytes', 'maxBundleBytes'], ['--rules', 'rulesFile']] : []),
+    ...(['bundle', 'rule-context-bundle'].includes(command) ? [['--max-bundle-bytes', 'maxBundleBytes'], ['--rules', 'rulesFile'], ['--rule-source', 'ruleSource']] : []),
     ...(command === 'rule-context-bundle' ? [['--context-policy', 'contextPolicyFile'], ['--max-targets', 'maxTargets'], ['--max-envelope-bytes', 'maxEnvelopeBytes']] : [])]);
   const numeric = ['maxBytes', 'timeoutMs', 'maxBundleBytes', 'maxRequestBytes', 'maxResponseBytes', 'maxResultBytes', 'maxDatasetBytes', 'maxInputBytes', 'maxReportBytes', 'projectId', 'mergeRequestIid', 'maxEnvelopeBytes', 'maxTargets'];
   const options = {};
@@ -121,7 +123,7 @@ async function main(args) {
 
 try { await main(process.argv.slice(2)); }
 catch (error) {
-  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError || error instanceof GitLabError || error instanceof RuleContextError;
+  const known = error instanceof IngestionError || error instanceof BundleError || error instanceof RuleError || error instanceof SemanticError || error instanceof ReviewerError || error instanceof EvaluationError || error instanceof GitLabError || error instanceof RuleContextError || error instanceof RuleSourceError;
   process.stderr.write(`${JSON.stringify({ error: { code: known ? error.code : 'INTERNAL_ERROR',
     message: known ? error.message : 'Unexpected operation failure.' } })}\n`);
   process.exitCode = 1;

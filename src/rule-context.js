@@ -49,7 +49,9 @@ export async function createRuleContextBundle(options) {
     if (selection.status !== 'matched') { decision.omissions.push({ reason: 'rule-not-selected' }); continue; }
     const observations = new Map();
     for (const match of selection.matches) for (const observation of (match.syntaxMatches ?? []).flat()) {
-      tick(); const anchor = { changeId: match.changeId, evidenceId: observation.evidenceId, side: observation.side === 'removed' ? 'old' : 'new', startLine: observation.startLine, endLine: observation.endLine, within: observation.within ?? null, withinLine: observation.withinLine ?? null };
+      tick(); const anchor = { changeId: match.changeId, evidenceId: observation.evidenceId,
+        ...(observation.sourceEvidenceId ? { sourceEvidenceId: observation.sourceEvidenceId, origin: observation.origin } : {}),
+        side: observation.side === 'removed' ? 'old' : 'new', startLine: observation.startLine, endLine: observation.endLine, within: observation.within ?? null, withinLine: observation.withinLine ?? null };
       observations.set(JSON.stringify(anchor), anchor);
     }
     if (!observations.size) { decision.omissions.push({ reason: 'syntax-anchor-required' }); continue; }

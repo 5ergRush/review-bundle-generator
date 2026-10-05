@@ -26,7 +26,12 @@ for (const item of cases) {
     git('init', '-q', '--template=', '--initial-branch=main'); await mkdir(join(repo, 'src'));
     await writeFile(join(repo, item.path), item.before); git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
     await writeFile(join(repo, item.path), item.after); git('add', '-A'); git('commit', '-qm', 'head'); const head = git('rev-parse', 'HEAD');
-    const bundle = await createReviewBundle({ repo, base, head, comparison: 'direct', rulesYaml: rules, semantic: true });
+    const bundle = await createReviewBundle({ repo, base, head, comparison: 'direct', rulesYaml: rules, semantic: true, ruleSource: item.ruleSource ?? 'patch' });
+    if (item.patchBaselineExpectedRules) {
+      const baseline = await createReviewBundle({ repo, base, head, comparison: 'direct', rulesYaml: rules, semantic: true });
+      assert.deepEqual(baseline.ruleSelection.decisions.filter(d => d.status === 'matched').map(d => d.ruleId).sort(), item.patchBaselineExpectedRules);
+      assert.deepEqual(bundle.facts, baseline.facts);
+    }
     assert.equal(bundle.changes.length, 1); const change = bundle.changes[0];
     assert.equal(change.status, 'M'); assert.equal(change.oldPath, item.path); assert.equal(change.newPath, item.path);
     const fact = bundle.facts.find(f => f.type === 'text-change');
@@ -39,7 +44,8 @@ for (const item of cases) {
     assert.deepEqual(selected, bundle.ruleSelection.decisions.filter(d => d.status === 'matched').map(d => d.ruleId).sort());
     const falseSelections = selected.filter(id => !item.expectedRules.includes(id));
     const missedRules = item.expectedRules.filter(id => !selected.includes(id));
-    results.push({ caseId: item.id, facts: 'passed', packetIntegrity: 'passed', expectedRules: item.expectedRules, selectedRules: selected, falseSelections, missedRules, specificity: falseSelections.length || missedRules.length ? 'failed' : 'passed' });
+    results.push({ caseId: item.id, facts: 'passed', packetIntegrity: 'passed', expectedRules: item.expectedRules, selectedRules: selected, falseSelections, missedRules, specificity: falseSelections.length || missedRules.length ? 'failed' : 'passed',
+      ...(item.ruleSource ? { ruleSource: item.ruleSource, patchBaselineExpectedRules: item.patchBaselineExpectedRules } : {}) });
     await writeFile(join(output, `${item.id}.packet.json`), JSON.stringify(packet, null, 2) + '\n');
     await writeFile(join(output, `${item.id}.diff.patch`), evidence.content);
   } finally { await rm(repo, { recursive: true, force: true }); }
