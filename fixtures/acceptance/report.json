@@ -218,6 +218,86 @@
       "specificity": "passed",
       "ruleSource": "pinned",
       "patchBaselineExpectedRules": []
+    },
+    {
+      "caseId": "component-qualified-alias",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "angular-component-teardown"
+      ],
+      "selectedRules": [
+        "angular-component-teardown"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v4"
+    },
+    {
+      "caseId": "component-qualified-namespace",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "angular-component-teardown"
+      ],
+      "selectedRules": [
+        "angular-component-teardown"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v4"
+    },
+    {
+      "caseId": "component-qualified-ordinary-class",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v4"
+    },
+    {
+      "caseId": "component-qualified-custom-import",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v4"
+    },
+    {
+      "caseId": "component-qualified-type-only-import",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v4"
+    },
+    {
+      "caseId": "component-qualified-unrelated-method",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v4"
     }
   ],
   "factsPassed": true,

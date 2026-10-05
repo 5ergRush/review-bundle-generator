@@ -11,7 +11,7 @@ const help = `Usage: review-bundle ingest|bundle --repo PATH --base REV [--head 
   [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N]
   [--max-bundle-bytes N (bundle only)]
   [--rules PATH (bundle only)]
-  [--rule-source patch|pinned (pinned requires v3 rules)]
+  [--rule-source patch|pinned (pinned requires v3/v4 rules)]
   [--angular-templates (bundle only; requires pinned rules)]
   [--angular-bindings (requires --angular-templates)]
   [--angular-owner PATH (repeatable; requires --angular-templates)]

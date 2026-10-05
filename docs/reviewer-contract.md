@@ -176,3 +176,5 @@ The packet boundary also accepts opt-in review-bundle/v5, retaining selection v4
 Opt-in `angularBindings: true` / `--angular-bindings` requires Angular template context and pinned v3 rules. It preserves existing facts, rules and ownership, adds parsed static template/member relationships, and records explicit omissions and budgets. Packet validation recomputes the section. See [Angular template binding relationships](angular-template-bindings.md). Earlier bundle modes retain their schemas.
 
 Optional [changed-template ownership](angular-template-owners.md) now supports explicit candidate component paths for template-only edits through `angularOwnerPaths` / repeatable `--angular-owner PATH` (bundle v7). It preserves rule selection and earlier modes. Optional bindings include those owners; candidate coverage and imported-tree authenticity remain explicit limits.
+
+Pinned review-rules/v4 adds same-revision bound Angular component qualification and rule-selection/v5; see [the component predicate contract](rules-contract.md#bound-component-qualification-review-rulesv4). Existing v1–v3 rule behavior is preserved.

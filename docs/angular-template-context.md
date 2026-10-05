@@ -101,3 +101,5 @@ Reviewer benefit remains unmeasured.
 Optional [Angular binding relationships](angular-template-bindings.md) now parses a bounded static subset through a separate `--angular-bindings` / `angularBindings: true` opt-in (bundle v6). Ordinary v5 context retains the limits described above.
 
 Optional [changed-template ownership](angular-template-owners.md) now supports explicit candidate component paths for template-only edits through `angularOwnerPaths` / repeatable `--angular-owner PATH` (bundle v7). It preserves rule selection and earlier modes. Optional bindings include those owners; candidate coverage and imported-tree authenticity remain explicit limits.
+
+Pinned review-rules/v4 adds same-revision bound Angular component qualification and rule-selection/v5; see [the component predicate contract](rules-contract.md#bound-component-qualification-review-rulesv4). Existing v1–v3 rule behavior is preserved.

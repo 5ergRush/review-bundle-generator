@@ -184,3 +184,71 @@ This produces rule-selection/v4 inside bundle/v4 and verifies complete changed .
 source sides against their pinned blobs. Predicates/config IDs retain the v3 format.
 See [pinned rule evidence](pinned-rule-evidence.md) for source limits, patch/source
 anchors, parsing availability, default compatibility and packet recomputation.
+
+## Bound component qualification: review-rules/v4
+
+Version 4 requires `ruleSource: 'pinned'` / `--rule-source pinned` and adds an
+optional `angularComponent: true` field to each changed-syntax predicate. False,
+null and other values are invalid; omission leaves that predicate unqualified.
+Existing v1/v2/v3 configurations and their IDs/selection output are unchanged.
+V4 emits `rule-selection/v5` inside the existing pinned bundle v4–v7 envelopes;
+these envelopes now admit selection v4 (rules v3) or v5 (rules v4). No additional
+CLI flag or template-expansion opt-in is required.
+
+See [component rules](../examples/angular-component-rules.yaml). For example,
+`member-call`, `callee: this.subscription.unsubscribe`, `within: ngOnDestroy`
+and `angularComponent: true` require all of the following on one changed syntax
+observation in the scoped revision side:
+
+- The literal call and named-method syntax conditions match.
+- Its nearest lexical class is a named TypeScript class declaration.
+- Exactly one decorator call on that class resolves through a direct runtime
+  named/aliased `Component` import or namespace `.Component` import from
+  `@angular/core` in the same pinned source.
+
+An ordinary class with an `ngOnDestroy` method does not qualify. Custom imports,
+barrels/re-exports, type-only imports and locally shadowed decorator identifiers
+are outside the direct-binding contract. A nested ordinary class cannot borrow
+its outer component's decorator. Multiple bound decorators and class expressions
+retain explicit unavailable scope rather than invent a component. Imports and
+class/decorator ranges may be outside the patch hunk because complete pinned
+source bytes back the observation. The opposite revision's decorator cannot
+qualify this observation.
+
+Every v4 observed node includes `angularComponentContext` with `status`
+(`included`, `not-component`, `unavailable`), `reason` and `component` (null or
+`{name, origin, decorator}`). Decorator provenance includes its range and the
+bound import declaration's kind/local name/range. These references share the
+observation's pinned source commit/path/blob and source evidence ID. The imported
+packet boundary reparses and recomputes all qualification, so rehashing a forged
+component/import claim does not make it valid.
+
+V4 pairs observations using token, qualified parent-name and component-status
+multisets within each hunk. This distinguishes a call moved out of a component
+into a same-named ordinary class. An edited node token line or enclosing method
+name remains required. Comment-only edits with unchanged qualification and
+untouched syntax under decorator-only edits do not trigger rules. A simultaneous
+qualification change on an edited syntax line may be a contextual change even
+when call tokens match. Cross-hunk moves, repeated same-qualified parent names,
+syntactic receiver spelling and structural comparison remain bounded observations,
+not complete semantic equivalence or runtime dispatch.
+
+Qualification proves this explicit decorator binding, not a lifecycle invocation,
+`this` receiver identity, framework version, installed package authenticity,
+inheritance, OnPush behavior or runtime correctness. Metadata arguments are not
+evaluated and need not contain a literal template; dynamic metadata can qualify
+the class while optional template expansion remains unavailable. Template ownership
+and lexical binding sections retain their separate opt-in contracts. No template
+rule predicates or defect findings are added by this version.
+
+Existing pinned source limits apply: 64 sides, 512 KiB each, 4 MiB total,
+250000 AST nodes per source traversal and the shared deterministic 5000000-operation
+selection budget. Qualification's additional source/class traversal consumes that
+budget. These are structural/work limits, not hard parser preemption. Unsupported
+or parse-failed sources retain explicit unavailable selection. Source coverage
+means parsing availability, not that every class qualified.
+
+The supplied offline expectation contract can assert selected rules for positive
+and negative component cases without a new acceptance schema. The acceptance audit
+contains six authored synthetic component-specificity cases; these do not establish
+real MR acceptance, independent holdout performance or reviewer benefit.
