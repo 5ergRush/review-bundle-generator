@@ -3,11 +3,11 @@
 Last updated: 2026-10-05
 Canonical repository: https://github.com/5ergRush/review-bundle-generator
 Canonical control file: PROJECT_CONTROL.md
-Phase: PR #14 verified merged; opt-in pinned full-source rule evidence implemented on feat/pinned-rule-evidence. Reviewer benefit remains unmeasured.
+Phase: PR #14 verified merged; PR #15 delivers opt-in pinned full-source rule evidence on feat/pinned-rule-evidence. Code-head Node 22/24 CI passed. Reviewer benefit remains unmeasured.
 
 ## Resume here
 
-1. Inspect main, PRs and current-head CI. PR #14 merged at f237bed37db2bd6ed7f8aa36bde364f8ba5413c3; main tree cc9e1c418fff35013046c2bf17e026dfec584542 matched the clean local checkpoint before this increment.
+1. Inspect main, PRs and current-head CI. PR #14 merged at f237bed37db2bd6ed7f8aa36bde364f8ba5413c3; main tree cc9e1c418fff35013046c2bf17e026dfec584542 matched the clean local checkpoint before this increment. PR #15: https://github.com/5ergRush/review-bundle-generator/pull/15. Code head e72dd49db04e39d35727842f2d1f599714799e9b passed Node 22/24 push and PR CI; verify current-head CI and merge status before resuming.
 2. Read docs/pinned-rule-evidence.md. ruleSource pinned / CLI --rule-source pinned accepts existing v3 rules and emits bundle/selection v4, with complete bounded changed regular .ts source sides verified against their Git blobs. It recovers long function/method scope, preserves Git facts, and recomputes selection from supplied full bytes at the packet boundary. Default patch mode remains supported.
 3. Observations require actual edited tokens or enclosing-name edits and retain patch/hunk/source/AST provenance. Full-file parse failures, anonymous scopes, unsupported source kinds/line separators and all budgets remain explicit. Sources are limited to 64 sides, 512 KiB/file, 4 MiB content and 250000 lexical/AST nodes/file plus selection/Git/bundle limits. Semantic/caller analysis remains optional; caller/alias snippets keep their separate budget.
 4. Run npm run validate, npm run audit:acceptance, npm run audit:callers and npm run smoke:package. Eighteen fact/rule cases include long teardown/loading positives and long refresh/reset controls, with patch-only baseline assertions. Eight caller cases remain. New tests cover scope/rename/class identity, sources/coordinates/BOM/CRLF, defaults, compiler/import integrity, source findings, automatic callers and GitLab/CLI integration.
@@ -107,14 +107,20 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 | Dashboard | Excluded from v1 |
 | Existing reviewer request/response contract | Not recovered; needed before adapter implementation |
 | GitLab deployment/authentication contract | Not recovered; needed before real integration |
-| YAML rule schema | review-rules/v1 documented in docs/rules-contract.md; no semantic predicates yet |
+| YAML rule schema | review-rules/v1/v2/v3 documented in docs/rules-contract.md; bounded changed-syntax predicates and opt-in pinned source evidence |
 | Service transport | Still to be established from integration requirements |
 | Production source recovery | No artifact recovered; begin from verified repository state |
 
 ## Current validation and Git state
 
+- Branch: feat/pinned-rule-evidence; PR #15; base main f237bed37db2bd6ed7f8aa36bde364f8ba5413c3.
+- Local validation: 193 tests and syntax checks, 18 fact/rule cases, 8 caller cases and installed-package smoke passed. Code head e72dd49db04e39d35727842f2d1f599714799e9b passed Node 22/24 push CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37247798044 and PR CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37247810425. This final documentation checkpoint triggers current-head CI; verify that head before merge.
+- Current APIs/CLI include rule-directed caller planning and pinned source mode; contracts and limits are linked in Resume here. No actual reviewer quality gain or real corporate MR acceptance is claimed.
+
+### Historical foundation and delivery evidence
+
 - Documentation bootstrap on main: 6c7c8a292d891742471689ad436fc0fb356662db.
-- Current implementation branch: feat/gitlab-packaging, based on main merge 7a6163fe91a586f9df4336f5906e97aa27031b26.
+- PR #7 implementation branch was feat/gitlab-packaging, based on main merge 7a6163fe91a586f9df4336f5906e97aa27031b26.
 - PR #1: https://github.com/5ergRush/review-bundle-generator/pull/1, verified merged at eb1a0789a40042d9881c0b516dd43c0984ba0998.
 - Foundation code commit: 665844e679b81ed2d358c946eb2b8008af0097ac.
 - Runtime: JavaScript ESM; Node >=22 and Git >=2.43. Pinned runtime dependencies: yaml 2.9.1 and typescript 5.9.3, recorded in package-lock.json.
@@ -137,7 +143,7 @@ Service transport and exact GitLab/reviewer interfaces remain to be established 
 
 ### Remaining boundaries
 
-- Bundles are explicitly partial. Without semantic opt-in, bundles remain diff-only; with opt-in, v3 adds partial static analysis and bounded requested callers. Rule selection is complete only when rules are supplied. Generic reviewer boundary, offline evaluation and read-only GitLab metadata/local bundle adapter exist; real provider/GitLab deployment and real labelled evaluation remain pending. Facts are not defect findings.
+- Bundles are explicitly partial. Default patch mode without semantic opt-in remains diff-only; pinned rule mode v4 includes bounded full changed TypeScript sources. Semantic opt-in adds partial static analysis and bounded requested callers to v3/v4. Rule selection is complete only when rules are supplied. Generic reviewer boundary, offline evaluation and read-only GitLab metadata/local bundle adapter exist; real provider/GitLab deployment and real labelled evaluation remain pending. Facts are not defect findings.
 - Binary and special-entry text counts are unavailable, not inferred zero. Filename language hints are not semantic evidence.
 - Bundle compilation accepts at most 10,000 change records; imported snapshot authenticity is the caller's responsibility.
 - Binary contents are omitted. Symlink/gitlink targets are not traversed. Rename detection is heuristic and capped.
@@ -268,4 +274,4 @@ Contextual validation checkpoint: syntax checks and all 131 tests passed locally
 
 - 2026-10-05: Verified PR #13 was merged while its final documentation checkpoint was being recorded. Main commit 62ea92e439b3b68fc34b1ddd65a27103e4ef7e18 has the validated feature tree 71d5f91c738f19835bb8565b34baf20ceda3c9d5. Prepared a documentation-only follow-up on docs/alias-context-checkpoint to put current status, code CI evidence and continuation notes on main. No implementation changes in that follow-up.
 
-- 2026-10-05: Verified PR #14 merged. Implemented pinned changed-source rule selection to address long-method hunk scope loss; new bundle/selection v4 contracts reuse v3 rule predicates. Eighteen fact/rule cases and source-mode packet/caller smoke now exercise the expanded evidence. Reviewer improvement remains unmeasured. Local syntax checks and all 193 tests passed; eighteen-case fact/rule audit, eight-case caller audit and installed tarball smoke passed. GitHub CI and delivery checkpoint pending.
+- 2026-10-05: Verified PR #14 merged. Implemented pinned changed-source rule selection to address long-method hunk scope loss; new bundle/selection v4 contracts reuse v3 rule predicates. Eighteen fact/rule cases and source-mode packet/caller smoke now exercise the expanded evidence. Reviewer improvement remains unmeasured. Local syntax checks and all 193 tests passed; eighteen-case fact/rule audit, eight-case caller audit and installed tarball smoke passed. PR #15 https://github.com/5ergRush/review-bundle-generator/pull/15 is prepared. Code head e72dd49db04e39d35727842f2d1f599714799e9b passed Node 22/24 push CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37247798044 and PR CI https://github.com/5ergRush/review-bundle-generator/actions/runs/37247810425, including both audits, packaging and installed smoke. This final documentation checkpoint triggers current-head CI; verify that head before merge. Held-out/real MRs and framework/template relationships remain first priority; real reviewer improvement remains unmeasured. Future dashboard manual rule overrides remain tracked.
