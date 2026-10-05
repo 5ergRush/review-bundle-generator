@@ -4,6 +4,8 @@ import { readTypeScriptSources } from './git.js';
 
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const root = '/review-project/';
+const MAX_ALIAS_DEPTH = 8;
+const MAX_ALIAS_OPERATIONS = 500_000;
 export class SemanticError extends Error {
   constructor(code, message) { super(message); this.name = 'SemanticError'; this.code = code; }
 }
@@ -60,8 +62,16 @@ function analyze(revision, side, bundle) {
   const program = ts.createProgram([...files.keys()], options, host);
   const checker = program.getTypeChecker();
   const declarations = []; const candidates = []; const calls = []; const unresolvedImports = []; const diagnostics = [];
+  const written = new Set(); let aliasOperations = 0;
+  const aliasTick = () => { if (++aliasOperations > MAX_ALIAS_OPERATIONS) throw new SemanticError('SEMANTIC_LIMIT', 'Alias analysis exceeds 500000 operations per revision.'); };
   let nodes = 0; let unresolvedCalls = 0;
   const canonical = symbol => symbol && (symbol.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(symbol) : symbol);
+  const markWritten = node => {
+    aliasTick();
+    if (ts.isShorthandPropertyAssignment(node)) { const symbol = canonical(checker.getShorthandAssignmentValueSymbol(node)); if (symbol) written.add(symbol); }
+    else if (ts.isIdentifier(node)) { const symbol = canonical(checker.getSymbolAtLocation(node)); if (symbol) written.add(symbol); }
+    else if (!ts.isPropertyAccessExpression(node) && !ts.isElementAccessExpression(node)) ts.forEachChild(node, markWritten);
+  };
   const origin = (source, node) => {
     const file = files.get(source.fileName);
     const start = source.getLineAndCharacterOfPosition(node.getStart(source));
@@ -78,6 +88,9 @@ function analyze(revision, side, bundle) {
       message: ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'), offset: diagnostic.start ?? 0 });
     const visit = node => {
       if (++nodes > 250_000) throw new SemanticError('SEMANTIC_LIMIT', 'AST exceeds 250000 nodes per revision.');
+      if (ts.isBinaryExpression(node) && node.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && node.operatorToken.kind <= ts.SyntaxKind.LastAssignment) markWritten(node.left);
+      if ((ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) && [ts.SyntaxKind.PlusPlusToken, ts.SyntaxKind.MinusMinusToken].includes(node.operator)) markWritten(node.operand);
+      if ((ts.isForOfStatement(node) || ts.isForInStatement(node)) && !ts.isVariableDeclarationList(node.initializer)) markWritten(node.initializer);
       if (supported(node) && change) {
         const location = origin(source, node);
         const names = [node.name.text]; let eligible = true;
@@ -113,8 +126,42 @@ function analyze(revision, side, bundle) {
       throw error;
     }
   }
+  // Resolve only immutable local identifier copies, after observing all binding writes.
+  const skipped = new Map(); let resolvedAliases = 0;
+  for (const call of calls) {
+    call.resolution = { kind: 'direct-symbol', aliases: [] };
+    if (!call.symbol.declarations?.some(node => ts.isVariableDeclaration(node) || ts.isBindingElement(node))) continue;
+    const aliases = []; const visited = new Set(); let symbol = call.symbol; let usePosition = call.node.getStart(call.source); let reason = null;
+    if (!ts.isCallExpression(call.node) || !ts.isIdentifier(call.node.expression)) reason = 'unsupported-call-expression';
+    while (!reason) {
+      aliasTick();
+      if (!symbol || visited.has(symbol)) { reason = symbol ? 'alias-cycle' : 'unresolved-initializer'; break; }
+      visited.add(symbol);
+      if (written.has(symbol)) { reason = 'binding-written'; break; }
+      const definitions = symbol.declarations ?? [];
+      if (definitions.length && definitions.every(node => ts.isFunctionDeclaration(node) && node.name && ts.isIdentifier(node.name)) && definitions.filter(node => node.body).length === 1) {
+        if (definitions.some(node => !files.has(node.getSourceFile().fileName) || node.getSourceFile().parseDiagnostics.length)) reason = 'target-source-unavailable';
+        else { call.aliasSymbol = symbol; call.resolution = { kind: 'local-const-alias', aliases }; resolvedAliases++; }
+        break;
+      }
+      if (aliases.length >= MAX_ALIAS_DEPTH) { reason = 'alias-depth-limit'; break; }
+      const declaration = definitions.length === 1 ? definitions[0] : null;
+      if (!declaration || !ts.isVariableDeclaration(declaration) || !ts.isIdentifier(declaration.name) || !ts.isVariableDeclarationList(declaration.parent)) { reason = 'unsupported-binding'; break; }
+      if (!(declaration.parent.flags & ts.NodeFlags.Const)) { reason = 'non-const-binding'; break; }
+      const source = declaration.getSourceFile();
+      if (source !== call.source) { reason = 'nonlocal-alias'; break; }
+      if (source.parseDiagnostics.length) { reason = 'alias-source-unavailable'; break; }
+      if (declaration.end > usePosition) { reason = 'forward-initialization'; break; }
+      if (!declaration.initializer || !ts.isIdentifier(declaration.initializer)) { reason = 'initializer-not-identifier'; break; }
+      aliases.push({ name: declaration.name.text, initializerName: declaration.initializer.text, node: declaration, source });
+      usePosition = declaration.getStart(source); symbol = canonical(checker.getSymbolAtLocation(declaration.initializer));
+    }
+    if (reason) skipped.set(reason, (skipped.get(reason) ?? 0) + 1);
+  }
   return { declarations, candidates, calls, origin, sourcePaths: new Set(revision.sources.map(source => source.path)), summary: { side, commit: revision.commit, sourceFiles: files.size,
-    astNodes: nodes, resolvedCallSites: calls.length, unresolvedCallSites: unresolvedCalls, unresolvedImports, parseDiagnostics: diagnostics } };
+    astNodes: nodes, resolvedCallSites: calls.length, unresolvedCallSites: unresolvedCalls, unresolvedImports, parseDiagnostics: diagnostics,
+    aliasResolution: { resolvedCallSites: resolvedAliases, skippedCallSites: [...skipped.values()].reduce((a, b) => a + b, 0), operations: aliasOperations,
+      skippedReasons: [...skipped].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([reason, count]) => ({ reason, count })) } } };
 }
 
 // Matching is structural provenance, not a claim of semantic equivalence.
@@ -164,40 +211,46 @@ export async function expandTypeScriptContext(repo, bundle, input = []) {
   const declarations = analyses.flatMap(item => item.declarations.map(declaration => declaration.record));
   for (const request of requested) if (!declarations.some(item => item.id === request.targetId)) fail('Unknown or stale targetId; regenerate semantic declarations using pinned revisions.');
   const evidence = []; const decisions = []; let bytes = 0;
+  const sameSymbol = (left, right) => left && right && (left === right || right.declarations?.some(node => left.declarations?.includes(node)));
+  const addEvidence = (analysis, source, node) => {
+    const record = { type: 'typescript-source', origin: analysis.origin(source, node), content: node.getText(source) };
+    const id = `evidence:${hash(record)}`; let omission = null;
+    if (!evidence.some(item => item.id === id)) {
+      const size = Buffer.byteLength(JSON.stringify({ id, ...record }));
+      if (record.origin.end.line - record.origin.start.line + 1 > 80) omission = 'snippet-line-limit';
+      else if (evidence.length >= 10) omission = 'snippet-count-limit';
+      else if (bytes + size > 64 * 1024) omission = 'context-byte-limit';
+      else { evidence.push({ id, ...record }); bytes += size; }
+    }
+    return { origin: record.origin, evidenceId: omission ? null : id, omission };
+  };
   for (const request of requested) {
     const analysis = analyses.find(item => item.declarations.some(declaration => declaration.record.id === request.targetId));
     const target = analysis.declarations.find(item => item.record.id === request.targetId);
     const matches = [];
-    for (const call of analysis.calls.filter(call => target.symbol && (call.symbol === target.symbol ||
-      call.symbol.declarations?.some(node => target.symbol.declarations?.includes(node))))) {
+    for (const call of analysis.calls.filter(call => sameSymbol(target.symbol, call.symbol) || sameSymbol(target.symbol, call.aliasSymbol))) {
       let snippet = call.node;
       for (let ancestor = call.node.parent; ancestor && !ts.isSourceFile(ancestor); ancestor = ancestor.parent) {
         snippet = ancestor;
         if (ts.isFunctionLike(ancestor) || ts.isStatement(ancestor)) break;
       }
-      const content = snippet.getText(call.source);
-      const record = { type: 'typescript-source', origin: analysis.origin(call.source, snippet), content };
-      const id = `evidence:${hash(record)}`;
-      let reason = null;
-      if (!evidence.some(item => item.id === id)) {
-        const size = Buffer.byteLength(JSON.stringify({ id, ...record }));
-        if (record.origin.end.line - record.origin.start.line + 1 > 80) reason = 'snippet-line-limit';
-        else if (evidence.length >= 10) reason = 'snippet-count-limit';
-        else if (bytes + size > 64 * 1024) reason = 'context-byte-limit';
-        else { evidence.push({ id, ...record }); bytes += size; }
-      }
-      matches.push({ origin: analysis.origin(call.source, call.node), evidenceId: reason ? null : id, omission: reason });
+      const snippetEvidence = addEvidence(analysis, call.source, snippet);
+      const resolution = sameSymbol(target.symbol, call.symbol) ? { kind: 'direct-symbol', aliases: [] } : call.resolution;
+      const aliases = resolution.aliases.map(alias => ({ name: alias.name, initializerName: alias.initializerName,
+        ...addEvidence(analysis, alias.source, alias.node.parent), origin: analysis.origin(alias.source, alias.node) }));
+      matches.push({ ...snippetEvidence, origin: analysis.origin(call.source, call.node), resolution: { kind: resolution.kind, aliases } });
     }
-    decisions.push({ ...request, status: matches.some(item => item.omission) ? 'partial' : 'complete-static-matches', matches });
+    decisions.push({ ...request, status: matches.some(item => item.omission || item.resolution.aliases.some(alias => alias.omission)) ? 'partial' : 'complete-static-matches', matches });
   }
   return {
     semanticAnalysis: { schemaVersion: 'typescript-analysis/v2', compilerVersion: ts.version,
       policy: { sources: 'committed-regular-typescript-files', configuration: 'fixed-esnext-bundler-noLib',
         maxFilesPerRevision: 1000, maxUniqueSourceBytes: 8 * 1024 * 1024, maxFileBytes: 512 * 1024,
         maxAstNodesPerRevision: 250_000, maxCallSitesPerRevision: 10_000, maxCounterpartCandidatesPerRevision: 10000,
-        counterparts: 'unique-same-change-kind-qualified-name', counterpartMeaning: 'structural-not-semantic-equivalence' },
+        counterparts: 'unique-same-change-kind-qualified-name', counterpartMeaning: 'structural-not-semantic-equivalence',
+        functionValueFlow: 'local-const-identifier-copies-to-named-functions', maxAliasDepth: MAX_ALIAS_DEPTH, maxAliasOperations: MAX_ALIAS_OPERATIONS },
       revisions: analyses.map(item => item.summary), declarations, counterparts },
-    contextExpansion: { schemaVersion: 'caller-context/v1', policy: { maxRequests: 50, maxSnippets: 10, maxLinesPerSnippet: 80, maxBytes: 64 * 1024 },
+    contextExpansion: { schemaVersion: 'caller-context/v2', policy: { maxRequests: 50, maxSnippets: 10, maxLinesPerSnippet: 80, maxBytes: 64 * 1024, maxAliasDepth: MAX_ALIAS_DEPTH },
       decisions, serializedEvidenceBytes: bytes }, evidence,
   };
 }

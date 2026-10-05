@@ -92,7 +92,7 @@ export async function createRuleContextBundle(options) {
     schemaVersion: 'rule-context-plan/v1', rulesConfigId: initial.ruleSelection.configId,
     policy, limits: { maxTargets, maxOperations: 5_000_000, maxRecordsPerRule: 10000 }, decisions, requests,
     omittedTargetIds: targetIds.filter(id => !included.has(id)),
-  }, limitations: ['Only v3 matched syntax with a known nearest named function or method requests callers; older rules, path-only rules and anonymous scopes omit context.', 'Counterparts are structural associations, not semantic equivalence. Indirect calls, framework relationships and runtime dispatch remain unsupported.', 'Target and snippet limits may omit context; zero static callers does not prove absence. Reviewer improvement is not measured.'] };
+  }, limitations: ['Only v3 matched syntax with a known nearest named function or method requests callers; older rules, path-only rules and anonymous scopes omit context.', 'Counterparts are structural associations, not semantic equivalence. Function-value flow beyond bounded local const identifier copies, framework relationships and runtime dispatch remain unsupported.', 'Target and snippet limits may omit context; zero static callers does not prove absence. Reviewer improvement is not measured.'] };
   const result = { id: `rule-context-bundle:${createHash('sha256').update(JSON.stringify(payload)).digest('hex')}`, ...payload };
   return freeze(clone(result, maxEnvelopeBytes, 'INVALID_CONTEXT_BUNDLE'));
 }

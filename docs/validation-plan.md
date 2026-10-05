@@ -34,8 +34,12 @@ nearest named-function qualifiers. Fourteen fact/packet/relevance cases pass,
 including teardown/loading changes versus unrelated methods. The caller audit
 confirms alias resolution and same-name exclusion, and initially reproduced deletion-only
 indexing and indirect-variable gaps. Structural counterpart mapping now resolves
-the unique deletion-only case; indirect-variable calls remain unsupported. Templates/framework ownership and runtime
-behavior remain unverified. Next: bounded rule-directed caller requests and template relationships. Cover positive and
+the unique deletion-only case. Explicit rule-directed caller requests are implemented;
+local const identifier copies to named functions now carry bounded binding evidence.
+Eight caller cases cover import/const/chain matches and mutable/property-copy limitations.
+General function-value flow, templates/framework ownership and runtime behavior remain
+unverified. Next: full-source rule evidence beyond patch fragments, held-out MR coverage
+and template relationships. Cover positive and
 same-path negative examples, misleading comments/strings, indirect calls, import
 aliases, validation modifications and Angular state/lifecycle/template relationships.
 Do not substitute filename suffixes or keyword counts for semantic proof. No single

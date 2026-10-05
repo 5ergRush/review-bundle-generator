@@ -77,22 +77,23 @@ pin both commits to reproduce the entire bundle.
 The compiler resolves call/new-expression symbols, follows import aliases, and
 matches symbols or their declaration nodes. The search covers pinned TypeScript
 sources on the target's side only. It does not expand recursively or follow
-dynamic dispatch, indirect function-value flow, reflection or runtime callbacks.
+dynamic dispatch, general function-value flow, reflection or runtime callbacks.
+A bounded local const identifier-copy subset is supported as described below.
 Unresolved sites are counted and never claimed to be absent callers.
 
-`contextExpansion` contains `caller-context/v1`, policy, sorted request decisions,
+`contextExpansion` now contains `caller-context/v2`, policy, sorted request decisions,
 and serialized evidence byte usage. Each decision records every matched call's
 origin, an evidence ID or an explicit omission. Evidence is the complete nearest
 enclosing statement/function node snippet, with immutable origin. Identical
 snippets are deduplicated across call sites and requests. Limits are global:
-10 unique snippets, 80 source lines per snippet, and 64 KiB of compact serialized
+10 unique snippets shared by call sites and alias declaration lists, 80 source lines per snippet, and 64 KiB of compact serialized
 evidence records (including metadata/IDs, excluding array separators). Snippets
 are omitted whole with `snippet-line-limit`, `snippet-count-limit` or
 `context-byte-limit`; no unmarked truncation occurs. Request order is normalized;
 source traversal order determines budget allocation.
 
 Semantic coverage remains `partial`. Context coverage is `not-requested`,
-`complete-static-matches`, or `partial` when snippets are omitted.
+`complete-static-matches`, or `partial` when call or alias-binding snippets are omitted.
 `complete-static-matches` only describes budget coverage of resolved matches:
 zero static callers is not proof of no callers. The final compact bundle budget
 is enforced after semantic/context records are added and fails without output.
@@ -141,10 +142,59 @@ bundle generation for actual source provenance, as before.
 `npm run audit:callers` checks old/new caller counts, aliased imports, same-name
 exclusion, exact lines/revisions, source snippets and packet validation. The prior
 deletion-only limitation is now a passing acceptance case with explicit structural
-provenance. The variable-indirect case (`const invoke = validate; invoke(...)`)
-remains limitation-confirmed; contract checks are not complete caller coverage.
+provenance. The local const case (`const invoke = validate; invoke(...)`) now passes
+with explicit binding provenance, as does a two-link chain. Mutable and property-based
+copies remain limitation-confirmed. Eight authored caller cases pass their contract
+assertions; contract checks are not complete caller coverage.
 
 Rules still select from changed syntax. Caller snippets require explicit requests
 and do not automatically determine rule relevance. Counterpart mapping is
 conservative, and zero static matches is not proof of no runtime callers. No
 Angular framework or template/runtime analysis is performed.
+
+## Bounded immutable aliases: caller-context/v2
+
+Identifier call expressions can follow at most eight local `const` identifier copies
+ending in a pinned, identifier-named function declaration with one implementation.
+Import/re-export aliases to that function can resolve. Every copied binding must be
+in the call site's source file, have a plain identifier initializer, and precede its
+use in source order (including the next outer copy). The file and terminal function
+sources must be parseable. Cycles, forward initialization and observed binding writes
+anywhere in the pinned revision prevent resolution. Writes include assignments,
+updates, destructuring assignments and for-in/of assignment targets. This is a
+conservative static subset, not execution-order or runtime equivalence proof.
+
+`let`/`var`, destructured bindings, property/element/conditional/call/cast/parenthesized
+initializers, imported const copies from another source file, method/arrow/class
+copies, and construction through copied functions remain unsupported. A closure
+written earlier than its alias initialization may be skipped even when runtime
+ordering could make the call valid. Dynamic writes/eval/external code are outside
+this compiler boundary. Normal direct-symbol callers retain their existing behavior.
+
+Semantic analysis remains `typescript-analysis/v2`: its policy now records the
+supported function-value subset, `maxAliasDepth: 8`, and `maxAliasOperations: 500000`.
+Each revision has an `aliasResolution` summary with resolved/skipped call-site counts,
+operation count and sorted reason/count records. Counts describe attempted alias
+analysis; skipped calls can still have a direct symbol (for example an arrow variable),
+and these counts do not establish completeness. Exceeding the per-revision operation
+budget fails with `SEMANTIC_LIMIT`, without a partial bundle.
+
+Every v2 context match has `resolution: {kind, aliases}`. `direct-symbol` has an empty
+chain. `local-const-alias` has 1–8 links ordered from the invoked copy towards the
+terminal function. Each link contains `name`, `initializerName`, pinned binding
+`origin`, `evidenceId`, and `omission`. Binding evidence contains the complete const
+declaration list (including the const keyword); the binding's origin can be a narrower
+range inside that snippet. Identical declaration lists are deduplicated. The call
+snippet is allocated first, then links in chain order, under the existing global
+snippet/line/byte budgets. A missing alias snippet has an explicit omission, and
+makes both the decision and bundle context coverage partial even if the call snippet
+was included. No additional unlimited source-evidence channel is introduced.
+
+The reviewer boundary accepts legacy caller-context/v1 and current v2. Legacy matches
+cannot contain resolution metadata. V2 validation checks kind/chain bounds, source
+revision/path/blob, initialization order, chain spellings, evidence containment,
+const declaration syntax, exact binding coordinates/initializer, invoked identifier,
+references, byte accounting and partial-coverage consistency. Snippet parsing is cached
+and indexed, with at most 25000 AST nodes per snippet. Imported snippets still cannot
+authenticate Git objects or prove whole-program symbol identity/write absence; use
+trusted pinned local generation. No provider interface or AI call is added.
