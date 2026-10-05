@@ -7,6 +7,13 @@ support an independent experiment without adding AI calls to the generator.
 
 ## Gate 1: facts and rule relevance
 
+Approved snapshots can now use [offline MR acceptance](offline-acceptance.md) via
+`review-bundle audit --bundle bundle.json --expectations expectations.json`.
+Author and freeze exact facts and per-change relevance before generation. Commit,
+config/mode, source coverage and negative cases are explicit; declared approval and
+holdout independence are not verified. No real corporate MR has been supplied or
+tested. The existing synthetic audit below remains development evidence.
+
 Run `npm run audit:acceptance` from the source checkout. Authored expectations in
 `fixtures/acceptance/cases.json` precede execution. The script creates real local
 Git commits, generates semantic bundles and reviewer packets, and verifies exact

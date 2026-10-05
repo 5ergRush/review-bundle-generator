@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "review-acceptance-expectations/v1",
+  "caseId": "example-teardown-removal",
+  "cohort": "development",
+  "provenance": { "kind": "synthetic", "author": "replace-with-expectation-author", "revision": "1" },
+  "revisions": {
+    "requestedBaseCommit": "1111111111111111111111111111111111111111",
+    "effectiveBaseCommit": "1111111111111111111111111111111111111111",
+    "headCommit": "2222222222222222222222222222222222222222",
+    "comparison": "direct"
+  },
+  "ruleConfigId": "rules:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "ruleSource": "pinned",
+  "changes": [
+    {
+      "status": "M", "oldPath": "src/example.ts", "newPath": "src/example.ts",
+      "oldKind": "file", "newKind": "file", "coverage": "text-diff",
+      "addedLines": 0, "removedLines": 1,
+      "selectedRuleIds": ["teardown-invariant"],
+      "requiredPatchLines": ["-    this.subscription.unsubscribe();"],
+      "sourceCoverage": { "available": true, "reason": "parsed-pinned-sources" }
+    }
+  ]
+}
