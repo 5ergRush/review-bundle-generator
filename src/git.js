@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const run = promisify(execFile);
-const decoder = new TextDecoder('utf-8', { fatal: true });
+const decoder = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 const DEFAULT_MAX_BYTES = 8 * 1024 * 1024;
 const MAX_ALLOWED_BYTES = 64 * 1024 * 1024;
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -100,19 +100,21 @@ async function commit(cwd, ref, limits) {
 }
 
 // Internal source reader: immutable regular blobs only, with aggregate bounds.
-export async function readTypeScriptSources(repo, revisions) {
+export async function readTypeScriptSources(repo, revisions, selectedPaths = null) {
   const limits = { maxBytes: 8 * 1024 * 1024, timeoutMs: 30_000 };
   const deadline = Date.now() + 30_000;
   let bytes = 0;
   const cache = new Map();
   return isolatedObjects(resolve(repo), limits, async cwd => {
     const result = [];
-    for (const revision of revisions) {
+    for (let revisionIndex = 0; revisionIndex < revisions.length; revisionIndex++) {
+      const revision = revisions[revisionIndex];
       const entries = decode(await git(cwd, ['ls-tree', '-rz', '--full-tree', revision], limits), 'Source paths').split('\0').filter(Boolean);
       const sources = [];
       for (const entry of entries) {
         const match = /^([0-7]{6}) blob ([a-f0-9]+)\t([\s\S]+)$/u.exec(entry);
         if (!match || !/^100(?:644|755)$/u.test(match[1]) || !/\.(?:ts|tsx|mts|cts)$/u.test(match[3])) continue;
+        if (selectedPaths !== null && !selectedPaths[revisionIndex].has(match[3])) continue;
         if (sources.length >= 1000) throw new IngestionError('SOURCE_LIMIT', 'More than 1000 TypeScript files in a revision.');
         if (Date.now() > deadline) throw new IngestionError('TIMEOUT', 'TypeScript source read exceeded 30 seconds.');
         let content = cache.get(match[2]);

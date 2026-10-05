@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { compileReviewBundle } from './bundle.js';
 import { parseRulesYaml, selectRules } from './rules.js';
 import ts from 'typescript';
+import { validateRuleSources } from './source-rules.js';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BYTES = 16 * 1024 * 1024;
@@ -88,10 +89,13 @@ function sourceOrigin(origin, commits, code) {
 
 function validateBundle(bundle) {
   const code = 'INVALID_REVIEW_BUNDLE';
-  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1, v2 or v3.');
+  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1, v2, v3 or v4.');
+  const pinnedRules = bundle.schemaVersion === 'review-bundle/v4';
+  const semantic = bundle.schemaVersion === 'review-bundle/v3' || (pinnedRules && bundle.semanticAnalysis !== undefined);
+  requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4 and selection v4.');
   keys(bundle, ['id', 'schemaVersion', 'provenance', 'summary', 'changes', 'evidence', 'facts', 'coverage',
     ...(bundle.ruleSelection !== undefined ? ['ruleSelection'] : []),
-    ...(bundle.schemaVersion === 'review-bundle/v3' ? ['semanticAnalysis', 'contextExpansion'] : [])], code);
+    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : [])], code);
   contentId(bundle, 'bundle', code);
   requireCondition(Array.isArray(bundle.changes) && Array.isArray(bundle.evidence) && Array.isArray(bundle.facts) && object(bundle.provenance), code, 'Missing bundle records.');
   const patches = bundle.evidence.filter(item => item?.type === 'git-patch');
@@ -111,16 +115,21 @@ function validateBundle(bundle) {
   keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion'], code);
   requireCondition(bundle.coverage.stages.gitDiff === 'complete' && bundle.coverage.stages.deterministicFacts === 'complete' &&
     bundle.coverage.stages.ruleSelection === (bundle.ruleSelection ? 'complete' : 'not-run') &&
-    bundle.coverage.stages.semanticAnalysis === (bundle.schemaVersion === 'review-bundle/v3' ? 'partial' : 'not-run') &&
+    bundle.coverage.stages.semanticAnalysis === (semantic ? 'partial' : 'not-run') &&
     bundle.coverage.limitations.every(item => typeof item === 'string'), code, 'Invalid bundle stage coverage.');
   const selectedRules = [];
+  const ruleSources = bundle.evidence.filter(item => item?.type === 'typescript-rule-source');
+  if (pinnedRules) {
+    try { validateRuleSources(ruleSources, bundle.changes, bundle.provenance.revisions); }
+    catch { throw new ReviewerError(code, 'Invalid pinned rule source evidence.'); }
+  } else requireCondition(ruleSources.length === 0, code, 'Rule source evidence requires bundle v4.');
   if (bundle.ruleSelection !== undefined) {
     try {
       const rules = bundle.ruleSelection.rules.map(rule => ({ ...rule,
         scope: Object.fromEntries(Object.entries(rule.scope).filter(([, value]) => value !== null)),
         when: Object.fromEntries(Object.entries(rule.when).filter(([, value]) => value !== null)) }));
-      const config = parseRulesYaml(JSON.stringify({ schemaVersion: bundle.ruleSelection.schemaVersion === 'rule-selection/v3' ? 'review-rules/v3' : bundle.ruleSelection.schemaVersion === 'rule-selection/v2' ? 'review-rules/v2' : 'review-rules/v1', rules }));
-      const expected = selectRules(config, baseline.changes, baseline.facts, baseline.evidence);
+      const config = parseRulesYaml(JSON.stringify({ schemaVersion: ['rule-selection/v3', 'rule-selection/v4'].includes(bundle.ruleSelection.schemaVersion) ? 'review-rules/v3' : bundle.ruleSelection.schemaVersion === 'rule-selection/v2' ? 'review-rules/v2' : 'review-rules/v1', rules }));
+      const expected = selectRules(config, baseline.changes, baseline.facts, [...baseline.evidence, ...ruleSources], pinnedRules ? 'pinned' : 'patch');
       requireCondition(JSON.stringify(bundle.ruleSelection) === JSON.stringify(expected), code, 'Invalid rule selection.');
       for (const decision of expected.decisions.filter(item => item.status === 'matched')) {
         const rule = config.rules.find(item => item.id === decision.ruleId);
@@ -137,8 +146,9 @@ function validateBundle(bundle) {
     requireCondition(object(evidence) && !evidenceById.has(evidence.id), code, 'Duplicate or invalid evidence.');
     contentId(evidence, 'evidence', code); evidenceById.set(evidence.id, evidence);
     if (evidence.type === 'git-patch') continue;
+    if (evidence.type === 'typescript-rule-source') continue;
     keys(evidence, ['id', 'type', 'origin', 'content'], code);
-    requireCondition(bundle.schemaVersion === 'review-bundle/v3' && evidence.type === 'typescript-source' &&
+    requireCondition(semantic && evidence.type === 'typescript-source' &&
       typeof evidence.content === 'string' && evidence.content.length > 0, code, 'Unsupported source evidence.');
     const origin = evidence.origin;
     sourceOrigin(origin, commits, code);
@@ -149,7 +159,7 @@ function validateBundle(bundle) {
     requireCondition(sourceCount <= 10 && sourceBytes <= 64 * 1024 && origin.end.line - origin.start.line + 1 <= 80, code, 'Source evidence exceeds caller context budgets.');
   }
   const contextChanges = new Map();
-  if (bundle.schemaVersion === 'review-bundle/v3') {
+  if (semantic) {
     requireCondition(['typescript-analysis/v1', 'typescript-analysis/v2'].includes(bundle.semanticAnalysis?.schemaVersion) && Array.isArray(bundle.semanticAnalysis.declarations) &&
       ['caller-context/v1', 'caller-context/v2'].includes(bundle.contextExpansion?.schemaVersion) && Array.isArray(bundle.contextExpansion.decisions) &&
       bundle.contextExpansion.decisions.length <= 50, code, 'Missing or oversized semantic/context sections.');
@@ -273,7 +283,7 @@ function validateBundle(bundle) {
       bundle.contextExpansion.decisions.some(item => item.matches.some(partialMatch)) ? 'partial' : 'complete-static-matches';
     requireCondition(bundle.coverage.stages.contextExpansion === expectedContextCoverage, code, 'Invalid caller context coverage.');
     requireCondition(bundle.contextExpansion.serializedEvidenceBytes === sourceBytes, code, 'Invalid context byte accounting.');
-  } else requireCondition(!bundle.semanticAnalysis && !bundle.contextExpansion && bundle.coverage.stages.contextExpansion === 'not-run', code, 'Semantic sections require bundle v3.');
+  } else requireCondition(!bundle.semanticAnalysis && !bundle.contextExpansion && bundle.coverage.stages.contextExpansion === 'not-run', code, 'Semantic sections require bundle v3 or v4.');
   return { selectedRules, evidenceById, contextChanges };
 }
 
@@ -348,7 +358,7 @@ export function normalizeReviewerResponse(inputRequest, inputResponse, options =
     }
     if (finding.ruleId !== null) {
       const matched = new Set(selected.get(finding.ruleId).matches.map(match => match.changeId));
-      requireCondition(evidence.type === 'git-patch' ? matched.has(evidence.changeId) :
+      requireCondition(['git-patch', 'typescript-rule-source'].includes(evidence.type) ? matched.has(evidence.changeId) :
         [...(contextChanges.get(evidence.id) ?? [])].some(id => matched.has(id)), code, 'Primary evidence is outside the selected rule scope.');
     }
     const payload = { type: 'reviewer-claim', verification: 'unverified', requestId: request.id, bundleId: request.bundleId,

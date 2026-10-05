@@ -47,7 +47,7 @@ try {
     GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@example.invalid' };
   const git = (...args) => run('git', ['-c', `core.hooksPath=${devNull}`, '-c', 'commit.gpgSign=false', ...args], repo, 'synthetic Git fixture', gitEnv).trim();
   git('init', '-q', '--template=', '--initial-branch=main');
-  const before = "export function validate(amount: number) {\n  if (amount <= 0) throw new Error('invalid');\n  return true;\n}\n";
+  const before = "export function validate(amount: number) {\n" + '  void amount;\n'.repeat(12) + "  if (amount <= 0) throw new Error('invalid');\n" + '  void amount;\n'.repeat(12) + "  return true;\n}\n";
   await writeFile(join(repo, 'file.ts'), before);
   await writeFile(join(repo, 'caller.ts'), "import { validate } from './file';\nconst invoke = validate;\ninvoke(-1);\n");
   git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
@@ -56,9 +56,9 @@ try {
   assert.equal(bundle.schemaVersion, 'review-bundle/v3'); assert.equal(bundle.summary.changedFiles, 1);
   await writeFile(join(temporary, 'context-policy.json'), JSON.stringify([{ ruleId: 'amount', kind: 'direct-callers', sides: ['old', 'new'] }]));
   await writeFile(join(temporary, 'rules.json'), JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'amount', title: 'Amount invariant', instruction: 'Check validation and actual callers.', scope: { paths: ['file.ts'] }, when: { changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'], within: 'validate' }] } }] }));
-  const ruleContext = JSON.parse(run(process.execPath, [cli, 'rule-context-bundle', '--repo', repo, '--base', base,
+  const ruleContext = JSON.parse(run(process.execPath, [cli, 'rule-context-bundle', '--repo', repo, '--base', base, '--rule-source', 'pinned',
     '--rules', join(temporary, 'rules.json'), '--context-policy', join(temporary, 'context-policy.json')], consumer, 'installed rule context bundle'));
-  assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 2);
+  assert.equal(ruleContext.bundle.schemaVersion, 'review-bundle/v4'); assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 2);
   assert.equal(ruleContext.bundle.contextExpansion.schemaVersion, 'caller-context/v2');
   for (const decision of ruleContext.bundle.contextExpansion.decisions) {
     assert.equal(decision.matches.length, 1); assert.equal(decision.matches[0].resolution.kind, 'local-const-alias');

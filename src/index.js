@@ -7,3 +7,4 @@ export { compileEvaluationDataset, evaluateReviewRuns, EvaluationError } from '.
 export { normalizeGitLabMergeRequest, fetchGitLabMergeRequest, createGitLabReviewBundle, assertGitLabSnapshotCurrent, GitLabError } from './gitlab.js';
 export { checkRuntime } from './runtime.js';
 export { createRuleContextBundle, RuleContextError } from './rule-context.js';
+export { RuleSourceError } from './source-rules.js';

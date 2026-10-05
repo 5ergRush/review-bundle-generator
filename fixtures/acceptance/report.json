@@ -162,6 +162,62 @@
       "falseSelections": [],
       "missedRules": [],
       "specificity": "passed"
+    },
+    {
+      "caseId": "long-teardown",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "teardown-invariant"
+      ],
+      "selectedRules": [
+        "teardown-invariant"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "patchBaselineExpectedRules": []
+    },
+    {
+      "caseId": "long-refresh-control",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "patchBaselineExpectedRules": []
+    },
+    {
+      "caseId": "long-loading",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "loading-state-invariant"
+      ],
+      "selectedRules": [
+        "loading-state-invariant"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "patchBaselineExpectedRules": []
+    },
+    {
+      "caseId": "long-reset-control",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "patchBaselineExpectedRules": []
     }
   ],
   "factsPassed": true,

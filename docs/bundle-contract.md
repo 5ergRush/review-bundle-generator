@@ -2,7 +2,7 @@
 
 Supplying `rulesYaml` now produces **review-bundle/v2**, adding the versioned [rule-selection section](rules-contract.md) and marking rule selection complete. All base change/evidence/fact/provenance semantics below are preserved. Without rules, v1 output is unchanged. Rule selection is instruction preparation, not completed review; overall coverage remains partial.
 
-The base contract compiles a **diff-only bundle**. Facts are observations about Git changes, not AI findings. Opt-in `semantic: true` through `createReviewBundle` produces **review-bundle/v3** with the [static TypeScript and caller-context contract](semantic-contract.md). Pure snapshot compilation retains v1/v2.
+The base contract compiles a **diff-only bundle**. Facts are observations about Git changes, not AI findings. Opt-in `semantic: true` through `createReviewBundle` produces **review-bundle/v3** with the [static TypeScript and caller-context contract](semantic-contract.md). Pure snapshot compilation retains v1/v2 by default. Explicit pinned source evidence and v3 rules produce [bundle v4](pinned-rule-evidence.md), with optional semantic/caller sections.
 
 ## Public APIs
 

@@ -78,3 +78,7 @@ callers are outside the static subset. Pass `.bundle` to `createReviewerRequest`
 not the outer envelope. The envelope preserves planning provenance for the operator;
 the existing reviewer validates the inner bundle. An imported envelope is not an
 authenticated planning claim, and no separate envelope-import validator is supplied.
+
+With `ruleSource: 'pinned'`, v3 syntax predicates select from full changed .ts sources
+and emit selection/v4 inside bundle/v4. The planner retains `sourceEvidenceId` and
+pinned AST origin alongside its patch anchor. See [pinned rule evidence](pinned-rule-evidence.md).

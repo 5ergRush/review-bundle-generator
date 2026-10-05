@@ -176,3 +176,11 @@ policy triggers, not proof the class is an Angular component, that OnPush applie
 that teardown is absent elsewhere, or that loading transitions are defective.
 Template bindings, framework metadata, equivalent cleanup and caller predicates
 remain outside this syntax subset. No rules are loaded from the analyzed checkout.
+
+## Pinned source selection
+
+V3 rule configurations can opt into `ruleSource: 'pinned'` / `--rule-source pinned`.
+This produces rule-selection/v4 inside bundle/v4 and verifies complete changed .ts
+source sides against their pinned blobs. Predicates/config IDs retain the v3 format.
+See [pinned rule evidence](pinned-rule-evidence.md) for source limits, patch/source
+anchors, parsing availability, default compatibility and packet recomputation.

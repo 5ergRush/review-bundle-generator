@@ -1,4 +1,5 @@
 import { observeChangedSyntax, SYNTAX_COMPILER_VERSION } from './changed-syntax.js';
+import { observePinnedSyntax, RULE_SOURCE_LIMITS } from './source-rules.js';
 import { createHash } from 'node:crypto';
 import { posix } from 'node:path';
 import { open } from 'node:fs/promises';
@@ -161,7 +162,7 @@ function globMatch(pattern, path, tick) {
 }
 
 // Internal input comes from the validated compiler, never arbitrary reviewer output.
-export function selectRules(config, changes, facts, evidence = []) {
+export function selectRules(config, changes, facts, evidence = [], ruleSource = 'patch') {
   let operations = 0;
   const tick = () => {
     if (++operations > MAX_OPERATIONS) throw new RuleError('SELECTION_LIMIT', 'Rule selection exceeded the deterministic operation budget; no partial selection returned.');
@@ -170,6 +171,7 @@ export function selectRules(config, changes, facts, evidence = []) {
   const decisions = [];
   const version2 = config.schemaVersion !== 'review-rules/v1';
   const version3 = config.schemaVersion === 'review-rules/v3';
+  const pinned = ruleSource === 'pinned';
   const syntaxCache = new Map();
   for (const rule of config.rules) {
     const matches = [], rejected = { status: 0, scope: 0, textUnavailable: 0, threshold: 0, ...(version2 ? { syntaxUnavailable: 0, syntaxNotMatched: 0 } : {}) };
@@ -195,7 +197,7 @@ export function selectRules(config, changes, facts, evidence = []) {
         (rule.when.minRemovedLines !== null && fact.value.removedLines < rule.when.minRemovedLines))) { rejected.threshold++; continue; }
       let syntaxMatches = [];
       if (version2 && rule.when.changedSyntax.length) {
-        if (!syntaxCache.has(change.id)) syntaxCache.set(change.id, observeChangedSyntax(change, evidence, tick, version3));
+        if (!syntaxCache.has(change.id)) syntaxCache.set(change.id, pinned ? observePinnedSyntax(change, evidence, tick) : observeChangedSyntax(change, evidence, tick, version3));
         const observed = syntaxCache.get(change.id);
         let withinUnavailable = false;
         syntaxMatches = rule.when.changedSyntax.map(predicate => observed.observations.filter(item => {
@@ -221,7 +223,9 @@ export function selectRules(config, changes, facts, evidence = []) {
         rejected.scope ? 'scope-not-matched' : 'status-not-matched';
     decisions.push({ ruleId: rule.id, status, reason, matches, rejected });
   }
-  return { schemaVersion: version3 ? 'rule-selection/v3' : version2 ? 'rule-selection/v2' : 'rule-selection/v1', configId: config.id, rules: config.rules,
+  return { schemaVersion: pinned ? 'rule-selection/v4' : version3 ? 'rule-selection/v3' : version2 ? 'rule-selection/v2' : 'rule-selection/v1', configId: config.id, rules: config.rules,
     policy: { paths: 'old-or-new-side', criteria: 'same-side-and', defaultEntryKinds: ['file'],
-      maxOperations: MAX_OPERATIONS, unavailableText: 'skip-with-reason', ...(version2 ? { syntax: 'bounded-typescript-patch-context', compilerVersion: SYNTAX_COMPILER_VERSION, comparison: version3 ? 'token-and-enclosing-name-multiset-within-hunk' : 'token-multiset-within-hunk', identifierBinding: 'spelling-only', calleeResolution: 'literal-property-chain', ...(version3 ? { memberReceiver: 'literal-this', enclosingScope: 'nearest-named-function-like', assignments: 'simple-equals-literal-this-target' } : {}), syntaxConditions: 'all-predicates-same-change', unavailableSyntax: 'skip-with-reason', maxHunkBytesPerSide: 128 * 1024, maxTokensAndNodesPerHunkSide: 25000 } : {}) }, decisions };
+      maxOperations: MAX_OPERATIONS, unavailableText: 'skip-with-reason', ...(version2 ? { syntax: pinned ? 'pinned-changed-typescript-sources' : 'bounded-typescript-patch-context', compilerVersion: SYNTAX_COMPILER_VERSION, comparison: pinned ? 'token-and-qualified-parent-multiset-within-hunk' : version3 ? 'token-and-enclosing-name-multiset-within-hunk' : 'token-multiset-within-hunk', identifierBinding: 'spelling-only', calleeResolution: 'literal-property-chain', ...(version3 ? { memberReceiver: 'literal-this', enclosingScope: 'nearest-named-function-like', assignments: 'simple-equals-literal-this-target' } : {}), syntaxConditions: 'all-predicates-same-change', unavailableSyntax: 'skip-with-reason', ...(pinned ? { ruleSources: RULE_SOURCE_LIMITS } : { maxHunkBytesPerSide: 128 * 1024, maxTokensAndNodesPerHunkSide: 25000 }) } : {}) }, decisions,
+    ...(pinned ? { sourceCoverage: [...syntaxCache].map(([changeId, value]) => ({ changeId, available: value.available, reason: value.reason,
+      sourceEvidenceIds: evidence.filter(item => item.type === 'typescript-rule-source' && item.changeId === changeId).map(item => item.id) })).sort((a, b) => compare(a.changeId, b.changeId)) } : {}) };
 }

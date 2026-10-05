@@ -169,3 +169,8 @@ Caller context also resolves bounded local const identifier copies to named func
 The packet includes both call and alias-binding evidence under the shared source
 budget. Mutable and complex function-value flow remain unsupported; see
 [the semantic contract](docs/semantic-contract.md).
+
+Use `--rule-source pinned` with v3 rules to recover enclosing-method context from
+complete pinned changed TypeScript files, even when a diff hunk omits the header.
+This opt-in produces bundle/selection v4 with blob-verified source evidence; semantic
+analysis remains optional. See [the pinned rule evidence contract](docs/pinned-rule-evidence.md).

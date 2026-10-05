@@ -184,5 +184,65 @@
       "-    this.loading = true;"
     ],
     "expectedRules": []
+  },
+  {
+    "id": "long-teardown",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  ngOnDestroy() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    this.subscription.unsubscribe();\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "after": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  ngOnDestroy() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [
+      "teardown-invariant"
+    ],
+    "ruleSource": "pinned",
+    "patchBaselineExpectedRules": []
+  },
+  {
+    "id": "long-refresh-control",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  refresh() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    this.subscription.unsubscribe();\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "after": "export class Screen {\n  subscription!: { unsubscribe(): void };\n  refresh() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "patchBaselineExpectedRules": []
+  },
+  {
+    "id": "long-loading",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  loading = false;\n  load() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    this.loading = true;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "after": "export class Screen {\n  loading = false;\n  load() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.loading = true;"
+    ],
+    "expectedRules": [
+      "loading-state-invariant"
+    ],
+    "ruleSource": "pinned",
+    "patchBaselineExpectedRules": []
+  },
+  {
+    "id": "long-reset-control",
+    "path": "src/screen.ts",
+    "before": "export class Screen {\n  loading = false;\n  reset() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    this.loading = true;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "after": "export class Screen {\n  loading = false;\n  reset() {\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n    void this;\n  }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-    this.loading = true;"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "patchBaselineExpectedRules": []
   }
 ]

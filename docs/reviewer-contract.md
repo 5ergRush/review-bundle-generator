@@ -161,3 +161,8 @@ Current caller context is caller-context/v2, with direct-symbol/immutable-local-
 resolution and bounded binding evidence. Legacy caller-context/v1 imports remain
 accepted. Both call and alias-binding omissions affect partial coverage. See
 [the semantic contract](semantic-contract.md) for provenance checks and supported flow.
+
+Bundle v4 adds complete bounded `typescript-rule-source` evidence and rule-selection/v4.
+Packet creation checks blob identities and recomputes selection from patches and full
+changed sources; semantic sections remain optional. Source findings may cite these
+files within the matched change. See [pinned rule evidence](pinned-rule-evidence.md).
