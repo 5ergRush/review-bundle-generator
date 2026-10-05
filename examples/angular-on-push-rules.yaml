@@ -1,0 +1,18 @@
+schemaVersion: review-rules/v5
+rules:
+  - id: on-push-loading
+    title: Review changed loading state in an explicit OnPush component
+    instruction: >-
+      Check the loading-state transition and its consumers. Verify whether a
+      notification path is needed and whether existing signals, subscriptions
+      or template events provide it. A changed assignment is not defect proof.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: assignment
+          target: this.loading
+          within: load
+          angularComponent: true
+          changeDetection: OnPush

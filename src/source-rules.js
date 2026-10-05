@@ -70,12 +70,12 @@ function shape(node) {
   return kind ? { kind, condition, callee, ...(target ? { target } : {}) } : null;
 }
 
-function parseSource(record, tick, qualifyComponent) {
+function parseSource(record, tick, qualifyComponent, qualifyChangeDetection) {
   const text = record?.content ?? ''; let file;
   try { file = ts.createSourceFile(record?.origin.path ?? 'absent.ts', text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS); }
   catch { return null; }
   if (file.parseDiagnostics.length) return null;
-  const classes = qualifyComponent && record ? discoverAngularComponents(record, tick).classes : [];
+  const classes = qualifyComponent && record ? discoverAngularComponents(record, tick, qualifyChangeDetection).classes : [];
   const point = offset => { const value = file.getLineAndCharacterOfPosition(offset); return { line: value.line + 1, column: value.character + 1 }; };
   const classContexts = new Map(classes.map(item => [JSON.stringify([item.classOrigin.start, item.classOrigin.end]), item]));
   const tokens = []; const pending = [file]; let count = 0;
@@ -107,24 +107,26 @@ function parseSource(record, tick, qualifyComponent) {
       const component = relation?.component?.decorator ? relation.component : null;
       const unavailable = nearestClass && (!relation || ['ambiguous-component-decorator', 'named-component-class-unavailable'].includes(relation.reason));
       angularComponentContext = { status: component ? 'included' : unavailable ? 'unavailable' : 'not-component',
-        reason: component ? 'bound-component-decorator' : unavailable ? relation?.reason ?? 'class-context-unavailable' : nearestClass ? 'nearest-class-not-bound-component' : 'not-in-class', component };
+        reason: component ? 'bound-component-decorator' : unavailable ? relation?.reason ?? 'class-context-unavailable' : nearestClass ? 'nearest-class-not-bound-component' : 'not-in-class', component,
+        ...(qualifyChangeDetection ? { changeDetection: relation?.changeDetectionContext ?? { status: 'unavailable', reason: 'component-not-qualified', strategy: null, metadataOrigin: null, binding: null } } : {}) };
     }
     nodes.push({ kind: value.kind, callee: value.callee, ...(value.target ? { target: value.target } : {}), identifiers: [...identifiers].sort(),
       ...(qualifyComponent ? { angularComponentContext } : {}),
       within, withinLine: withinLine === -1 ? null : withinLine, startLine: first.line + 1, endLine: last.line + 1,
       origin: record ? { ...record.origin, start: { line: first.line + 1, column: first.character + 1 }, end: { line: exclusive.line + 1, column: exclusive.character + 1 } } : null,
-      included, fingerprint: JSON.stringify([scope, included.map(token => token.value), ...(qualifyComponent ? [angularComponentContext.status] : [])]) });
+      included, fingerprint: JSON.stringify([scope, included.map(token => token.value), ...(qualifyComponent ? [angularComponentContext.status] : []),
+        ...(qualifyChangeDetection ? [angularComponentContext.changeDetection.status] : [])]) });
   }
   return { file, nodes };
 }
 
-export function observePinnedSyntax(change, evidence, tick, qualifyComponent = false) {
+export function observePinnedSyntax(change, evidence, tick, qualifyComponent = false, qualifyChangeDetection = false) {
   if (!eligible(change)) return { available: false, reason: 'not-applicable', observations: [] };
   const sources = ['old', 'new'].map(side => evidence.find(item => item.type === 'typescript-rule-source' && item.changeId === change.id && item.side === side));
   if (sources.some((source, index) => !source && change[index === 0 ? 'oldPath' : 'newPath'] !== null)) return { available: false, reason: 'source-unavailable', observations: [] };
   if (sources.some(source => /[\u2028\u2029]|\r(?!\n)/u.test(source?.content ?? ''))) return { available: false, reason: 'unsupported-line-separators', observations: [] };
   const sourceLines = sources.map(source => source?.content.split('\n') ?? []);
-  const parsed = sources.map(source => parseSource(source, tick, qualifyComponent));
+  const parsed = sources.map(source => parseSource(source, tick, qualifyComponent, qualifyChangeDetection));
   if (parsed.some(item => item === null)) return { available: false, reason: 'parse-unavailable', observations: [] };
   const observations = [];
   for (const patchId of change.evidenceIds) {

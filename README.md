@@ -190,3 +190,5 @@ analysis remains optional. See [the pinned rule evidence contract](docs/pinned-r
 Offline acceptance v2 can assert exact configured template owner sets and revision-specific class ranges; see [the expectations contract](docs/offline-acceptance.md#configured-template-owner-expectations).
 
 Pinned review-rules/v4 adds same-revision bound Angular component qualification and rule-selection/v5; see [the component predicate contract](docs/rules-contract.md#bound-component-qualification-review-rulesv4). Existing v1–v3 rule behavior is preserved.
+
+Pinned rules v5 can require an explicit bound OnPush reference and retain successful/failed qualification checks in rule-selection/v6; see [the strategy contract](docs/rules-contract.md#explicit-onpush-metadata-review-rulesv5).

@@ -50,7 +50,7 @@ try {
   const before = "export function validate(amount: number) {\n" + '  void amount;\n'.repeat(12) + "  if (amount <= 0) throw new Error('invalid');\n" + '  void amount;\n'.repeat(12) + "  return true;\n}\n";
   await writeFile(join(repo, 'file.ts'), before);
   await writeFile(join(repo, 'caller.ts'), "import { validate } from './file';\nconst invoke = validate;\ninvoke(-1);\n");
-  const componentBefore = "import { Component as View } from '@angular/core';\n@View({templateUrl: './consumer.view'})\nexport class Panel {\n  loading = false;\n  load() {\n    this.loading = true;\n  }\n}\n";
+  const componentBefore = "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({templateUrl: './consumer.view', changeDetection: Strategy.OnPush})\nexport class Panel {\n  loading = false;\n  load() {\n    this.loading = true;\n  }\n}\n";
   await writeFile(join(repo, 'component.ts'), componentBefore);
   await writeFile(join(repo, 'consumer.view'), '<button [disabled]="loading">Load</button>\n');
   git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
@@ -99,6 +99,15 @@ try {
   await writeFile(join(temporary, 'qualified.json'), JSON.stringify(qualified));
   const qualifiedPacket = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'qualified.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed component provenance packet'));
   assert.equal(qualifiedPacket.selectedRules.length, 2);
+  componentRules.schemaVersion = 'review-rules/v5'; componentRules.rules.find(rule => rule.id === 'loading').when.changedSyntax[0].changeDetection = 'OnPush';
+  await writeFile(join(temporary, 'on-push-rules.json'), JSON.stringify(componentRules));
+  const onPush = JSON.parse(run(process.execPath, [cli, 'bundle', '--repo', repo, '--base', base, '--rules', join(temporary, 'on-push-rules.json'), '--rule-source', 'pinned'], consumer, 'installed explicit OnPush selection'));
+  assert.equal(onPush.ruleSelection.schemaVersion, 'rule-selection/v6');
+  const pushLoading = onPush.ruleSelection.decisions.find(decision => decision.ruleId === 'loading'); assert.equal(pushLoading.status, 'matched');
+  assert.equal(pushLoading.matches[0].syntaxMatches[0][0].angularComponentContext.changeDetection.strategy, 'OnPush');
+  await writeFile(join(temporary, 'on-push.json'), JSON.stringify(onPush));
+  const pushPacket = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'on-push.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed OnPush provenance packet'));
+  assert.equal(pushPacket.selectedRules.length, 2);
   // HTML-only increment: the component is unchanged across this separate range.
   const templateBase = git('rev-parse', 'HEAD');
   await writeFile(join(repo, 'consumer.view'), '<button [disabled]="loading" (click)="load()">New</button>\n');

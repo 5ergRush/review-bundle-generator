@@ -84,3 +84,5 @@ These checks verify facts/context/rule relevance; reviewer improvement is unmeas
 Angular template opt-in can extend this inner bundle to v5 without changing selection v4. See [Angular template context](angular-template-context.md) for explicit metadata ownership and template provenance.
 
 Pinned review-rules/v4 adds same-revision bound Angular component qualification and rule-selection/v5; see [the component predicate contract](rules-contract.md#bound-component-qualification-review-rulesv4). Existing v1–v3 rule behavior is preserved.
+
+Pinned rules v5 can require an explicit bound OnPush reference and retain successful/failed qualification checks in rule-selection/v6; see [the strategy contract](rules-contract.md#explicit-onpush-metadata-review-rulesv5).

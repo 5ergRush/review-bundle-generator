@@ -156,3 +156,120 @@ test('CLI supports pinned v4 and rejects implicit patch mode', async t => {
   const good = run(['--rule-source', 'pinned']); assert.equal(good.status, 0); assert.equal(JSON.parse(good.stdout).ruleSelection.schemaVersion, 'rule-selection/v5');
   const bad = run([]); assert.equal(bad.status, 1); assert.equal(bad.stdout, '');
 });
+
+const pushPredicate = { ...predicate, changeDetection: 'OnPush' };
+const pushYaml = (predicates = [pushPredicate]) => yaml(predicates, 'review-rules/v5');
+const pushSource = (strategy = 'Strategy.OnPush', imports = "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';", metadata = `changeDetection: ${strategy}`) => source(imports, `@View({${metadata}})`);
+const pushDecision = b => selected(b).matches[0].syntaxMatches[0][0].angularComponentContext.changeDetection;
+
+test('v5 accepts only OnPush qualification requiring a component and preserves older schemas', () => {
+  assert.equal(parseRulesYaml(pushYaml()).schemaVersion, 'review-rules/v5');
+  for (const value of ['Default', 'on-push', null, true, 0]) assert.throws(() => parseRulesYaml(pushYaml([{ ...pushPredicate, changeDetection: value }])), { code: 'INVALID_RULES' });
+  const noComponent = { ...pushPredicate }; delete noComponent.angularComponent;
+  assert.throws(() => parseRulesYaml(pushYaml([noComponent])), { code: 'INVALID_RULES' });
+  assert.throws(() => parseRulesYaml(yaml([pushPredicate])), { code: 'INVALID_RULES' });
+  assert.deepEqual(parseRulesYaml(pushYaml([pushPredicate, pushPredicate])), parseRulesYaml(pushYaml()));
+});
+
+for (const [name, before] of [
+  ['aliased runtime enum', pushSource()],
+  ['namespace runtime enum', pushSource('ng.ChangeDetectionStrategy.OnPush', "import * as ng from '@angular/core';", 'changeDetection: ng.ChangeDetectionStrategy.OnPush').replace('@View', '@ng.Component')],
+  ['quoted metadata property', pushSource(undefined, undefined, '"changeDetection": Strategy.OnPush')],
+]) test(`${name} qualifies explicit OnPush with source-backed enum provenance`, async t => {
+  const f = await fixture(t, before); const b = await createReviewBundle({ ...f.options, rulesYaml: pushYaml() });
+  assert.equal(b.ruleSelection.schemaVersion, 'rule-selection/v6'); assert.equal(selected(b).status, 'matched');
+  const context = pushDecision(b); assert.equal(context.status, 'included'); assert.equal(context.strategy, 'OnPush');
+  assert.equal(context.binding.origin.commit, f.options.base); assert.equal(context.binding.origin.start.line, 1); assert.equal(context.metadataOrigin.start.line, 2);
+  assert.equal(context.binding.origin.object, context.metadataOrigin.object); createReviewerRequest(b, identity);
+});
+
+for (const [name, before] of [
+  ['explicit Default', pushSource('Strategy.Default')],
+  ['absent strategy', pushSource(undefined, undefined, 'selector: "panel"')],
+]) test(`${name} is a known non-match without assuming a runtime default`, async t => {
+  const f = await fixture(t, before); const b = await createReviewBundle({ ...f.options, rulesYaml: pushYaml() });
+  assert.equal(selected(b).reason, 'changed-syntax-not-matched'); assert.equal(b.ruleSelection.sourceCoverage[0].available, true); createReviewerRequest(b, identity);
+  assert.equal(selected(b).qualificationChecks[0].status, 'not-matched');
+  assert.equal(selected(b).qualificationChecks[0].reason, name === 'explicit Default' ? 'bound-change-detection-strategy' : 'no-explicit-change-detection');
+  const unqualified = await createReviewBundle({ ...f.options, rulesYaml: pushYaml([predicate]) });
+  assert.equal(selected(unqualified).status, 'matched'); assert.equal(pushDecision(unqualified).status, 'not-matched');
+  assert.equal(pushDecision(unqualified).strategy, name === 'explicit Default' ? 'Default' : null);
+});
+
+for (const [name, before] of [
+  ['numeric enum value', pushSource('0')],
+  ['dynamic function value', pushSource('resolveStrategy()')],
+  ['local const enum copy', pushSource('Copy.OnPush', "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\nconst Copy = Strategy;")],
+  ['type-only enum import', pushSource(undefined, "import { Component as View, type ChangeDetectionStrategy as Strategy } from '@angular/core';")],
+  ['custom enum import', pushSource(undefined, "import { Component as View } from '@angular/core';\nimport { ChangeDetectionStrategy as Strategy } from './custom';")],
+  ['shadowed enum parameter', "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\nfunction wrap(Strategy: any) {\n" + pushSource(undefined, '').replace('export class', 'class') + '}\n'],
+  ['metadata spread before the property', pushSource(undefined, undefined, '...metadata, changeDetection: Strategy.OnPush')],
+  ['metadata spread after the property', pushSource(undefined, undefined, 'changeDetection: Strategy.OnPush, ...metadata')],
+  ['duplicate strategy', pushSource(undefined, undefined, 'changeDetection: Strategy.Default, changeDetection: Strategy.OnPush')],
+  ['computed property', pushSource(undefined, undefined, "['changeDetection']: Strategy.OnPush")],
+  ['unknown enum member', pushSource('Strategy.Other')],
+  ['computed enum member', pushSource("Strategy['OnPush']")],
+  ['nonliteral component metadata', source(undefined, '@View(metadata)')],
+]) test(`${name} cannot establish explicit OnPush`, async t => {
+  const f = await fixture(t, before); const b = await createReviewBundle({ ...f.options, rulesYaml: pushYaml() });
+  assert.equal(selected(b).reason, 'syntax-evidence-unavailable'); createReviewerRequest(b, identity);
+  assert.equal(selected(b).qualificationChecks[0].status, 'unavailable'); assert(selected(b).qualificationChecks[0].reason.length > 0);
+  const plain = await createReviewBundle({ ...f.options, rulesYaml: pushYaml([predicate]) });
+  assert.equal(selected(plain).status, 'matched'); assert.equal(pushDecision(plain).status, 'unavailable');
+});
+
+test('OnPush qualification uses only the changed source side and untouched metadata edits do not select', async t => {
+  const before = pushSource(), after = pushSource('Strategy.Default').replace('this.subscription.unsubscribe();', 'this.subscription.unsubscribe(); this.subscription.unsubscribe();');
+  const f = await fixture(t, before, after);
+  const added = await createReviewBundle({ ...f.options, rulesYaml: pushYaml([{ ...pushPredicate, side: 'added' }]) }); assert.equal(selected(added).status, 'skipped');
+  const removed = await fixture(t, before, remove(before).replace('Strategy.OnPush', 'Strategy.Default'));
+  assert.equal(pushDecision(await createReviewBundle({ ...removed.options, rulesYaml: pushYaml() })).strategy, 'OnPush');
+  const untouched = await fixture(t, before, before.replace('Strategy.OnPush', 'Strategy.Default'));
+  assert.equal(selected(await createReviewBundle({ ...untouched.options, rulesYaml: pushYaml() })).status, 'skipped');
+});
+
+test('same-named component moves retain explicit OnPush versus Default status', async t => {
+  const before = "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n{\n@View({changeDetection: Strategy.OnPush})\nclass Panel { ngOnDestroy() {\n this.subscription.unsubscribe();\n} }\n}\n{\n@View({changeDetection: Strategy.Default})\nclass Panel { ngOnDestroy() {\n} }\n}\n";
+  const after = before.replace(' this.subscription.unsubscribe();\n', '').replace('@View({changeDetection: Strategy.Default})\nclass Panel { ngOnDestroy() {\n', '@View({changeDetection: Strategy.Default})\nclass Panel { ngOnDestroy() {\n this.subscription.unsubscribe();\n');
+  const f = await fixture(t, before, after); const b = await createReviewBundle({ ...f.options, rulesYaml: pushYaml() });
+  assert.equal(selected(b).status, 'matched'); assert.equal(pushDecision(b).strategy, 'OnPush'); createReviewerRequest(b, identity);
+});
+
+test('OnPush metadata and enum binding claims are recomputed after rehashing forgeries', async t => {
+  const f = await fixture(t, pushSource()); const b = await createReviewBundle({ ...f.options, rulesYaml: pushYaml() });
+  for (const mutate of [c => c.strategy = 'Default', c => c.metadataOrigin.start.line++, c => c.binding.origin.commit = 'a'.repeat(40), c => c.binding.localName = 'Other', c => c.status = 'unavailable']) {
+    const forged = clone(b); mutate(pushDecision(forged)); const { id, ...payload } = forged; forged.id = 'bundle:' + createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+    assert.throws(() => createReviewerRequest(forged, identity), { code: 'INVALID_REVIEW_BUNDLE' });
+  }
+  const forged = clone(b); selected(forged).qualificationChecks[0].reason = 'invented';
+  const { id, ...payload } = forged; forged.id = 'bundle:' + createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+  assert.throws(() => createReviewerRequest(forged, identity), { code: 'INVALID_REVIEW_BUNDLE' });
+});
+
+test('OnPush qualification integrates with template/owner/caller contexts and offline relevance expectations', async t => {
+  const before = pushSource(undefined, undefined, "changeDetection: Strategy.OnPush, template: '{{loading}}'"); const f = await fixture(t, before);
+  const options = { ...f.options, rulesYaml: pushYaml(), angularTemplates: true, angularBindings: true, angularOwnerPaths: ['target.ts'] };
+  const b = await createReviewBundle(options); assert.equal(b.schemaVersion, 'review-bundle/v7'); createReviewerRequest(b, identity);
+  const callers = await createRuleContextBundle({ ...options, contextPolicy: [{ ruleId: 'teardown', kind: 'direct-callers', sides: ['old', 'new'] }] });
+  assert.equal(callers.contextPlan.requests.length, 2); createReviewerRequest(callers.bundle, identity);
+  const expected = { schemaVersion: 'review-acceptance-expectations/v1', caseId: 'explicit-on-push', cohort: 'development', provenance: { kind: 'synthetic', author: 'contract-test', revision: '1' },
+    revisions: b.provenance.revisions, ruleConfigId: parseRulesYaml(pushYaml()).id, ruleSource: 'pinned', changes: [{ status: 'M', oldPath: 'target.ts', newPath: 'target.ts', oldKind: 'file', newKind: 'file', coverage: 'text-diff',
+      addedLines: 0, removedLines: 1, selectedRuleIds: ['teardown'], requiredPatchLines: ['-  this.subscription.unsubscribe();'], sourceCoverage: { available: true, reason: 'parsed-pinned-sources' } }] };
+  assert.equal(auditReviewBundle(b, expected).passed, true);
+});
+
+test('CLI and compilation require pinned v5 rule sources', async t => {
+  const f = await fixture(t, pushSource()); const rulePath = join(f.repo, 'rules.json'); await writeFile(rulePath, pushYaml());
+  const args = [resolve('src/cli.js'), 'bundle', '--repo', f.repo, '--base', f.options.base, '--head', f.options.head, '--rules', rulePath];
+  const good = spawnSync(process.execPath, [...args, '--rule-source', 'pinned'], { encoding: 'utf8', timeout: 20000 }); assert.equal(good.status, 0); assert.equal(JSON.parse(good.stdout).ruleSelection.schemaVersion, 'rule-selection/v6');
+  const bad = spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 20000 }); assert.equal(bad.status, 1); assert.equal(bad.stdout, '');
+  const snapshot = await ingestGitDiff({ repo: f.repo, base: f.options.base, head: f.options.head, comparison: 'direct' });
+  assert.throws(() => compileReviewBundle(snapshot, { rulesYaml: pushYaml() }), { code: 'INVALID_INPUT' });
+});
+
+test('change-detection qualification records enforce a shared bound without partial output', async t => {
+  const before = pushSource().replace('  this.subscription.unsubscribe();\n', '  this.subscription.unsubscribe();\n'.repeat(80));
+  const after = before.replaceAll('  this.subscription.unsubscribe();\n', ''); const f = await fixture(t, before, after);
+  const config = JSON.parse(pushYaml()); config.rules = Array.from({ length: 128 }, (_, index) => ({ ...config.rules[0], id: `rule-${index}` }));
+  await assert.rejects(createReviewBundle({ ...f.options, rulesYaml: JSON.stringify(config), maxBundleBytes: 64 * 1024 * 1024 }), { code: 'SELECTION_LIMIT' });
+});
