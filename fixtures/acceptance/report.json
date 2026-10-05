@@ -298,6 +298,160 @@
       "specificity": "passed",
       "ruleSource": "pinned",
       "ruleSchemaVersion": "review-rules/v4"
+    },
+    {
+      "caseId": "on-push-explicit",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [
+        "on-push-loading"
+      ],
+      "selectedRules": [
+        "on-push-loading"
+      ],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v5",
+      "expectedQualification": [
+        {
+          "status": "included",
+          "reason": "bound-change-detection-strategy"
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "status": "included",
+          "reason": "bound-change-detection-strategy"
+        }
+      ],
+      "qualificationPassed": true
+    },
+    {
+      "caseId": "on-push-default",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v5",
+      "expectedQualification": [
+        {
+          "status": "not-matched",
+          "reason": "bound-change-detection-strategy"
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "status": "not-matched",
+          "reason": "bound-change-detection-strategy"
+        }
+      ],
+      "qualificationPassed": true
+    },
+    {
+      "caseId": "on-push-absent",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v5",
+      "expectedQualification": [
+        {
+          "status": "not-matched",
+          "reason": "no-explicit-change-detection"
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "status": "not-matched",
+          "reason": "no-explicit-change-detection"
+        }
+      ],
+      "qualificationPassed": true
+    },
+    {
+      "caseId": "on-push-numeric",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v5",
+      "expectedQualification": [
+        {
+          "status": "unavailable",
+          "reason": "nonliteral-change-detection-reference"
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "status": "unavailable",
+          "reason": "nonliteral-change-detection-reference"
+        }
+      ],
+      "qualificationPassed": true
+    },
+    {
+      "caseId": "on-push-dynamic",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v5",
+      "expectedQualification": [
+        {
+          "status": "unavailable",
+          "reason": "nonliteral-change-detection-reference"
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "status": "unavailable",
+          "reason": "nonliteral-change-detection-reference"
+        }
+      ],
+      "qualificationPassed": true
+    },
+    {
+      "caseId": "on-push-spread",
+      "facts": "passed",
+      "packetIntegrity": "passed",
+      "expectedRules": [],
+      "selectedRules": [],
+      "falseSelections": [],
+      "missedRules": [],
+      "specificity": "passed",
+      "ruleSource": "pinned",
+      "ruleSchemaVersion": "review-rules/v5",
+      "expectedQualification": [
+        {
+          "status": "unavailable",
+          "reason": "unsupported-component-metadata-properties"
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "status": "unavailable",
+          "reason": "unsupported-component-metadata-properties"
+        }
+      ],
+      "qualificationPassed": true
     }
   ],
   "factsPassed": true,

@@ -158,8 +158,8 @@ export function compileReviewBundle(input, options = {}) {
   }
   const ruleConfig = options.rulesYaml === undefined ? null : parseRulesYaml(options.rulesYaml);
   const ruleSource = options.ruleSource ?? 'patch';
-  if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && !['review-rules/v3', 'review-rules/v4'].includes(ruleConfig?.schemaVersion)) ||
-    (ruleSource !== 'pinned' && (options.ruleSourceEvidence !== undefined || ruleConfig?.schemaVersion === 'review-rules/v4'))) throw new BundleError('INVALID_INPUT', 'Pinned ruleSource requires v3/v4 rules and explicit source evidence; source evidence is forbidden in patch mode.');
+  if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && !['review-rules/v3', 'review-rules/v4', 'review-rules/v5'].includes(ruleConfig?.schemaVersion)) ||
+    (ruleSource !== 'pinned' && (options.ruleSourceEvidence !== undefined || ['review-rules/v4', 'review-rules/v5'].includes(ruleConfig?.schemaVersion)))) throw new BundleError('INVALID_INPUT', 'Pinned ruleSource requires v3/v4/v5 rules and explicit source evidence; source evidence is forbidden in patch mode.');
   const snapshot = normalizeSnapshot(input);
   const sections = splitPatches(snapshot);
   const changes = [], evidence = [], facts = [];
@@ -215,10 +215,11 @@ export function compileReviewBundle(input, options = {}) {
         'Semantic analysis and adaptive context have not run; selected rules have not been reviewed.'])].sort(compare) },
   };
   if (ruleSource === 'pinned') payload.coverage.limitations.push('Pinned rule evidence contains complete changed regular .ts source sides within explicit file/byte/AST/operation bounds. Rule observations still require actual edited tokens or enclosing named-function edits. Parsing/scope failures are explicit; ' +
-    (ruleConfig?.schemaVersion === 'review-rules/v4' ? 'Only directly imported runtime Angular Component decorator bindings qualify the nearest class; no template or runtime correctness is inferred.' : 'no binding, Angular template or runtime correctness is inferred.'));
-  if (ruleConfig?.schemaVersion === 'review-rules/v4') {
+    (['review-rules/v4', 'review-rules/v5'].includes(ruleConfig?.schemaVersion) ? 'Only directly imported runtime Angular Component decorator bindings qualify the nearest class; no template or runtime correctness is inferred.' : 'no binding, Angular template or runtime correctness is inferred.'));
+  if (['review-rules/v4', 'review-rules/v5'].includes(ruleConfig?.schemaVersion)) {
     payload.coverage.limitations.push('Component-qualified rules check same-source-side lexical class ownership and a unique direct @angular/core Component decorator import. Metadata is not evaluated, imported wrappers/barrels and inherited decorators are unsupported, and this does not establish lifecycle or receiver semantics.');
   }
+  if (ruleConfig?.schemaVersion === 'review-rules/v5') payload.coverage.limitations.push('OnPush-qualified syntax requires an explicit literal changeDetection property whose OnPush member resolves through a direct runtime ChangeDetectionStrategy import from @angular/core. Absent/Default metadata is not an explicit OnPush match; dynamic, spread, ambiguous or unbound metadata is unavailable. No default strategy, actual change detection or receiver/runtime behavior is inferred.');
   const bundle = { id: `bundle:${hash(payload)}`, ...payload };
   if (Buffer.byteLength(JSON.stringify(bundle)) > maxBundleBytes) {
     throw new BundleError('BUNDLE_LIMIT', `Serialized bundle exceeds maxBundleBytes (${maxBundleBytes}); no partial bundle returned.`);
@@ -233,8 +234,8 @@ export async function createReviewBundle(options) {
     throw new SemanticError('INVALID_INPUT', 'Context requests require semantic: true; semantic must be boolean.');
   }
   const ruleVersion = rulesYaml === undefined ? null : parseRulesYaml(rulesYaml).schemaVersion;
-  if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && !['review-rules/v3', 'review-rules/v4'].includes(ruleVersion))) throw new BundleError('INVALID_INPUT', 'ruleSource must be patch or pinned; pinned mode requires review-rules/v3 or v4.');
-  if (ruleVersion === 'review-rules/v4' && ruleSource !== 'pinned') throw new BundleError('INVALID_INPUT', 'Review rules v4 require pinned rule source.');
+  if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && !['review-rules/v3', 'review-rules/v4', 'review-rules/v5'].includes(ruleVersion))) throw new BundleError('INVALID_INPUT', 'ruleSource must be patch or pinned; pinned mode requires review-rules/v3, v4 or v5.');
+  if (['review-rules/v4', 'review-rules/v5'].includes(ruleVersion) && ruleSource !== 'pinned') throw new BundleError('INVALID_INPUT', 'Review rules v4/v5 require pinned rule source.');
   if (typeof angularTemplates !== 'boolean' || (angularTemplates && ruleSource !== 'pinned')) throw new BundleError('INVALID_INPUT', 'angularTemplates must be boolean and requires pinned rule source.');
   if (typeof angularBindings !== 'boolean' || (angularBindings && !angularTemplates)) throw new BundleError('INVALID_INPUT', 'angularBindings must be boolean and requires angularTemplates: true.');
   if (angularOwnerPaths !== undefined) {

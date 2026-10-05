@@ -32,16 +32,16 @@ function origin(source, file, node) {
   const start = file.getLineAndCharacterOfPosition(node.getStart(file)); const end = file.getLineAndCharacterOfPosition(node.end);
   return { ...source.origin, start: { line: start.line + 1, column: start.character + 1 }, end: { line: end.line + 1, column: end.character + 1 } };
 }
-function componentImport(expression, checker, source, file) {
-  const namespace = ts.isPropertyAccessExpression(expression) && expression.name.text === 'Component' && ts.isIdentifier(expression.expression);
+function angularImport(expression, checker, source, file, importedName) {
+  const namespace = ts.isPropertyAccessExpression(expression) && expression.name.text === importedName && ts.isIdentifier(expression.expression);
   const target = namespace ? expression.expression : ts.isIdentifier(expression) ? expression : null;
   const declarations = target && checker.getSymbolAtLocation(target)?.declarations;
   if (!declarations || declarations.length !== 1) return null;
   const declaration = declarations[0]; let clause; let imported;
-  if (namespace && ts.isNamespaceImport(declaration)) { clause = declaration.parent; imported = 'Component'; }
+  if (namespace && ts.isNamespaceImport(declaration)) { clause = declaration.parent; imported = importedName; }
   else if (!namespace && ts.isImportSpecifier(declaration) && !declaration.isTypeOnly) { clause = declaration.parent.parent; imported = (declaration.propertyName ?? declaration.name).text; }
   const statement = clause?.parent;
-  if (imported !== 'Component' || clause.isTypeOnly || !ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier) || statement.moduleSpecifier.text !== '@angular/core') return null;
+  if (imported !== importedName || clause.isTypeOnly || !ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier) || statement.moduleSpecifier.text !== '@angular/core') return null;
   return { localName: target.text, kind: namespace ? 'namespace-import' : 'named-import', origin: origin(source, file, declaration) };
 }
 function templateFor(source, parsed, anchor, tick) {
@@ -59,7 +59,7 @@ function relationForOwner(source, parsed, owner, tick) {
   const component = { name: owner.name.text, origin: origin(source, file, owner) };
   const decorators = (ts.getDecorators(owner) ?? []).flatMap(decorator => {
     tick(); if (!ts.isCallExpression(decorator.expression)) return [];
-    const binding = componentImport(decorator.expression.expression, checker, source, file);
+    const binding = angularImport(decorator.expression.expression, checker, source, file, 'Component');
     return binding ? [{ decorator, binding }] : [];
   });
   if (decorators.length !== 1) return { component, reason: decorators.length ? 'ambiguous-component-decorator' : 'component-import-binding-unavailable' };
@@ -83,12 +83,37 @@ function relationForOwner(source, parsed, owner, tick) {
   template.path = path; template.commit = source.origin.commit; return { component, template };
 }
 
+function changeDetectionForOwner(source, parsed, owner, relation, tick) {
+  const result = (status, reason, strategy = null, metadataOrigin = null, binding = null) => ({ status, reason, strategy, metadataOrigin, binding });
+  if (!relation.component?.decorator) return result('unavailable', 'component-not-qualified');
+  const { file, checker } = parsed;
+  const decorator = (ts.getDecorators(owner) ?? []).find(item => { tick(); return ts.isCallExpression(item.expression) && angularImport(item.expression.expression, checker, source, file, 'Component'); });
+  const args = decorator.expression.arguments;
+  if (args.length !== 1 || !ts.isObjectLiteralExpression(args[0])) return result('unavailable', 'nonliteral-component-metadata');
+  const properties = new Map();
+  for (const property of args[0].properties) {
+    tick(); if (!ts.isPropertyAssignment(property) || !(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name))) return result('unavailable', 'unsupported-component-metadata-properties');
+    const name = property.name.text;
+    if (properties.has(name)) return result('unavailable', 'ambiguous-component-metadata-properties');
+    properties.set(name, property.initializer);
+  }
+  if (!properties.has('changeDetection')) return result('not-matched', 'no-explicit-change-detection');
+  const value = properties.get('changeDetection'), metadataOrigin = origin(source, file, value);
+  if (!ts.isPropertyAccessExpression(value)) return result('unavailable', 'nonliteral-change-detection-reference', null, metadataOrigin);
+  const binding = angularImport(value.expression, checker, source, file, 'ChangeDetectionStrategy');
+  if (!binding) return result('unavailable', 'change-detection-import-binding-unavailable', null, metadataOrigin);
+  if (!['OnPush', 'Default'].includes(value.name.text)) return result('unavailable', 'unsupported-change-detection-member', null, metadataOrigin, binding);
+  return result(value.name.text === 'OnPush' ? 'included' : 'not-matched', 'bound-change-detection-strategy', value.name.text, metadataOrigin, binding);
+}
+
 // Internal shared ownership parser for an explicitly configured candidate source set.
-export function discoverAngularComponents(source, tick) {
+export function discoverAngularComponents(source, tick, includeChangeDetection = false) {
   const parsed = parseSource(source, tick);
   if (!parsed) return { status: 'parse-unavailable', classes: [] };
   return { status: 'parsed', classes: [...parsed.classes].sort((a, b) => a.getStart(parsed.file) - b.getStart(parsed.file)).map(owner => {
-    tick(); return { classOrigin: origin(source, parsed.file, owner), ...relationForOwner(source, parsed, owner, tick) };
+    tick(); const relation = relationForOwner(source, parsed, owner, tick);
+    return { classOrigin: origin(source, parsed.file, owner), ...relation,
+      ...(includeChangeDetection ? { changeDetectionContext: changeDetectionForOwner(source, parsed, owner, relation, tick) } : {}) };
   }) };
 }
 

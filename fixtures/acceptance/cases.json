@@ -332,5 +332,127 @@
     "expectedRules": [],
     "ruleSource": "pinned",
     "ruleSchemaVersion": "review-rules/v4"
+  },
+  {
+    "id": "on-push-explicit",
+    "path": "src/loading.ts",
+    "before": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: Strategy.OnPush})\nclass Panel {\n load() {\n  this.loading = true;\n }\n}\n",
+    "after": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: Strategy.OnPush})\nclass Panel {\n load() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.loading = true;"
+    ],
+    "expectedRules": [
+      "on-push-loading"
+    ],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v5",
+    "expectedQualification": [
+      {
+        "status": "included",
+        "reason": "bound-change-detection-strategy"
+      }
+    ]
+  },
+  {
+    "id": "on-push-default",
+    "path": "src/loading.ts",
+    "before": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: Strategy.Default})\nclass Panel {\n load() {\n  this.loading = true;\n }\n}\n",
+    "after": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: Strategy.Default})\nclass Panel {\n load() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.loading = true;"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v5",
+    "expectedQualification": [
+      {
+        "status": "not-matched",
+        "reason": "bound-change-detection-strategy"
+      }
+    ]
+  },
+  {
+    "id": "on-push-absent",
+    "path": "src/loading.ts",
+    "before": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({selector: \"panel\"})\nclass Panel {\n load() {\n  this.loading = true;\n }\n}\n",
+    "after": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({selector: \"panel\"})\nclass Panel {\n load() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.loading = true;"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v5",
+    "expectedQualification": [
+      {
+        "status": "not-matched",
+        "reason": "no-explicit-change-detection"
+      }
+    ]
+  },
+  {
+    "id": "on-push-numeric",
+    "path": "src/loading.ts",
+    "before": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: 0})\nclass Panel {\n load() {\n  this.loading = true;\n }\n}\n",
+    "after": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: 0})\nclass Panel {\n load() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.loading = true;"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v5",
+    "expectedQualification": [
+      {
+        "status": "unavailable",
+        "reason": "nonliteral-change-detection-reference"
+      }
+    ]
+  },
+  {
+    "id": "on-push-dynamic",
+    "path": "src/loading.ts",
+    "before": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: resolveStrategy()})\nclass Panel {\n load() {\n  this.loading = true;\n }\n}\n",
+    "after": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: resolveStrategy()})\nclass Panel {\n load() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.loading = true;"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v5",
+    "expectedQualification": [
+      {
+        "status": "unavailable",
+        "reason": "nonliteral-change-detection-reference"
+      }
+    ]
+  },
+  {
+    "id": "on-push-spread",
+    "path": "src/loading.ts",
+    "before": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: Strategy.OnPush, ...metadata})\nclass Panel {\n load() {\n  this.loading = true;\n }\n}\n",
+    "after": "import { Component as View, ChangeDetectionStrategy as Strategy } from '@angular/core';\n@View({changeDetection: Strategy.OnPush, ...metadata})\nclass Panel {\n load() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.loading = true;"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v5",
+    "expectedQualification": [
+      {
+        "status": "unavailable",
+        "reason": "unsupported-component-metadata-properties"
+      }
+    ]
   }
 ]

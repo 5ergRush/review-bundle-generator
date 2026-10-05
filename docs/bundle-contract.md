@@ -89,3 +89,5 @@ Opt-in `angularBindings: true` / `--angular-bindings` requires Angular template 
 Optional [changed-template ownership](angular-template-owners.md) now supports explicit candidate component paths for template-only edits through `angularOwnerPaths` / repeatable `--angular-owner PATH` (bundle v7). It preserves rule selection and earlier modes. Optional bindings include those owners; candidate coverage and imported-tree authenticity remain explicit limits.
 
 Pinned review-rules/v4 adds same-revision bound Angular component qualification and rule-selection/v5; see [the component predicate contract](rules-contract.md#bound-component-qualification-review-rulesv4). Existing v1–v3 rule behavior is preserved.
+
+Pinned rules v5 can require an explicit bound OnPush reference and retain successful/failed qualification checks in rule-selection/v6; see [the strategy contract](rules-contract.md#explicit-onpush-metadata-review-rulesv5).

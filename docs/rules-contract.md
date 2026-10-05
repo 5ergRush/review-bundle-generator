@@ -252,3 +252,74 @@ The supplied offline expectation contract can assert selected rules for positive
 and negative component cases without a new acceptance schema. The acceptance audit
 contains six authored synthetic component-specificity cases; these do not establish
 real MR acceptance, independent holdout performance or reviewer benefit.
+
+## Explicit OnPush metadata: review-rules/v5
+
+Version 5 requires pinned sources and optionally adds `changeDetection: OnPush`
+to a changed-syntax predicate that also has `angularComponent: true`. `Default`,
+other values, null and qualification without the component requirement are invalid
+rule configuration. Existing v1–v4 configurations retain their format, IDs and
+selection behavior. V5 emits `rule-selection/v6` in the existing pinned bundle
+v4–v7 envelopes. See [the authored example](../examples/angular-on-push-rules.yaml).
+
+The nearest qualified class must have one literal object argument in its bound
+Component decorator. All metadata properties must be plain uniquely named
+assignments; spreads, computed names, shorthand/method properties or duplicates
+make strategy qualification unavailable. Other property values are not evaluated.
+The `changeDetection` value must be the literal `.OnPush` access rooted at a
+runtime named/aliased `ChangeDetectionStrategy` import from `@angular/core`, or
+`namespace.ChangeDetectionStrategy.OnPush` through a direct runtime namespace
+import. Import symbols are resolved in the same pinned source revision. Strings,
+numbers, enum copies, computed members, calls, local/shadowed/custom/type-only
+bindings and wrappers/barrels do not establish this reference.
+
+`angularComponentContext.changeDetection` retains:
+
+| Field | Meaning |
+| --- | --- |
+| `status` | `included`, `not-matched` or `unavailable` |
+| `reason` | Explicit metadata/import outcome |
+| `strategy` | Bound literal `OnPush` or `Default`, otherwise null |
+| `metadataOrigin` | Exact strategy expression range with source commit/path/blob, or null |
+| `binding` | Direct enum import kind/local name/declaration range, or null |
+
+A missing property gives `not-matched / no-explicit-change-detection`. A bound
+`.Default` gives `not-matched / bound-change-detection-strategy`; `.OnPush` gives
+`included` with that reason. Neither a missing property nor the contract asserts
+a runtime default. Unknown metadata is unavailable, including
+`nonliteral-component-metadata`, `unsupported-component-metadata-properties`,
+`ambiguous-component-metadata-properties`, `nonliteral-change-detection-reference`,
+`change-detection-import-binding-unavailable` and `unsupported-change-detection-member`.
+A source that parsed can still have unavailable strategy qualification.
+
+Every v6 rule decision includes `qualificationChecks` (empty if no applicable
+candidate was evaluated). Each check records change ID, normalized predicate index,
+added/removed side, patch and pinned source evidence IDs, syntax origin, outcome
+status/reason and the complete component context. These checks cover scoped changed
+syntax candidates that satisfy the kind/spelling/within conditions before strategy
+filtering. They preserve failed outcomes as well as successful ones; absence of a
+check does not prove available metadata. Normal selection reasons and rejection
+counters remain. All checks and strategy/import/class ranges are recomputed at the
+packet boundary; a rehashed forged reason or reference is invalid.
+
+V5 pairing includes component and change-detection status alongside the existing
+token/qualified-parent fingerprint. An identical call moved from a same-named
+explicit OnPush component into a Default component cannot cancel the observation.
+An edited syntax token line or named-method token is still required; changing only
+metadata around untouched syntax does not select. Simultaneous qualification
+changes on edited syntax lines can be contextual changes even with equal call
+spelling. This remains hunk-local structural comparison, not semantic equivalence.
+
+The existing AST/source/5000000-operation limits apply. At most 10000 strategy
+qualification checks are returned across the entire selection. Exceeding any limit
+fails without a partial bundle. Class/metadata/import traversal consumes the shared
+work budget; compiler parsing/type-checker work is not hard preempted by that budget.
+Bundle/request byte limits still apply to the retained checks.
+
+This contract proves an explicit directly bound reference in source, not installed
+package authenticity, effective runtime metadata, inheritance, receiver identity,
+notification requirements, change-detection execution or a defect. Rule instructions
+must ask the reviewer to assess the relevant invariant using consumers and actual
+notification paths. The six authored synthetic OnPush acceptance cases verify
+positive/negative rule selection and unavailable metadata reasons; real MR relevance,
+independent holdouts and reviewer improvement remain unmeasured.

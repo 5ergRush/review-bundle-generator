@@ -61,9 +61,10 @@ export function parseRulesYaml(source) {
   try { input = doc.toJS({ maxAliasCount: 0 }); }
   catch { throw new RuleError('INVALID_YAML', 'Rule YAML could not be converted.'); }
   keys(input, ['schemaVersion', 'rules'], 'Rule document');
-  check(['review-rules/v1', 'review-rules/v2', 'review-rules/v3', 'review-rules/v4'].includes(input.schemaVersion), 'Expected review-rules/v1 through v4.');
+  check(['review-rules/v1', 'review-rules/v2', 'review-rules/v3', 'review-rules/v4', 'review-rules/v5'].includes(input.schemaVersion), 'Expected review-rules/v1 through v5.');
   const version2 = input.schemaVersion !== 'review-rules/v1';
-  const version4 = input.schemaVersion === 'review-rules/v4';
+  const version5 = input.schemaVersion === 'review-rules/v5';
+  const version4 = version5 || input.schemaVersion === 'review-rules/v4';
   const version3 = version4 || input.schemaVersion === 'review-rules/v3';
   check(Array.isArray(input.rules) && input.rules.length <= 250, 'Expected at most 250 rules.');
   const seen = new Set();
@@ -91,7 +92,7 @@ export function parseRulesYaml(source) {
     if (condition.changedSyntax !== undefined) {
       check(Array.isArray(condition.changedSyntax) && condition.changedSyntax.length <= 8, 'changedSyntax must have 0–8 predicates.');
       changedSyntax = condition.changedSyntax.map(predicate => {
-        keys(predicate, ['side', 'kind', 'identifiers', 'callee', ...(version3 ? ['target', 'within'] : []), ...(version4 ? ['angularComponent'] : [])], 'Syntax predicate');
+        keys(predicate, ['side', 'kind', 'identifiers', 'callee', ...(version3 ? ['target', 'within'] : []), ...(version4 ? ['angularComponent'] : []), ...(version5 ? ['changeDetection'] : [])], 'Syntax predicate');
         check(['added', 'removed'].includes(predicate.side) && ['throw-guard', 'call', ...(version3 ? ['member-call', 'assignment'] : [])].includes(predicate.kind), 'Unsupported syntax predicate.');
         const identifiers = predicate.identifiers === undefined ? [] : list(predicate.identifiers, value => typeof value === 'string' && /^[a-zA-Z_$][a-zA-Z0-9_$]{0,79}$/u.test(value), 'identifiers', true);
         const dotted = value => typeof value === 'string' && value.length <= 200 && /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/u.test(value);
@@ -101,9 +102,10 @@ export function parseRulesYaml(source) {
         check(predicate.kind === 'assignment' ? dotted(predicate.target) && predicate.target.startsWith('this.') : predicate.target === undefined, 'Assignments require a literal this target; other kinds cannot have a target.');
         check(predicate.within === undefined || typeof predicate.within === 'string' && /^[a-zA-Z_$][a-zA-Z0-9_$]{0,79}$/u.test(predicate.within), 'within must be a literal named enclosing function or method.');
         check(predicate.angularComponent === undefined || predicate.angularComponent === true, 'angularComponent, when supplied, must be true.');
+        check(predicate.changeDetection === undefined || predicate.changeDetection === 'OnPush' && predicate.angularComponent === true, 'changeDetection requires OnPush and angularComponent: true.');
         return { side: predicate.side, kind: predicate.kind, identifiers, ...(isCall ? { callee: predicate.callee } : {}),
           ...(predicate.kind === 'assignment' ? { target: predicate.target } : {}), ...(predicate.within !== undefined ? { within: predicate.within } : {}),
-          ...(predicate.angularComponent === true ? { angularComponent: true } : {}) };
+          ...(predicate.angularComponent === true ? { angularComponent: true } : {}), ...(predicate.changeDetection !== undefined ? { changeDetection: predicate.changeDetection } : {}) };
       }).sort((a, b) => compare(JSON.stringify(a), JSON.stringify(b)));
       changedSyntax = changedSyntax.filter((item, index) => index === 0 || JSON.stringify(item) !== JSON.stringify(changedSyntax[index - 1]));
     }
@@ -173,13 +175,16 @@ export function selectRules(config, changes, facts, evidence = [], ruleSource = 
   const textFacts = new Map(facts.filter(f => f.type === 'text-change').map(f => [f.changeId, f]));
   const decisions = [];
   const version2 = config.schemaVersion !== 'review-rules/v1';
-  const version4 = config.schemaVersion === 'review-rules/v4';
+  const version5 = config.schemaVersion === 'review-rules/v5';
+  const version4 = version5 || config.schemaVersion === 'review-rules/v4';
   const version3 = version4 || config.schemaVersion === 'review-rules/v3';
   const pinned = ruleSource === 'pinned';
-  if (version4 && !pinned) throw new RuleError('INVALID_RULES', 'Review rules v4 require pinned rule source.');
+  if (version4 && !pinned) throw new RuleError('INVALID_RULES', 'Review rules v4/v5 require pinned rule source.');
   const syntaxCache = new Map();
+  let qualificationChecksCount = 0;
   for (const rule of config.rules) {
     const matches = [], rejected = { status: 0, scope: 0, textUnavailable: 0, threshold: 0, ...(version2 ? { syntaxUnavailable: 0, syntaxNotMatched: 0 } : {}) };
+    const qualificationChecks = [];
     if (rule.enabled) for (const change of changes) {
       tick();
       if (!rule.scope.statuses.includes(change.status)) { rejected.status++; continue; }
@@ -202,10 +207,10 @@ export function selectRules(config, changes, facts, evidence = [], ruleSource = 
         (rule.when.minRemovedLines !== null && fact.value.removedLines < rule.when.minRemovedLines))) { rejected.threshold++; continue; }
       let syntaxMatches = [];
       if (version2 && rule.when.changedSyntax.length) {
-        if (!syntaxCache.has(change.id)) syntaxCache.set(change.id, pinned ? observePinnedSyntax(change, evidence, tick, version4) : observeChangedSyntax(change, evidence, tick, version3));
+        if (!syntaxCache.has(change.id)) syntaxCache.set(change.id, pinned ? observePinnedSyntax(change, evidence, tick, version4, version5) : observeChangedSyntax(change, evidence, tick, version3));
         const observed = syntaxCache.get(change.id);
         let withinUnavailable = false;
-        syntaxMatches = rule.when.changedSyntax.map(predicate => observed.observations.filter(item => {
+        syntaxMatches = rule.when.changedSyntax.map((predicate, predicateIndex) => observed.observations.filter(item => {
           tick();
           const candidate = item.side === predicate.side && item.kind === predicate.kind &&
             (!['call', 'member-call'].includes(predicate.kind) || predicate.callee === item.callee) &&
@@ -214,7 +219,16 @@ export function selectRules(config, changes, facts, evidence = [], ruleSource = 
           if (candidate && predicate.within !== undefined && item.within === null) withinUnavailable = true;
           const withinMatches = predicate.within === undefined || predicate.within === item.within;
           if (candidate && withinMatches && predicate.angularComponent && item.angularComponentContext.status === 'unavailable') withinUnavailable = true;
-          return candidate && withinMatches && (!predicate.angularComponent || item.angularComponentContext.status === 'included');
+          const componentMatches = !predicate.angularComponent || item.angularComponentContext.status === 'included';
+          if (candidate && withinMatches && predicate.changeDetection) {
+            if (++qualificationChecksCount > 10000) throw new RuleError('SELECTION_LIMIT', 'More than 10000 change-detection qualification checks; no partial selection returned.');
+            const context = item.angularComponentContext;
+            const status = context.status === 'included' ? context.changeDetection.status : context.status === 'unavailable' ? 'unavailable' : 'not-matched';
+            qualificationChecks.push({ changeId: change.id, predicateIndex, side: item.side, evidenceId: item.evidenceId, sourceEvidenceId: item.sourceEvidenceId,
+              origin: item.origin, status, reason: context.status === 'included' ? context.changeDetection.reason : context.reason, angularComponentContext: context });
+          }
+          if (candidate && withinMatches && componentMatches && predicate.changeDetection && item.angularComponentContext.changeDetection.status === 'unavailable') withinUnavailable = true;
+          return candidate && withinMatches && componentMatches && (!predicate.changeDetection || item.angularComponentContext.changeDetection.status === 'included');
         }));
         if (syntaxMatches.some(items => !items.length)) {
           if (!observed.available || withinUnavailable) rejected.syntaxUnavailable++; else rejected.syntaxNotMatched++;
@@ -228,11 +242,11 @@ export function selectRules(config, changes, facts, evidence = [], ruleSource = 
     const reason = !rule.enabled ? 'disabled' : !changes.length ? 'no-changes' : matches.length ? 'scope-and-conditions-match' :
       rejected.syntaxUnavailable ? 'syntax-evidence-unavailable' : rejected.syntaxNotMatched ? 'changed-syntax-not-matched' : rejected.textUnavailable ? 'text-evidence-unavailable' : rejected.threshold ? 'line-threshold-not-met' :
         rejected.scope ? 'scope-not-matched' : 'status-not-matched';
-    decisions.push({ ruleId: rule.id, status, reason, matches, rejected });
+    decisions.push({ ruleId: rule.id, status, reason, matches, rejected, ...(version5 ? { qualificationChecks } : {}) });
   }
-  return { schemaVersion: version4 ? 'rule-selection/v5' : pinned ? 'rule-selection/v4' : version3 ? 'rule-selection/v3' : version2 ? 'rule-selection/v2' : 'rule-selection/v1', configId: config.id, rules: config.rules,
+  return { schemaVersion: version5 ? 'rule-selection/v6' : version4 ? 'rule-selection/v5' : pinned ? 'rule-selection/v4' : version3 ? 'rule-selection/v3' : version2 ? 'rule-selection/v2' : 'rule-selection/v1', configId: config.id, rules: config.rules,
     policy: { paths: 'old-or-new-side', criteria: 'same-side-and', defaultEntryKinds: ['file'],
-      maxOperations: MAX_OPERATIONS, unavailableText: 'skip-with-reason', ...(version2 ? { syntax: pinned ? 'pinned-changed-typescript-sources' : 'bounded-typescript-patch-context', compilerVersion: SYNTAX_COMPILER_VERSION, comparison: version4 ? 'token-qualified-parent-and-component-status-multiset-within-hunk' : pinned ? 'token-and-qualified-parent-multiset-within-hunk' : version3 ? 'token-and-enclosing-name-multiset-within-hunk' : 'token-multiset-within-hunk', identifierBinding: 'spelling-only', calleeResolution: 'literal-property-chain', ...(version3 ? { memberReceiver: 'literal-this', enclosingScope: 'nearest-named-function-like', assignments: 'simple-equals-literal-this-target' } : {}), ...(version4 ? { angularComponent: 'nearest-named-class-declaration-with-one-direct-runtime-angular-core-Component-import-binding', frameworkQualification: 'same-source-side-as-changed-syntax', metadataEvaluation: 'not-performed' } : {}), syntaxConditions: 'all-predicates-same-change', unavailableSyntax: 'skip-with-reason', ...(pinned ? { ruleSources: RULE_SOURCE_LIMITS } : { maxHunkBytesPerSide: 128 * 1024, maxTokensAndNodesPerHunkSide: 25000 }) } : {}) }, decisions,
+      maxOperations: MAX_OPERATIONS, unavailableText: 'skip-with-reason', ...(version2 ? { syntax: pinned ? 'pinned-changed-typescript-sources' : 'bounded-typescript-patch-context', compilerVersion: SYNTAX_COMPILER_VERSION, comparison: version5 ? 'token-qualified-parent-component-and-change-detection-status-multiset-within-hunk' : version4 ? 'token-qualified-parent-and-component-status-multiset-within-hunk' : pinned ? 'token-and-qualified-parent-multiset-within-hunk' : version3 ? 'token-and-enclosing-name-multiset-within-hunk' : 'token-multiset-within-hunk', identifierBinding: 'spelling-only', calleeResolution: 'literal-property-chain', ...(version3 ? { memberReceiver: 'literal-this', enclosingScope: 'nearest-named-function-like', assignments: 'simple-equals-literal-this-target' } : {}), ...(version4 ? { angularComponent: 'nearest-named-class-declaration-with-one-direct-runtime-angular-core-Component-import-binding', frameworkQualification: 'same-source-side-as-changed-syntax', metadataEvaluation: version5 ? 'direct-literal-change-detection-import-reference-only' : 'not-performed', ...(version5 ? { maxQualificationChecks: 10000 } : {}) } : {}), syntaxConditions: 'all-predicates-same-change', unavailableSyntax: 'skip-with-reason', ...(pinned ? { ruleSources: RULE_SOURCE_LIMITS } : { maxHunkBytesPerSide: 128 * 1024, maxTokensAndNodesPerHunkSide: 25000 }) } : {}) }, decisions,
     ...(pinned ? { sourceCoverage: [...syntaxCache].map(([changeId, value]) => ({ changeId, available: value.available, reason: value.reason,
       sourceEvidenceIds: evidence.filter(item => item.type === 'typescript-rule-source' && item.changeId === changeId).map(item => item.id) })).sort((a, b) => compare(a.changeId, b.changeId)) } : {}) };
 }

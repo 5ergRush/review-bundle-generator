@@ -36,24 +36,30 @@ patch coordinates. The original nine-case audit passed, including the original c
 guard-condition replacement, and misleading comments/strings. This fixes the narrow
 baseline gap; it is not complete behavioral analysis.
 
-Current increment: v3 adds literal this-member calls, simple state assignments and
-nearest named-function qualifiers. Eighteen fact/packet/relevance cases pass,
-including teardown/loading changes versus unrelated methods. The caller audit
-confirms alias resolution and same-name exclusion, and initially reproduced deletion-only
-indexing and indirect-variable gaps. Structural counterpart mapping now resolves
-the unique deletion-only case. Explicit rule-directed caller requests are implemented;
-local const identifier copies to named functions now carry bounded binding evidence.
-Eight caller cases cover import/const/chain matches and mutable/property-copy limitations.
-General function-value flow, templates/framework ownership and runtime behavior remain
-unverified. Opt-in pinned source mode now recovers long-method scope beyond patch fragments,
-with byte-verified sources and eighteen fact/rule cases including paired controls.
-Opt-in Angular component/template context now follows explicit imported Component metadata from selected-rule syntax, with pinned template bytes and authored positive/negative ownership tests. HTML-only owner discovery, template bindings and runtime correctness remain unverified. See docs/angular-template-context.md.
-Next: independently authored held-out/real MR coverage, HTML-only ownership and parsed template relationships. Cover positive and
-same-path negative examples, misleading comments/strings, indirect calls, import
-aliases, validation modifications and Angular state/lifecycle/template relationships.
+Current coverage: 30 authored fact/packet/relevance cases pass. V3 adds literal
+this-member calls, simple state assignments and nearest named-function qualifiers;
+pinned source mode recovers long-method scope beyond patch fragments. V4 requires
+same-side bound Component ownership; v5 can additionally require an explicit directly
+bound OnPush strategy reference. Same-file/class negatives, custom/type-only imports,
+absent/Default metadata and dynamic/spread/numeric strategies exercise specificity
+and unavailable outcomes. The six OnPush cases also assert authored qualification
+statuses/reasons. This is same-author synthetic development evidence.
+
+The separate eight-case caller audit covers direct imports, bounded immutable local
+const aliases and unsupported mutable/property flows. Structural counterpart mapping
+and rule-directed context requests are implemented. Optional component/template
+metadata, lexical bindings and configured template-only owner discovery retain
+pinned evidence and explicit omissions. These relationships are bounded syntax and
+binding contracts, not Angular/runtime correctness.
+
+Next validation dependency: independently authored held-out/approved real MR
+snapshots and expectations, with positive and same-path negative examples. The offline
+acceptance API can check exact per-change facts/rules and, with expectations v2,
+configured template owner sets. Broader project indexing, semantic changed-template
+rule predicates and general function-value flow remain possible implementation work.
 Do not substitute filename suffixes or keyword counts for semantic proof. No single
-predicate should be described as full Angular/runtime correctness. Extend this audit
-with independently authored expectations and later approved real MR samples.
+predicate establishes complete Angular/runtime correctness; no real corporate MR
+or independent reviewer-quality comparison has been tested.
 
 ## Gate 2: independent reviewer comparison
 
