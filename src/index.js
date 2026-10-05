@@ -8,3 +8,4 @@ export { normalizeGitLabMergeRequest, fetchGitLabMergeRequest, createGitLabRevie
 export { checkRuntime } from './runtime.js';
 export { createRuleContextBundle, RuleContextError } from './rule-context.js';
 export { RuleSourceError } from './source-rules.js';
+export { compileAcceptanceExpectations, auditReviewBundle, AcceptanceError } from './acceptance.js';

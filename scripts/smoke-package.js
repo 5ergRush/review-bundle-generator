@@ -31,7 +31,7 @@ try {
   const packageDirectory = join(consumer, 'node_modules', 'review-bundle-generator');
   const cli = join(packageDirectory, 'src', 'cli.js');
   const imported = run(process.execPath, ['--input-type=module', '-e',
-    "import * as api from 'review-bundle-generator'; if (!['createReviewBundle','createRuleContextBundle','createReviewerRequest','evaluateReviewRuns','fetchGitLabMergeRequest','checkRuntime'].every(name => typeof api[name] === 'function')) process.exit(1); console.log('exports-ready');"], consumer, 'package exports');
+    "import * as api from 'review-bundle-generator'; if (!['createReviewBundle','createRuleContextBundle','createReviewerRequest','evaluateReviewRuns','fetchGitLabMergeRequest','checkRuntime','compileAcceptanceExpectations','auditReviewBundle'].every(name => typeof api[name] === 'function')) process.exit(1); console.log('exports-ready');"], consumer, 'package exports');
   assert.equal(imported.trim(), 'exports-ready');
   const doctor = JSON.parse(run(process.execPath, [cli, 'doctor'], consumer, 'installed doctor')); assert.equal(doctor.status, 'runtime-ready');
   const manifest = JSON.parse(await readFile(join(packageDirectory, 'package.json'), 'utf8'));
@@ -67,8 +67,18 @@ try {
   await writeFile(join(temporary, 'bundle.json'), JSON.stringify(ruleContext.bundle));
   const packet = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'bundle.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed alias provenance packet'));
   assert.equal(packet.selectedRules[0].id, 'amount');
+  // Expectations are authored from the synthetic edit, not from generator counts/decisions.
+  const expectations = { schemaVersion: 'review-acceptance-expectations/v1', caseId: 'installed-guard-removal', cohort: 'development',
+    provenance: { kind: 'synthetic', author: 'package-smoke', revision: '1' },
+    revisions: { requestedBaseCommit: base, effectiveBaseCommit: base, headCommit: git('rev-parse', 'HEAD'), comparison: 'merge-base' },
+    ruleConfigId: ruleContext.bundle.ruleSelection.configId, ruleSource: 'pinned',
+    changes: [{ status: 'M', oldPath: 'file.ts', newPath: 'file.ts', oldKind: 'file', newKind: 'file', coverage: 'text-diff',
+      addedLines: 0, removedLines: 1, selectedRuleIds: ['amount'], requiredPatchLines: ["-  if (amount <= 0) throw new Error('invalid');"], sourceCoverage: { available: true, reason: 'parsed-pinned-sources' } }] };
+  await writeFile(join(temporary, 'expectations.json'), JSON.stringify(expectations));
+  const acceptance = JSON.parse(run(process.execPath, [cli, 'audit', '--bundle', join(temporary, 'bundle.json'), '--expectations', join(temporary, 'expectations.json')], consumer, 'installed offline acceptance'));
+  assert.equal(acceptance.passed, true); assert.equal(acceptance.reviewerImprovement, 'not-measured');
   const fixtureDirectory = join(packageDirectory, 'fixtures', 'evaluation');
   const report = JSON.parse(run(process.execPath, [cli, 'evaluate', '--dataset', join(fixtureDirectory, 'dataset.json'), '--runs', join(fixtureDirectory, 'runs.json')], consumer, 'installed offline evaluation'));
   assert.equal(report.schemaVersion, 'review-evaluation-report/v1'); assert.equal(report.evidenceKind, 'synthetic-or-mixed');
-  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle, automatic alias context/provenance packet and offline evaluation passed.\n');
+  process.stdout.write('Installed tarball, package exports, CLI bin, runtime doctor, semantic bundle, automatic alias context/provenance packet, offline acceptance and evaluation passed.\n');
 } finally { await rm(temporary, { recursive: true, force: true }); }
