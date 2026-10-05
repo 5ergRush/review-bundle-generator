@@ -1,0 +1,261 @@
+{
+  "schemaVersion": "public-angular-calibration/v1",
+  "repository": "https://github.com/angular/components.git",
+  "cohort": "development",
+  "expectationAuthor": "Codex (same implementation author; source inspection before generation)",
+  "expectationRevision": "1",
+  "comparison": "direct",
+  "sourceApproval": "Public upstream merged PRs; not corporate MR approval or an independent holdout.",
+  "cases": [
+    {
+      "caseId": "angular-components-pr-23185",
+      "url": "https://github.com/angular/components/pull/23185",
+      "title": "fix(material/menu): item highlighted state not updating in time when using lazy content",
+      "base": "4279ff139bb4c4612474a88089c65cf617861211",
+      "head": "2a2cd9c3e4f96b1cf3e370cec2a485bc53a7e185",
+      "mergedCommit": "2a2cd9c3e4f96b1cf3e370cec2a485bc53a7e185",
+      "changes": [
+        {
+          "status": "M",
+          "oldPath": "src/material-experimental/mdc-menu/menu-item.ts",
+          "newPath": "src/material-experimental/mdc-menu/menu-item.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 4,
+          "removedLines": 2,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material/menu/menu-item.ts",
+          "newPath": "src/material/menu/menu-item.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 16,
+          "removedLines": 1,
+          "selectedRuleIds": [
+            "on-push-highlight-state",
+            "on-push-highlight-notification"
+          ],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material/menu/menu-trigger.ts",
+          "newPath": "src/material/menu/menu-trigger.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 1,
+          "removedLines": 1,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "tools/public_api_guard/material/menu.md",
+          "newPath": "tools/public_api_guard/material/menu.md",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 5,
+          "removedLines": 2,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": null
+        }
+      ],
+      "prBase": "d090617912da8e70aa336aa5b4d804b1b535402e",
+      "prHead": "e1cb618de24a033fee3cca073576f82f6e3869db"
+    },
+    {
+      "caseId": "angular-components-pr-27250",
+      "url": "https://github.com/angular/components/pull/27250",
+      "title": "fix(material/slider): fix cd for sliders w/ form controls",
+      "base": "de7c3dbd084f84cc6601830e3639c679a91bbbd3",
+      "head": "d303ead1330a7fcf3a72d044e2161898b524ce17",
+      "mergedCommit": "d303ead1330a7fcf3a72d044e2161898b524ce17",
+      "changes": [
+        {
+          "status": "M",
+          "oldPath": "src/material/slider/slider-input.ts",
+          "newPath": "src/material/slider/slider-input.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 1,
+          "removedLines": 0,
+          "selectedRuleIds": [
+            "slider-parent-notification"
+          ],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material/slider/slider-interface.ts",
+          "newPath": "src/material/slider/slider-interface.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 3,
+          "removedLines": 1,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        }
+      ],
+      "prBase": "91fbe764829c80ae93d5c896b28dd6a4d523812a",
+      "prHead": "9f85a64ef3dc38edad5da07e030b374a422d9c41"
+    },
+    {
+      "caseId": "angular-components-pr-23992",
+      "url": "https://github.com/angular/components/pull/23992",
+      "title": "perf(material/button): do not run change detection when the anchor is clicked",
+      "base": "3fd6f0e188eb84dc1bf23cb8c5f6ba0a88f1b553",
+      "head": "41f024430222ea68e28946548cda6c10ec86b4aa",
+      "mergedCommit": "41f024430222ea68e28946548cda6c10ec86b4aa",
+      "changes": [
+        {
+          "status": "M",
+          "oldPath": "src/material-experimental/mdc-button/BUILD.bazel",
+          "newPath": "src/material-experimental/mdc-button/BUILD.bazel",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 1,
+          "removedLines": 0,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": false,
+            "reason": "not-applicable"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material-experimental/mdc-button/button-base.ts",
+          "newPath": "src/material-experimental/mdc-button/button-base.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 15,
+          "removedLines": 9,
+          "selectedRuleIds": [
+            "native-listener-teardown"
+          ],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material-experimental/mdc-button/button.spec.ts",
+          "newPath": "src/material-experimental/mdc-button/button.spec.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 24,
+          "removedLines": 1,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material/button/BUILD.bazel",
+          "newPath": "src/material/button/BUILD.bazel",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 1,
+          "removedLines": 0,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": false,
+            "reason": "not-applicable"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material/button/button.spec.ts",
+          "newPath": "src/material/button/button.spec.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 24,
+          "removedLines": 1,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "src/material/button/button.ts",
+          "newPath": "src/material/button/button.ts",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 24,
+          "removedLines": 4,
+          "selectedRuleIds": [
+            "on-push-native-listener",
+            "native-listener-teardown",
+            "on-push-listener-teardown"
+          ],
+          "requiredPatchLines": [],
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          }
+        },
+        {
+          "status": "M",
+          "oldPath": "tools/public_api_guard/material/button.md",
+          "newPath": "tools/public_api_guard/material/button.md",
+          "oldKind": "file",
+          "newKind": "file",
+          "coverage": "text-diff",
+          "addedLines": 10,
+          "removedLines": 4,
+          "selectedRuleIds": [],
+          "requiredPatchLines": [],
+          "sourceCoverage": null
+        }
+      ],
+      "prBase": "7bbe68d5807b5e620763845a44cd68049553a950",
+      "prHead": "568c3ca90406f1150d2e971fb419d6b038980d62"
+    }
+  ],
+  "snapshotPolicy": "landed-single-parent-commit-vs-first-parent"
+}

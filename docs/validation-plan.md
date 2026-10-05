@@ -14,6 +14,13 @@ config/mode, source coverage and negative cases are explicit; declared approval 
 holdout independence are not verified. No real corporate MR has been supplied or
 tested. The existing synthetic audit below remains development evidence.
 
+Separate [public Angular calibration](public-angular-calibration.md) now checks
+three landed upstream PRs and thirteen changed files, including real negative
+controls. All exact fact and per-change rule assertions pass; each bundle agrees
+with repeated generation. Same-author expectations and deliberately tailored
+rules make this development calibration, not independent acceptance. The pinned
+landed-commit comparisons avoid unrelated changes in stored PR base/head refs.
+
 Run `npm run audit:acceptance` from the source checkout. Authored expectations in
 `fixtures/acceptance/cases.json` precede execution. The script creates real local
 Git commits, generates semantic bundles and reviewer packets, and verifies exact

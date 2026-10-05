@@ -12,6 +12,11 @@ For approved MR fact/rule checks against pre-authored expectations, use the
 [offline acceptance command](docs/offline-acceptance.md):
 `review-bundle audit --bundle bundle.json --expectations expectations.json`.
 
+[Public Angular calibration](docs/public-angular-calibration.md) exercises three
+landed upstream PRs with frozen same-author development expectations. It covers
+real changed-source facts and per-file rule relevance, not an independent holdout
+or reviewer improvement.
+
 Deterministic context preparation for an existing AI MR reviewer. The generator will compile relevant changes, rules and bounded supporting context; the external reviewer performs the AI review.
 
 **Current increment:** JavaScript ESM library and CLI for committed Git ingestion, deterministic bundles, scoped YAML rules, static TypeScript/caller context, a generic reviewer boundary with normalized findings, offline repeatable evaluation, and a read-only GitLab metadata adapter. Bundles and results preserve evidence and partial coverage. See [PROJECT_CONTROL.md](PROJECT_CONTROL.md) for scope, evidence and the next step.
