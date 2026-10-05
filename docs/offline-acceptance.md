@@ -1,7 +1,7 @@
 # Offline MR acceptance
 
 `review-bundle audit` checks Gate 1 (facts and rule relevance) on an ordinary
-generated bundle against supplied expectations. It accepts existing bundle v1–v4,
+generated bundle against supplied expectations. It accepts existing bundle v1–v5,
 including pinned-source mode and optional semantic/caller context. It performs no
 Git reads, network requests, source execution or AI review.
 
@@ -65,7 +65,7 @@ an empty array does not assert patch content. These are required lines, not an
 assertion that the complete patch contains no other lines.
 The external assertions cover the listed fields. Mode values, rename similarity,
 blob identities and caller availability are validated internally where applicable,
-but are not independently asserted by this expectations schema.
+but are not independently asserted by this expectations schema. Angular template ownership in v5 is internally validated by the packet boundary; these expectations do not independently assert that relationship.
 
 `selectedRuleIds` asserts the exact set selected for that change. Global rule
 agreement cannot hide a rule attached to the wrong file. `sourceCoverage` is null

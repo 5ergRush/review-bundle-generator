@@ -133,6 +133,33 @@ export async function readTypeScriptSources(repo, revisions, selectedPaths = nul
   });
 }
 
+// Internal explicit template reader; never follows working-tree files or links.
+export async function readAngularTemplateSources(repo, requests) {
+  if (!Array.isArray(requests) || requests.length > 10) throw new IngestionError('SOURCE_LIMIT', 'At most 10 external template sources.');
+  const limits = { maxBytes: 8 * 1024 * 1024, timeoutMs: 30_000 }; const deadline = Date.now() + 30_000;
+  return isolatedObjects(resolve(repo), limits, async cwd => {
+    const trees = new Map(); const result = []; let bytes = 0;
+    for (const request of requests) {
+      if (Date.now() > deadline) throw new IngestionError('TIMEOUT', 'Template source read exceeded 30 seconds.');
+      if (!trees.has(request.commit)) {
+        const entries = decode(await git(cwd, ['ls-tree', '-rz', '--full-tree', request.commit], { ...limits, timeoutMs: Math.max(1, deadline - Date.now()) }), 'Template paths').split('\0').filter(Boolean);
+        trees.set(request.commit, new Map(entries.map(entry => {
+          const match = /^([0-7]{6}) (blob|tree|commit) ([a-f0-9]+)\t([\s\S]+)$/u.exec(entry);
+          return match ? [match[4], { mode: match[1], type: match[2], object: match[3] }] : [null, null];
+        })));
+      }
+      const entry = trees.get(request.commit).get(request.path);
+      if (!entry || entry.type !== 'blob' || !/^100(?:644|755)$/u.test(entry.mode)) throw new IngestionError('TEMPLATE_SOURCE_UNAVAILABLE', 'Requested pinned template is missing or not a regular blob.');
+      if (Date.now() > deadline) throw new IngestionError('TIMEOUT', 'Template source read exceeded 30 seconds.');
+      const raw = await git(cwd, ['cat-file', 'blob', entry.object], { maxBytes: 32 * 1024, timeoutMs: Math.max(1, deadline - Date.now()) });
+      bytes += raw.length;
+      if (bytes > 128 * 1024) throw new IngestionError('SOURCE_LIMIT', 'External template source bytes exceed 128 KiB.');
+      result.push({ ...request, object: entry.object, content: decode(raw, 'Angular template source') });
+    }
+    return result;
+  });
+}
+
 function entryKind(mode) {
   return mode === '000000' ? null : mode === '160000' ? 'gitlink' : mode === '120000' ? 'symlink' : 'file';
 }

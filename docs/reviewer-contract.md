@@ -166,3 +166,7 @@ Bundle v4 adds complete bounded `typescript-rule-source` evidence and rule-selec
 Packet creation checks blob identities and recomputes selection from patches and full
 changed sources; semantic sections remain optional. Source findings may cite these
 files within the matched change. See [pinned rule evidence](pinned-rule-evidence.md).
+
+## Angular template context (bundle v5)
+
+The packet boundary also accepts opt-in review-bundle/v5, retaining selection v4 and optional semantic/caller sections. It recomputes component ownership and validates complete pinned template bytes/IDs/ranges/blob hashes. Primary template evidence must belong to the cited rule ownership, including when different owners share a changed file. See [Angular template context](angular-template-context.md) for budgets, omissions and authenticity limits. Findings remain unverified.
