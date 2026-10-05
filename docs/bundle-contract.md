@@ -81,3 +81,7 @@ Future contract changes must preserve existing semantics or use a new schema ver
 ## Angular template opt-in
 
 createReviewBundle with angularTemplates: true and pinned v3 rules extends the ordinary bundle to v5. Facts/changes/rule selection retain their identities; optional semantic/caller context remains independent. See [Angular template context](angular-template-context.md). The pure diff compiler performs no template reads.
+
+## Parsed Angular bindings (bundle v6)
+
+Opt-in `angularBindings: true` / `--angular-bindings` requires Angular template context and pinned v3 rules. It preserves existing facts, rules and ownership, adds parsed static template/member relationships, and records explicit omissions and budgets. Packet validation recomputes the section. See [Angular template binding relationships](angular-template-bindings.md). Earlier bundle modes retain their schemas.

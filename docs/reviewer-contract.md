@@ -170,3 +170,7 @@ files within the matched change. See [pinned rule evidence](pinned-rule-evidence
 ## Angular template context (bundle v5)
 
 The packet boundary also accepts opt-in review-bundle/v5, retaining selection v4 and optional semantic/caller sections. It recomputes component ownership and validates complete pinned template bytes/IDs/ranges/blob hashes. Primary template evidence must belong to the cited rule ownership, including when different owners share a changed file. See [Angular template context](angular-template-context.md) for budgets, omissions and authenticity limits. Findings remain unverified.
+
+## Parsed Angular bindings (bundle v6)
+
+Opt-in `angularBindings: true` / `--angular-bindings` requires Angular template context and pinned v3 rules. It preserves existing facts, rules and ownership, adds parsed static template/member relationships, and records explicit omissions and budgets. Packet validation recomputes the section. See [Angular template binding relationships](angular-template-bindings.md). Earlier bundle modes retain their schemas.

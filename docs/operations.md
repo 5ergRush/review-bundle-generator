@@ -75,3 +75,7 @@ policy, authorized project/checkout and fork history handling, existing-reviewer
 request/response mapping, observed usage instrumentation, human-labelled real MR
 evaluation and deployment-owned transport/concurrency behavior. No live performance,
 quality, provider-cost or operational-readiness claim is made by synthetic tests.
+
+## Parsed Angular bindings (bundle v6)
+
+Opt-in `angularBindings: true` / `--angular-bindings` requires Angular template context and pinned v3 rules. It preserves existing facts, rules and ownership, adds parsed static template/member relationships, and records explicit omissions and budgets. Packet validation recomputes the section. See [Angular template binding relationships](angular-template-bindings.md). Earlier bundle modes retain their schemas.

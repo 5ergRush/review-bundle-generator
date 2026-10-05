@@ -4,6 +4,7 @@ import { parseRulesYaml, selectRules } from './rules.js';
 import ts from 'typescript';
 import { validateRuleSources } from './source-rules.js';
 import { compileAngularTemplateContext } from './angular-context.js';
+import { compileAngularTemplateBindings } from './angular-bindings.js';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BYTES = 16 * 1024 * 1024;
@@ -90,14 +91,15 @@ function sourceOrigin(origin, commits, code) {
 
 function validateBundle(bundle) {
   const code = 'INVALID_REVIEW_BUNDLE';
-  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4', 'review-bundle/v5'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1 through v5.');
-  const angularTemplates = bundle.schemaVersion === 'review-bundle/v5';
-  const pinnedRules = ['review-bundle/v4', 'review-bundle/v5'].includes(bundle.schemaVersion);
+  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1 through v6.');
+  const angularBindings = bundle.schemaVersion === 'review-bundle/v6';
+  const angularTemplates = ['review-bundle/v5', 'review-bundle/v6'].includes(bundle.schemaVersion);
+  const pinnedRules = ['review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6'].includes(bundle.schemaVersion);
   const semantic = bundle.schemaVersion === 'review-bundle/v3' || (pinnedRules && bundle.semanticAnalysis !== undefined);
-  requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4/v5 and selection v4.');
+  requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4/v5/v6 and selection v4.');
   keys(bundle, ['id', 'schemaVersion', 'provenance', 'summary', 'changes', 'evidence', 'facts', 'coverage',
     ...(bundle.ruleSelection !== undefined ? ['ruleSelection'] : []),
-    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : []), ...(angularTemplates ? ['angularTemplateContext'] : [])], code);
+    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : []), ...(angularTemplates ? ['angularTemplateContext'] : []), ...(angularBindings ? ['angularTemplateBindings'] : [])], code);
   contentId(bundle, 'bundle', code);
   requireCondition(Array.isArray(bundle.changes) && Array.isArray(bundle.evidence) && Array.isArray(bundle.facts) && object(bundle.provenance), code, 'Missing bundle records.');
   const patches = bundle.evidence.filter(item => item?.type === 'git-patch');
@@ -114,7 +116,8 @@ function validateBundle(bundle) {
   }
   requireCondition(object(bundle.coverage) && bundle.coverage.status === 'partial' && object(bundle.coverage.stages) && Array.isArray(bundle.coverage.limitations), code, 'Missing partial coverage contract.');
   keys(bundle.coverage, ['status', 'stages', 'limitations'], code);
-  keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion', ...(angularTemplates ? ['angularTemplates'] : [])], code);
+  keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion', ...(angularTemplates ? ['angularTemplates'] : []), ...(angularBindings ? ['angularBindings'] : [])], code);
+  requireCondition(!angularBindings || bundle.coverage.stages.angularBindings === 'partial', code, 'Angular binding coverage must be partial.');
   requireCondition(!angularTemplates || bundle.coverage.stages.angularTemplates === 'partial', code, 'Angular template coverage must be partial.');
   requireCondition(bundle.coverage.stages.gitDiff === 'complete' && bundle.coverage.stages.deterministicFacts === 'complete' &&
     bundle.coverage.stages.ruleSelection === (bundle.ruleSelection ? 'complete' : 'not-run') &&
@@ -125,7 +128,7 @@ function validateBundle(bundle) {
   if (pinnedRules) {
     try { validateRuleSources(ruleSources, bundle.changes, bundle.provenance.revisions); }
     catch { throw new ReviewerError(code, 'Invalid pinned rule source evidence.'); }
-  } else requireCondition(ruleSources.length === 0, code, 'Rule source evidence requires bundle v4/v5.');
+  } else requireCondition(ruleSources.length === 0, code, 'Rule source evidence requires bundle v4/v5/v6.');
   if (bundle.ruleSelection !== undefined) {
     try {
       const rules = bundle.ruleSelection.rules.map(rule => ({ ...rule,
@@ -147,7 +150,11 @@ function validateBundle(bundle) {
   if (angularTemplates) {
     try { requireCondition(JSON.stringify(bundle.angularTemplateContext) === JSON.stringify(compileAngularTemplateContext(bundle, templateSources)), code, 'Invalid Angular template context.'); }
     catch { throw new ReviewerError(code, 'Angular ownership or template evidence is inconsistent.'); }
-  } else requireCondition(templateSources.length === 0, code, 'Angular template sources require bundle v5.');
+  } else requireCondition(templateSources.length === 0, code, 'Angular template sources require bundle v5/v6.');
+  if (angularBindings) {
+    try { requireCondition(JSON.stringify(bundle.angularTemplateBindings) === JSON.stringify(compileAngularTemplateBindings(bundle)), code, 'Invalid Angular template bindings.'); }
+    catch { throw new ReviewerError(code, 'Angular binding relationships or coordinates are inconsistent.'); }
+  }
   const commits = [bundle.provenance.revisions.effectiveBaseCommit, bundle.provenance.revisions.headCommit];
   let sourceBytes = 0; let sourceCount = 0;
   for (const evidence of bundle.evidence) {
