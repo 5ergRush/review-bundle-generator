@@ -1,5 +1,7 @@
 # Review Bundle Generator
 
+Opt-in [Angular binding relationships](docs/angular-template-bindings.md) adds parsed template locals and pinned component-member references through `--angular-templates --angular-bindings` (bundle v6).
+
 Opt-in [Angular template context](docs/angular-template-context.md) follows explicit
 component metadata from selected-rule syntax:
 `--rule-source pinned --angular-templates` emits bundle v5.

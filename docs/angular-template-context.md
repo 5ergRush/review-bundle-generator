@@ -97,3 +97,5 @@ positive/negative ownership cases.
 The tests and installed-package smoke verify this static contract. No actual
 corporate MR, Angular build/runtime validation or AI-quality comparison occurred.
 Reviewer benefit remains unmeasured.
+
+Optional [Angular binding relationships](angular-template-bindings.md) now parses a bounded static subset through a separate `--angular-bindings` / `angularBindings: true` opt-in (bundle v6). Ordinary v5 context retains the limits described above.

@@ -62,10 +62,13 @@ try {
   await writeFile(join(temporary, 'rules.json'), JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'amount', title: 'Amount invariant', instruction: 'Check validation and actual callers.', scope: { paths: ['file.ts'] }, when: { changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'], within: 'validate' }] } },
     { id: 'loading', title: 'Loading state', instruction: 'Check component template consumers and equivalent cleanup.', scope: { paths: ['component.ts'] }, when: { changedSyntax: [{ side: 'removed', kind: 'assignment', target: 'this.loading', within: 'load' }] } }] }));
   const ruleContext = JSON.parse(run(process.execPath, [cli, 'rule-context-bundle', '--repo', repo, '--base', base, '--rule-source', 'pinned',
-    '--rules', join(temporary, 'rules.json'), '--context-policy', join(temporary, 'context-policy.json'), '--angular-templates'], consumer, 'installed rule context bundle'));
-  assert.equal(ruleContext.bundle.schemaVersion, 'review-bundle/v5'); assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 2);
+    '--rules', join(temporary, 'rules.json'), '--context-policy', join(temporary, 'context-policy.json'), '--angular-templates', '--angular-bindings'], consumer, 'installed rule context bundle'));
+  assert.equal(ruleContext.bundle.schemaVersion, 'review-bundle/v6'); assert.equal(ruleContext.schemaVersion, 'rule-context-bundle/v1'); assert.equal(ruleContext.contextPlan.requests.length, 2);
   assert.equal(ruleContext.bundle.angularTemplateContext.decisions.find(d => d.ruleId === 'loading').template.path, 'consumer.view');
   assert.equal(ruleContext.bundle.evidence.find(e => e.type === 'angular-template-source').content, '<button [disabled]="loading">Load</button>\n');
+  const loadingBinding = ruleContext.bundle.angularTemplateBindings.decisions.find(d => d.ruleId === 'loading').bindings[0].references[0];
+  assert.equal(loadingBinding.name, 'loading'); assert.equal(loadingBinding.classification, 'component-member');
+  assert.equal(loadingBinding.member.name, 'loading');
   assert.equal(ruleContext.bundle.contextExpansion.schemaVersion, 'caller-context/v2');
   for (const decision of ruleContext.bundle.contextExpansion.decisions) {
     assert.equal(decision.matches.length, 1); assert.equal(decision.matches[0].resolution.kind, 'local-const-alias');

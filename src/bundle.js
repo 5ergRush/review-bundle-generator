@@ -5,6 +5,7 @@ import { parseRulesYaml, selectRules } from './rules.js';
 import { expandTypeScriptContext, SemanticError } from './semantic.js';
 import { readRuleSourceEvidence, validateRuleSources } from './source-rules.js';
 import { expandAngularTemplateContext } from './angular-context.js';
+import { compileAngularTemplateBindings } from './angular-bindings.js';
 
 const MAX_INPUT_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BUNDLE_BYTES = 16 * 1024 * 1024;
@@ -222,19 +223,25 @@ export function compileReviewBundle(input, options = {}) {
 
 export async function createReviewBundle(options) {
   if (!object(options)) throw new BundleError('INVALID_INPUT', 'An options object is required.');
-  const { maxBundleBytes, rulesYaml, ruleSource = 'patch', angularTemplates = false, semantic = false, contextRequests = [], ...gitOptions } = options;
+  const { maxBundleBytes, rulesYaml, ruleSource = 'patch', angularTemplates = false, angularBindings = false, semantic = false, contextRequests = [], ...gitOptions } = options;
   if (typeof semantic !== 'boolean' || (!semantic && (!Array.isArray(contextRequests) || contextRequests.length))) {
     throw new SemanticError('INVALID_INPUT', 'Context requests require semantic: true; semantic must be boolean.');
   }
   if (!['patch', 'pinned'].includes(ruleSource) || (ruleSource === 'pinned' && (rulesYaml === undefined || parseRulesYaml(rulesYaml).schemaVersion !== 'review-rules/v3'))) throw new BundleError('INVALID_INPUT', 'ruleSource must be patch or pinned; pinned mode requires review-rules/v3.');
   if (typeof angularTemplates !== 'boolean' || (angularTemplates && ruleSource !== 'pinned')) throw new BundleError('INVALID_INPUT', 'angularTemplates must be boolean and requires pinned rule source.');
+  if (typeof angularBindings !== 'boolean' || (angularBindings && !angularTemplates)) throw new BundleError('INVALID_INPUT', 'angularBindings must be boolean and requires angularTemplates: true.');
   if (angularTemplates) {
-    const ordinary = await createReviewBundle({ ...options, angularTemplates: false });
+    const ordinary = await createReviewBundle({ ...options, angularTemplates: false, angularBindings: false });
     const extension = await expandAngularTemplateContext(gitOptions.repo, ordinary);
     const { id, ...payload } = ordinary;
     payload.schemaVersion = 'review-bundle/v5'; payload.angularTemplateContext = extension.angularTemplateContext;
     payload.evidence.push(...extension.evidence); payload.coverage.stages.angularTemplates = 'partial';
-    payload.coverage.limitations.push('Angular template context follows only selected-rule syntax inside a named class with an imported @angular/core Component decorator and explicit literal metadata. Dynamic/ambiguous/custom metadata and HTML-only changes are unsupported. External templates are bounded pinned regular UTF-8 blobs; inline templates are decoded metadata values. No template binding, runtime behavior, custom resource loader or framework correctness is inferred.');
+    if (angularBindings) {
+      payload.schemaVersion = 'review-bundle/v6'; payload.angularTemplateBindings = compileAngularTemplateBindings(payload);
+      payload.coverage.stages.angularBindings = 'partial';
+      payload.coverage.limitations.push('Angular binding analysis uses pinned Angular 18.2.14 syntax and lexical scope with unique declared instance members only. It does not type-check, match directives/pipes, resolve inheritance, evaluate expressions or infer defects. For-track scopes remain unresolved. Inline offsets refer to decoded template values, not TypeScript literal offsets. Parse errors omit relationships explicitly; budgets fail without partial output.');
+    }
+    payload.coverage.limitations.push('Angular template context follows only selected-rule syntax inside a named class with an imported @angular/core Component decorator and explicit literal metadata. Dynamic/ambiguous/custom metadata and HTML-only changes are unsupported. External templates are bounded pinned regular UTF-8 blobs; inline templates are decoded metadata values. ' + (angularBindings ? 'Template ownership alone does not establish runtime behavior, custom resource loader or framework correctness.' : 'No template binding, runtime behavior, custom resource loader or framework correctness is inferred.'));
     payload.coverage.limitations.sort(compare);
     const result = { id: `bundle:${hash(payload)}`, ...payload };
     if (Buffer.byteLength(JSON.stringify(result)) > (maxBundleBytes ?? DEFAULT_BUNDLE_BYTES)) throw new BundleError('BUNDLE_LIMIT', 'Serialized Angular template bundle exceeds maxBundleBytes; no partial bundle returned.');
