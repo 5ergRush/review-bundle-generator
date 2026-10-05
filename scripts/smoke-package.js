@@ -89,8 +89,23 @@ try {
   await writeFile(join(temporary, 'expectations.json'), JSON.stringify(expectations));
   const acceptance = JSON.parse(run(process.execPath, [cli, 'audit', '--bundle', join(temporary, 'bundle.json'), '--expectations', join(temporary, 'expectations.json')], consumer, 'installed offline acceptance'));
   assert.equal(acceptance.passed, true); assert.equal(acceptance.reviewerImprovement, 'not-measured');
+  // HTML-only increment: the component is unchanged across this separate range.
+  const templateBase = git('rev-parse', 'HEAD');
+  await writeFile(join(repo, 'consumer.view'), '<button [disabled]="loading" (click)="load()">New</button>\n');
+  git('add', '-A'); git('commit', '-qm', 'template-only');
+  await writeFile(join(temporary, 'owner-rules.json'), JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'view', title: 'Template consumer', instruction: 'Check actual owner state.', scope: { paths: ['consumer.view'] } }] }));
+  const owners = JSON.parse(run(process.execPath, [cli, 'bundle', '--repo', repo, '--base', templateBase,
+    '--rules', join(temporary, 'owner-rules.json'), '--rule-source', 'pinned', '--angular-templates', '--angular-bindings', '--angular-owner', 'component.ts'], consumer, 'installed template-only ownership'));
+  assert.equal(owners.schemaVersion, 'review-bundle/v7'); assert.equal(owners.changes.length, 1);
+  assert(owners.angularTemplateOwnerContext.decisions.every(d => d.owners[0].component.name === 'Panel'));
+  const nextOwner = owners.angularTemplateBindings.decisions.find(d => d.template && d.anchor.side === 'new');
+  assert.deepEqual(nextOwner.bindings.flatMap(binding => binding.references.map(r => r.name)), ['loading', 'load']);
+  assert(nextOwner.bindings.flatMap(binding => binding.references).every(r => r.classification === 'component-member'));
+  await writeFile(join(temporary, 'owners.json'), JSON.stringify(owners));
+  const ownerPacket = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'owners.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed template-only packet'));
+  assert.equal(ownerPacket.selectedRules[0].id, 'view');
   const fixtureDirectory = join(packageDirectory, 'fixtures', 'evaluation');
   const report = JSON.parse(run(process.execPath, [cli, 'evaluate', '--dataset', join(fixtureDirectory, 'dataset.json'), '--runs', join(fixtureDirectory, 'runs.json')], consumer, 'installed offline evaluation'));
   assert.equal(report.schemaVersion, 'review-evaluation-report/v1'); assert.equal(report.evidenceKind, 'synthetic-or-mixed');
-  process.stdout.write('Installed tarball, exports, CLI, runtime doctor, semantic bundle, automatic alias callers, Angular template ownership/packet, offline acceptance and evaluation passed.\n');
+  process.stdout.write('Installed tarball, exports, CLI, runtime doctor, semantic bundle, automatic alias callers, Angular template ownership/bindings and template-only owners/packet, offline acceptance and evaluation passed.\n');
 } finally { await rm(temporary, { recursive: true, force: true }); }

@@ -99,3 +99,5 @@ corporate MR, Angular build/runtime validation or AI-quality comparison occurred
 Reviewer benefit remains unmeasured.
 
 Optional [Angular binding relationships](angular-template-bindings.md) now parses a bounded static subset through a separate `--angular-bindings` / `angularBindings: true` opt-in (bundle v6). Ordinary v5 context retains the limits described above.
+
+Optional [changed-template ownership](angular-template-owners.md) now supports explicit candidate component paths for template-only edits through `angularOwnerPaths` / repeatable `--angular-owner PATH` (bundle v7). It preserves rule selection and earlier modes. Optional bindings include those owners; candidate coverage and imported-tree authenticity remain explicit limits.
