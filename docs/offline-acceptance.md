@@ -63,6 +63,9 @@ counts must be null; available counts are nonnegative integers, including zero.
 Required patch lines are exact individual strings, including their `+/-/ ` prefix;
 an empty array does not assert patch content. These are required lines, not an
 assertion that the complete patch contains no other lines.
+The external assertions cover the listed fields. Mode values, rename similarity,
+blob identities and caller availability are validated internally where applicable,
+but are not independently asserted by this expectations schema.
 
 `selectedRuleIds` asserts the exact set selected for that change. Global rule
 agreement cannot hide a rule attached to the wrong file. `sourceCoverage` is null
