@@ -244,5 +244,93 @@
     "expectedRules": [],
     "ruleSource": "pinned",
     "patchBaselineExpectedRules": []
+  },
+  {
+    "id": "component-qualified-alias",
+    "path": "src/lifecycle.ts",
+    "before": "import { Component as View } from '@angular/core';\n@View({})\nexport class Panel {\n ngOnDestroy() {\n  this.subscription.unsubscribe();\n }\n}\n",
+    "after": "import { Component as View } from '@angular/core';\n@View({})\nexport class Panel {\n ngOnDestroy() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [
+      "angular-component-teardown"
+    ],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v4"
+  },
+  {
+    "id": "component-qualified-namespace",
+    "path": "src/lifecycle.ts",
+    "before": "import * as ng from '@angular/core';\n@ng.Component({})\nexport class Panel {\n ngOnDestroy() {\n  this.subscription.unsubscribe();\n }\n}\n",
+    "after": "import * as ng from '@angular/core';\n@ng.Component({})\nexport class Panel {\n ngOnDestroy() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [
+      "angular-component-teardown"
+    ],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v4"
+  },
+  {
+    "id": "component-qualified-ordinary-class",
+    "path": "src/lifecycle.ts",
+    "before": "\n\nexport class Panel {\n ngOnDestroy() {\n  this.subscription.unsubscribe();\n }\n}\n",
+    "after": "\n\nexport class Panel {\n ngOnDestroy() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v4"
+  },
+  {
+    "id": "component-qualified-custom-import",
+    "path": "src/lifecycle.ts",
+    "before": "import { Component as View } from './custom';\n@View({})\nexport class Panel {\n ngOnDestroy() {\n  this.subscription.unsubscribe();\n }\n}\n",
+    "after": "import { Component as View } from './custom';\n@View({})\nexport class Panel {\n ngOnDestroy() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v4"
+  },
+  {
+    "id": "component-qualified-type-only-import",
+    "path": "src/lifecycle.ts",
+    "before": "import type { Component as View } from '@angular/core';\n@View({})\nexport class Panel {\n ngOnDestroy() {\n  this.subscription.unsubscribe();\n }\n}\n",
+    "after": "import type { Component as View } from '@angular/core';\n@View({})\nexport class Panel {\n ngOnDestroy() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v4"
+  },
+  {
+    "id": "component-qualified-unrelated-method",
+    "path": "src/lifecycle.ts",
+    "before": "import { Component as View } from '@angular/core';\n@View({})\nexport class Panel {\n refresh() {\n  this.subscription.unsubscribe();\n }\n}\n",
+    "after": "import { Component as View } from '@angular/core';\n@View({})\nexport class Panel {\n refresh() {\n }\n}\n",
+    "expectedAdded": 0,
+    "expectedRemoved": 1,
+    "requiredPatchLines": [
+      "-  this.subscription.unsubscribe();"
+    ],
+    "expectedRules": [],
+    "ruleSource": "pinned",
+    "ruleSchemaVersion": "review-rules/v4"
   }
 ]

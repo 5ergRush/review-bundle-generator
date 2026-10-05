@@ -11,6 +11,7 @@ const output = resolve(process.argv[2] ?? 'fixtures/acceptance');
 await mkdir(output, { recursive: true });
 const cases = JSON.parse(await readFile(new URL('../fixtures/acceptance/cases.json', import.meta.url), 'utf8'));
 const angularRules = parse(await readFile(new URL('../examples/angular-invariant-rules.yaml', import.meta.url), 'utf8'));
+const componentRules = await readFile(new URL('../examples/angular-component-rules.yaml', import.meta.url), 'utf8');
 const rules = stringify({ schemaVersion: 'review-rules/v3', rules: [
   { id: 'authorization-guard', title: 'Authorization invariant', instruction: 'The caller passes externally supplied roles. Verify that unauthorized roles cannot reach the protected action. A removed guard needs equivalent enforcement; request caller evidence rather than assume it.', scope: { paths: ['src/access.ts'] }, when: { minRemovedLines: 1, changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['role'] }] } },
   { id: 'money-boundary', title: 'Money invariant', instruction: 'Amounts passed to the payment boundary must remain positive integer minor units. Check validation changes, including zero, negative and fractional inputs; do not assume the UI enforces the invariant.', scope: { paths: ['src/payment.ts'] }, when: { minRemovedLines: 1, changedSyntax: [{ side: 'removed', kind: 'throw-guard', identifiers: ['amount'] }] } },
@@ -26,7 +27,7 @@ for (const item of cases) {
     git('init', '-q', '--template=', '--initial-branch=main'); await mkdir(join(repo, 'src'));
     await writeFile(join(repo, item.path), item.before); git('add', '-A'); git('commit', '-qm', 'base'); const base = git('rev-parse', 'HEAD');
     await writeFile(join(repo, item.path), item.after); git('add', '-A'); git('commit', '-qm', 'head'); const head = git('rev-parse', 'HEAD');
-    const bundle = await createReviewBundle({ repo, base, head, comparison: 'direct', rulesYaml: rules, semantic: true, ruleSource: item.ruleSource ?? 'patch' });
+    const bundle = await createReviewBundle({ repo, base, head, comparison: 'direct', rulesYaml: item.ruleSchemaVersion === 'review-rules/v4' ? componentRules : rules, semantic: true, ruleSource: item.ruleSource ?? 'patch' });
     if (item.patchBaselineExpectedRules) {
       const baseline = await createReviewBundle({ repo, base, head, comparison: 'direct', rulesYaml: rules, semantic: true });
       assert.deepEqual(baseline.ruleSelection.decisions.filter(d => d.status === 'matched').map(d => d.ruleId).sort(), item.patchBaselineExpectedRules);
@@ -45,7 +46,8 @@ for (const item of cases) {
     const falseSelections = selected.filter(id => !item.expectedRules.includes(id));
     const missedRules = item.expectedRules.filter(id => !selected.includes(id));
     results.push({ caseId: item.id, facts: 'passed', packetIntegrity: 'passed', expectedRules: item.expectedRules, selectedRules: selected, falseSelections, missedRules, specificity: falseSelections.length || missedRules.length ? 'failed' : 'passed',
-      ...(item.ruleSource ? { ruleSource: item.ruleSource, patchBaselineExpectedRules: item.patchBaselineExpectedRules } : {}) });
+      ...(item.ruleSource ? { ruleSource: item.ruleSource, patchBaselineExpectedRules: item.patchBaselineExpectedRules } : {}),
+      ...(item.ruleSchemaVersion ? { ruleSchemaVersion: item.ruleSchemaVersion } : {}) });
     await writeFile(join(output, `${item.id}.packet.json`), JSON.stringify(packet, null, 2) + '\n');
     await writeFile(join(output, `${item.id}.diff.patch`), evidence.content);
   } finally { await rm(repo, { recursive: true, force: true }); }

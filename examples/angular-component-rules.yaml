@@ -1,0 +1,16 @@
+schemaVersion: review-rules/v4
+rules:
+  - id: angular-component-teardown
+    title: Review changed teardown in an Angular component
+    instruction: >-
+      Check whether component resources still stop at destruction. A removed
+      unsubscribe call is a trigger; verify equivalent cleanup before reporting.
+    scope:
+      paths: ['src/**']
+    when:
+      changedSyntax:
+        - side: removed
+          kind: member-call
+          callee: this.subscription.unsubscribe
+          within: ngOnDestroy
+          angularComponent: true

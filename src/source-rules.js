@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { createHash } from 'node:crypto';
 import { readTypeScriptSources } from './git.js';
+import { discoverAngularComponents } from './angular-context.js';
 
 export const RULE_SOURCE_LIMITS = { maxFiles: 64, maxBytes: 4 * 1024 * 1024, maxFileBytes: 512 * 1024, maxNodesPerFile: 250000 };
 const hash = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
@@ -69,11 +70,14 @@ function shape(node) {
   return kind ? { kind, condition, callee, ...(target ? { target } : {}) } : null;
 }
 
-function parseSource(record, tick) {
+function parseSource(record, tick, qualifyComponent) {
   const text = record?.content ?? ''; let file;
   try { file = ts.createSourceFile(record?.origin.path ?? 'absent.ts', text, ts.ScriptTarget.ESNext, true, ts.ScriptKind.TS); }
   catch { return null; }
   if (file.parseDiagnostics.length) return null;
+  const classes = qualifyComponent && record ? discoverAngularComponents(record, tick).classes : [];
+  const point = offset => { const value = file.getLineAndCharacterOfPosition(offset); return { line: value.line + 1, column: value.character + 1 }; };
+  const classContexts = new Map(classes.map(item => [JSON.stringify([item.classOrigin.start, item.classOrigin.end]), item]));
   const tokens = []; const pending = [file]; let count = 0;
   while (pending.length) {
     tick(); if (++count > RULE_SOURCE_LIMITS.maxNodesPerFile) throw new RuleSourceError('RULE_SOURCE_LIMIT', 'Source token tree exceeds 250000 nodes.');
@@ -90,27 +94,37 @@ function parseSource(record, tick) {
     for (let index = lower(start); index < tokens.length && tokens[index].end <= end; index++) { tick(); included.push(tokens[index]); }
     const identifiers = new Set(); const parts = [value.condition];
     while (parts.length) { tick(); const part = parts.pop(); if (ts.isIdentifier(part)) identifiers.add(part.text); ts.forEachChild(part, child => { parts.push(child); }); }
-    let within = null; let withinLine = null; const scope = [];
+    let within = null; let withinLine = null; const scope = []; let nearestClass = null;
     for (let parent = node.parent; parent; parent = parent.parent) {
       tick(); if (parent.name && ts.isIdentifier(parent.name)) scope.unshift(parent.name.text);
+      if (!nearestClass && (ts.isClassDeclaration(parent) || ts.isClassExpression(parent))) nearestClass = parent;
       if (withinLine === null && ts.isFunctionLike(parent)) { within = parent.name && ts.isIdentifier(parent.name) ? parent.name.text : null; withinLine = within ? file.getLineAndCharacterOfPosition(parent.name.getStart(file)).line + 1 : -1; }
     }
     const first = file.getLineAndCharacterOfPosition(start); const last = file.getLineAndCharacterOfPosition(end - 1); const exclusive = file.getLineAndCharacterOfPosition(end);
+    let angularComponentContext;
+    if (qualifyComponent) {
+      const relation = nearestClass ? classContexts.get(JSON.stringify([point(nearestClass.getStart(file)), point(nearestClass.end)])) : null;
+      const component = relation?.component?.decorator ? relation.component : null;
+      const unavailable = nearestClass && (!relation || ['ambiguous-component-decorator', 'named-component-class-unavailable'].includes(relation.reason));
+      angularComponentContext = { status: component ? 'included' : unavailable ? 'unavailable' : 'not-component',
+        reason: component ? 'bound-component-decorator' : unavailable ? relation?.reason ?? 'class-context-unavailable' : nearestClass ? 'nearest-class-not-bound-component' : 'not-in-class', component };
+    }
     nodes.push({ kind: value.kind, callee: value.callee, ...(value.target ? { target: value.target } : {}), identifiers: [...identifiers].sort(),
+      ...(qualifyComponent ? { angularComponentContext } : {}),
       within, withinLine: withinLine === -1 ? null : withinLine, startLine: first.line + 1, endLine: last.line + 1,
       origin: record ? { ...record.origin, start: { line: first.line + 1, column: first.character + 1 }, end: { line: exclusive.line + 1, column: exclusive.character + 1 } } : null,
-      included, fingerprint: JSON.stringify([scope, included.map(token => token.value)]) });
+      included, fingerprint: JSON.stringify([scope, included.map(token => token.value), ...(qualifyComponent ? [angularComponentContext.status] : [])]) });
   }
   return { file, nodes };
 }
 
-export function observePinnedSyntax(change, evidence, tick) {
+export function observePinnedSyntax(change, evidence, tick, qualifyComponent = false) {
   if (!eligible(change)) return { available: false, reason: 'not-applicable', observations: [] };
   const sources = ['old', 'new'].map(side => evidence.find(item => item.type === 'typescript-rule-source' && item.changeId === change.id && item.side === side));
   if (sources.some((source, index) => !source && change[index === 0 ? 'oldPath' : 'newPath'] !== null)) return { available: false, reason: 'source-unavailable', observations: [] };
   if (sources.some(source => /[\u2028\u2029]|\r(?!\n)/u.test(source?.content ?? ''))) return { available: false, reason: 'unsupported-line-separators', observations: [] };
   const sourceLines = sources.map(source => source?.content.split('\n') ?? []);
-  const parsed = sources.map(source => parseSource(source, tick));
+  const parsed = sources.map(source => parseSource(source, tick, qualifyComponent));
   if (parsed.some(item => item === null)) return { available: false, reason: 'parse-unavailable', observations: [] };
   const observations = [];
   for (const patchId of change.evidenceIds) {

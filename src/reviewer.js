@@ -98,7 +98,7 @@ function validateBundle(bundle) {
   const angularTemplates = ['review-bundle/v5', 'review-bundle/v6', 'review-bundle/v7'].includes(bundle.schemaVersion);
   const pinnedRules = ['review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6', 'review-bundle/v7'].includes(bundle.schemaVersion);
   const semantic = bundle.schemaVersion === 'review-bundle/v3' || (pinnedRules && bundle.semanticAnalysis !== undefined);
-  requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4/v5/v6 and selection v4.');
+  requireCondition(pinnedRules ? ['rule-selection/v4', 'rule-selection/v5'].includes(bundle.ruleSelection?.schemaVersion) : !['rule-selection/v4', 'rule-selection/v5'].includes(bundle.ruleSelection?.schemaVersion), code, 'Pinned rules require bundle v4/v5/v6 and selection v4/v5.');
   keys(bundle, ['id', 'schemaVersion', 'provenance', 'summary', 'changes', 'evidence', 'facts', 'coverage',
     ...(bundle.ruleSelection !== undefined ? ['ruleSelection'] : []),
     ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : []), ...(angularTemplates ? ['angularTemplateContext'] : []), ...(angularBindings ? ['angularTemplateBindings'] : []), ...(angularOwners ? ['angularTemplateOwnerContext'] : [])], code);
@@ -137,7 +137,7 @@ function validateBundle(bundle) {
       const rules = bundle.ruleSelection.rules.map(rule => ({ ...rule,
         scope: Object.fromEntries(Object.entries(rule.scope).filter(([, value]) => value !== null)),
         when: Object.fromEntries(Object.entries(rule.when).filter(([, value]) => value !== null)) }));
-      const config = parseRulesYaml(JSON.stringify({ schemaVersion: ['rule-selection/v3', 'rule-selection/v4'].includes(bundle.ruleSelection.schemaVersion) ? 'review-rules/v3' : bundle.ruleSelection.schemaVersion === 'rule-selection/v2' ? 'review-rules/v2' : 'review-rules/v1', rules }));
+      const config = parseRulesYaml(JSON.stringify({ schemaVersion: bundle.ruleSelection.schemaVersion === 'rule-selection/v5' ? 'review-rules/v4' : ['rule-selection/v3', 'rule-selection/v4'].includes(bundle.ruleSelection.schemaVersion) ? 'review-rules/v3' : bundle.ruleSelection.schemaVersion === 'rule-selection/v2' ? 'review-rules/v2' : 'review-rules/v1', rules }));
       const expected = selectRules(config, baseline.changes, baseline.facts, [...baseline.evidence, ...ruleSources], pinnedRules ? 'pinned' : 'patch');
       requireCondition(JSON.stringify(bundle.ruleSelection) === JSON.stringify(expected), code, 'Invalid rule selection.');
       for (const decision of expected.decisions.filter(item => item.status === 'matched')) {

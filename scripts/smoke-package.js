@@ -89,6 +89,16 @@ try {
   await writeFile(join(temporary, 'expectations.json'), JSON.stringify(expectations));
   const acceptance = JSON.parse(run(process.execPath, [cli, 'audit', '--bundle', join(temporary, 'bundle.json'), '--expectations', join(temporary, 'expectations.json')], consumer, 'installed offline acceptance'));
   assert.equal(acceptance.passed, true); assert.equal(acceptance.reviewerImprovement, 'not-measured');
+  const componentRules = JSON.parse(await readFile(join(temporary, 'rules.json'), 'utf8'));
+  componentRules.schemaVersion = 'review-rules/v4'; componentRules.rules.find(rule => rule.id === 'loading').when.changedSyntax[0].angularComponent = true;
+  await writeFile(join(temporary, 'component-rules.json'), JSON.stringify(componentRules));
+  const qualified = JSON.parse(run(process.execPath, [cli, 'bundle', '--repo', repo, '--base', base, '--rules', join(temporary, 'component-rules.json'), '--rule-source', 'pinned'], consumer, 'installed component-qualified selection'));
+  assert.equal(qualified.schemaVersion, 'review-bundle/v4'); assert.equal(qualified.ruleSelection.schemaVersion, 'rule-selection/v5');
+  const qualifiedLoading = qualified.ruleSelection.decisions.find(decision => decision.ruleId === 'loading'); assert.equal(qualifiedLoading.status, 'matched');
+  assert.equal(qualifiedLoading.matches[0].syntaxMatches[0][0].angularComponentContext.component.name, 'Panel');
+  await writeFile(join(temporary, 'qualified.json'), JSON.stringify(qualified));
+  const qualifiedPacket = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'qualified.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed component provenance packet'));
+  assert.equal(qualifiedPacket.selectedRules.length, 2);
   // HTML-only increment: the component is unchanged across this separate range.
   const templateBase = git('rev-parse', 'HEAD');
   await writeFile(join(repo, 'consumer.view'), '<button [disabled]="loading" (click)="load()">New</button>\n');
