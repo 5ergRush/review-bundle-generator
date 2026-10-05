@@ -5,6 +5,7 @@ import ts from 'typescript';
 import { validateRuleSources } from './source-rules.js';
 import { compileAngularTemplateContext } from './angular-context.js';
 import { compileAngularTemplateBindings } from './angular-bindings.js';
+import { compileAngularTemplateOwners } from './angular-owners.js';
 
 const MAX_BYTES = 64 * 1024 * 1024;
 const DEFAULT_BYTES = 16 * 1024 * 1024;
@@ -91,15 +92,16 @@ function sourceOrigin(origin, commits, code) {
 
 function validateBundle(bundle) {
   const code = 'INVALID_REVIEW_BUNDLE';
-  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1 through v6.');
-  const angularBindings = bundle.schemaVersion === 'review-bundle/v6';
-  const angularTemplates = ['review-bundle/v5', 'review-bundle/v6'].includes(bundle.schemaVersion);
-  const pinnedRules = ['review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6'].includes(bundle.schemaVersion);
+  requireCondition(object(bundle) && ['review-bundle/v1', 'review-bundle/v2', 'review-bundle/v3', 'review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6', 'review-bundle/v7'].includes(bundle.schemaVersion), code, 'Expected review-bundle/v1 through v7.');
+  const angularOwners = bundle.schemaVersion === 'review-bundle/v7';
+  const angularBindings = bundle.schemaVersion === 'review-bundle/v6' || (angularOwners && bundle.angularTemplateBindings !== undefined);
+  const angularTemplates = ['review-bundle/v5', 'review-bundle/v6', 'review-bundle/v7'].includes(bundle.schemaVersion);
+  const pinnedRules = ['review-bundle/v4', 'review-bundle/v5', 'review-bundle/v6', 'review-bundle/v7'].includes(bundle.schemaVersion);
   const semantic = bundle.schemaVersion === 'review-bundle/v3' || (pinnedRules && bundle.semanticAnalysis !== undefined);
   requireCondition(pinnedRules ? bundle.ruleSelection?.schemaVersion === 'rule-selection/v4' : bundle.ruleSelection?.schemaVersion !== 'rule-selection/v4', code, 'Pinned rules require bundle v4/v5/v6 and selection v4.');
   keys(bundle, ['id', 'schemaVersion', 'provenance', 'summary', 'changes', 'evidence', 'facts', 'coverage',
     ...(bundle.ruleSelection !== undefined ? ['ruleSelection'] : []),
-    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : []), ...(angularTemplates ? ['angularTemplateContext'] : []), ...(angularBindings ? ['angularTemplateBindings'] : [])], code);
+    ...(semantic ? ['semanticAnalysis', 'contextExpansion'] : []), ...(angularTemplates ? ['angularTemplateContext'] : []), ...(angularBindings ? ['angularTemplateBindings'] : []), ...(angularOwners ? ['angularTemplateOwnerContext'] : [])], code);
   contentId(bundle, 'bundle', code);
   requireCondition(Array.isArray(bundle.changes) && Array.isArray(bundle.evidence) && Array.isArray(bundle.facts) && object(bundle.provenance), code, 'Missing bundle records.');
   const patches = bundle.evidence.filter(item => item?.type === 'git-patch');
@@ -116,7 +118,8 @@ function validateBundle(bundle) {
   }
   requireCondition(object(bundle.coverage) && bundle.coverage.status === 'partial' && object(bundle.coverage.stages) && Array.isArray(bundle.coverage.limitations), code, 'Missing partial coverage contract.');
   keys(bundle.coverage, ['status', 'stages', 'limitations'], code);
-  keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion', ...(angularTemplates ? ['angularTemplates'] : []), ...(angularBindings ? ['angularBindings'] : [])], code);
+  keys(bundle.coverage.stages, ['gitDiff', 'deterministicFacts', 'semanticAnalysis', 'ruleSelection', 'contextExpansion', ...(angularTemplates ? ['angularTemplates'] : []), ...(angularBindings ? ['angularBindings'] : []), ...(angularOwners ? ['angularOwners'] : [])], code);
+  requireCondition(!angularOwners || bundle.coverage.stages.angularOwners === 'partial', code, 'Angular owner coverage must be partial.');
   requireCondition(!angularBindings || bundle.coverage.stages.angularBindings === 'partial', code, 'Angular binding coverage must be partial.');
   requireCondition(!angularTemplates || bundle.coverage.stages.angularTemplates === 'partial', code, 'Angular template coverage must be partial.');
   requireCondition(bundle.coverage.stages.gitDiff === 'complete' && bundle.coverage.stages.deterministicFacts === 'complete' &&
@@ -151,6 +154,12 @@ function validateBundle(bundle) {
     try { requireCondition(JSON.stringify(bundle.angularTemplateContext) === JSON.stringify(compileAngularTemplateContext(bundle, templateSources)), code, 'Invalid Angular template context.'); }
     catch { throw new ReviewerError(code, 'Angular ownership or template evidence is inconsistent.'); }
   } else requireCondition(templateSources.length === 0, code, 'Angular template sources require bundle v5/v6.');
+  const ownerSources = bundle.evidence.filter(item => item?.type === 'angular-owner-source');
+  const ownerTemplates = bundle.evidence.filter(item => item?.type === 'angular-owner-template-source');
+  if (angularOwners) {
+    try { requireCondition(JSON.stringify(bundle.angularTemplateOwnerContext) === JSON.stringify(compileAngularTemplateOwners(bundle, bundle.angularTemplateOwnerContext?.policy?.candidatePaths, ownerSources, ownerTemplates)), code, 'Invalid changed-template ownership.'); }
+    catch { throw new ReviewerError(code, 'Candidate ownership sources or relationships are inconsistent.'); }
+  } else requireCondition(ownerSources.length === 0 && ownerTemplates.length === 0, code, 'Ownership evidence requires bundle v7.');
   if (angularBindings) {
     try { requireCondition(JSON.stringify(bundle.angularTemplateBindings) === JSON.stringify(compileAngularTemplateBindings(bundle)), code, 'Invalid Angular template bindings.'); }
     catch { throw new ReviewerError(code, 'Angular binding relationships or coordinates are inconsistent.'); }
@@ -162,7 +171,7 @@ function validateBundle(bundle) {
     contentId(evidence, 'evidence', code); evidenceById.set(evidence.id, evidence);
     if (evidence.type === 'git-patch') continue;
     if (evidence.type === 'typescript-rule-source') continue;
-    if (evidence.type === 'angular-template-source') continue;
+    if (evidence.type === 'angular-template-source' || (angularOwners && ['angular-owner-source', 'angular-owner-template-source'].includes(evidence.type))) continue;
     keys(evidence, ['id', 'type', 'origin', 'content'], code);
     requireCondition(semantic && evidence.type === 'typescript-source' &&
       typeof evidence.content === 'string' && evidence.content.length > 0, code, 'Unsupported source evidence.');
@@ -178,6 +187,9 @@ function validateBundle(bundle) {
   for (const decision of bundle.angularTemplateContext?.decisions ?? []) if (decision.template?.kind === 'external') {
     const id = decision.template.evidenceId; if (!contextChanges.has(id)) contextChanges.set(id, new Set());
     contextChanges.get(id).add(decision.anchor.changeId);
+  }
+  for (const decision of bundle.angularTemplateOwnerContext?.decisions ?? []) for (const owner of decision.owners) for (const id of [owner.sourceEvidenceId, owner.template.evidenceId]) {
+    if (!contextChanges.has(id)) contextChanges.set(id, new Set()); contextChanges.get(id).add(decision.changeId);
   }
   if (semantic) {
     requireCondition(['typescript-analysis/v1', 'typescript-analysis/v2'].includes(bundle.semanticAnalysis?.schemaVersion) && Array.isArray(bundle.semanticAnalysis.declarations) &&
@@ -380,6 +392,9 @@ export function normalizeReviewerResponse(inputRequest, inputResponse, options =
       const matched = new Set(selected.get(finding.ruleId).matches.map(match => match.changeId));
       if (evidence.type === 'angular-template-source') requireCondition(request.bundle.angularTemplateContext.decisions.some(decision =>
         decision.ruleId === finding.ruleId && decision.template?.evidenceId === evidence.id), code, 'Primary template evidence is outside the cited rule ownership.');
+      if (['angular-owner-source', 'angular-owner-template-source'].includes(evidence.type)) requireCondition(request.bundle.angularTemplateOwnerContext.decisions.some(decision =>
+        decision.ruleId === finding.ruleId && decision.owners.some(owner => evidence.type === 'angular-owner-template-source' ? owner.template.evidenceId === evidence.id : owner.sourceEvidenceId === evidence.id &&
+          [owner.component.origin, owner.component.decorator.binding.origin].some(range => location.startLine >= range.start.line && location.endLine <= range.end.line - (range.end.column === 1 ? 1 : 0)))), code, 'Primary owner evidence is outside the cited rule/component scope.');
       requireCondition(['git-patch', 'typescript-rule-source'].includes(evidence.type) ? matched.has(evidence.changeId) :
         [...(contextChanges.get(evidence.id) ?? [])].some(id => matched.has(id)), code, 'Primary evidence is outside the selected rule scope.');
     }

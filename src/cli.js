@@ -14,6 +14,7 @@ const help = `Usage: review-bundle ingest|bundle --repo PATH --base REV [--head 
   [--rule-source patch|pinned (pinned requires v3 rules)]
   [--angular-templates (bundle only; requires pinned rules)]
   [--angular-bindings (requires --angular-templates)]
+  [--angular-owner PATH (repeatable; requires --angular-templates)]
   [--semantic] [--callers declaration:SHA256 (repeatable, bundle only)]
 review-bundle packet --bundle PATH --reviewer-id ID --reviewer-version VERSION
   [--max-request-bytes N]
@@ -28,18 +29,19 @@ review-bundle audit --bundle PATH --expectations PATH
 review-bundle gitlab-snapshot --instance HTTPS_URL --project-id N --mr-iid N
   [--metadata PATH (offline)] [--timeout-ms N] [--max-response-bytes N]
 review-bundle gitlab-bundle --repo PATH --snapshot PATH
-  [--rules PATH] [--rule-source patch|pinned] [--angular-templates] [--angular-bindings] [--semantic] [--callers declaration:SHA256]
+  [--rules PATH] [--rule-source patch|pinned] [--angular-templates] [--angular-bindings] [--angular-owner PATH] [--semantic] [--callers declaration:SHA256]
   [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N] [--max-envelope-bytes N]
 review-bundle gitlab-check --snapshot PATH --current PATH
 review-bundle rule-context-bundle --repo PATH --base REV [--head REV]
   --rules PATH --context-policy PATH [--max-targets N] [--max-envelope-bytes N]
-  [--rule-source patch|pinned] [--angular-templates] [--angular-bindings] [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
+  [--rule-source patch|pinned] [--angular-templates] [--angular-bindings] [--angular-owner PATH] [--comparison merge-base|direct] [--max-bytes N] [--timeout-ms N] [--max-bundle-bytes N]
 
 Writes ingestion/v1, bundle/v1 (without rules), bundle/v2 (with rules), or bundle/v3 (with semantic analysis) JSON.
 Rule-context-bundle writes rule-context-bundle/v1 containing the ordinary .bundle and explicit plan.
 Pinned rule-source writes bundle/v4 with complete bounded changed .ts files and selection/v4.
 Angular template opt-in writes bundle/v5 with explicit component/template context.
 Angular bindings opt-in writes bundle/v6 with parsed static template/member relationships.
+Explicit candidate owner paths opt into bundle/v7 with changed-template ownership.
 Default head: HEAD. Default comparison: merge-base. Only committed changes.
 The bundle command compiles diff evidence and deterministic facts. No AI calls.
 Packet and normalize are offline JSON operations. No CLI command invokes a reviewer.
@@ -77,6 +79,9 @@ async function main(args) {
   const options = {};
   while (args.length) {
     const flag = args.shift();
+    if (['bundle', 'gitlab-bundle', 'rule-context-bundle'].includes(command) && flag === '--angular-owner') {
+      options.angularOwnerPaths ??= []; options.angularOwnerPaths.push(args.shift()); continue;
+    }
     if (['bundle', 'gitlab-bundle', 'rule-context-bundle'].includes(command) && flag === '--angular-bindings') {
       if (options.angularBindings) throw new IngestionError('INVALID_INPUT', 'Duplicate --angular-bindings.');
       options.angularBindings = true; continue;

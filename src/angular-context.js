@@ -46,11 +46,15 @@ function componentImport(expression, checker, source, file) {
 }
 function templateFor(source, parsed, anchor, tick) {
   if (!parsed) return { reason: 'parse-unavailable' };
-  const { file, checker } = parsed;
+  const { file } = parsed;
   const start = file.getPositionOfLineAndCharacter(anchor.origin.start.line - 1, anchor.origin.start.column - 1);
   const end = file.getPositionOfLineAndCharacter(anchor.origin.end.line - 1, anchor.origin.end.column - 1);
   const candidates = parsed.classes.filter(node => { tick(); return node.getStart(file) <= start && node.end >= end; }).sort((a, b) => a.end - a.getStart(file) - (b.end - b.getStart(file)));
   const owner = candidates[0];
+  return relationForOwner(source, parsed, owner, tick);
+}
+function relationForOwner(source, parsed, owner, tick) {
+  const { file, checker } = parsed;
   if (!owner || !ts.isClassDeclaration(owner) || !owner.name) return { reason: 'named-component-class-unavailable' };
   const component = { name: owner.name.text, origin: origin(source, file, owner) };
   const decorators = (ts.getDecorators(owner) ?? []).flatMap(decorator => {
@@ -77,6 +81,15 @@ function templateFor(source, parsed, anchor, tick) {
   const url = value.text; const path = posix.normalize(posix.join(posix.dirname(source.origin.path), url));
   if (!url || url.length > 4096 || /[\\\0\r\n:%?#]/u.test(url) || url.startsWith('/') || path.startsWith('../') || path === '..' || path === '.' || path.startsWith('/')) return { component, reason: 'unsupported-template-url' };
   template.path = path; template.commit = source.origin.commit; return { component, template };
+}
+
+// Internal shared ownership parser for an explicitly configured candidate source set.
+export function discoverAngularComponents(source, tick) {
+  const parsed = parseSource(source, tick);
+  if (!parsed) return { status: 'parse-unavailable', classes: [] };
+  return { status: 'parsed', classes: [...parsed.classes].sort((a, b) => a.getStart(parsed.file) - b.getStart(parsed.file)).map(owner => {
+    tick(); return { classOrigin: origin(source, parsed.file, owner), ...relationForOwner(source, parsed, owner, tick) };
+  }) };
 }
 
 function plan(bundle) {

@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import * as ng from '@angular/compiler';
 import { AngularContextError } from './angular-context.js';
+import { angularOwnerBindingDecisions } from './angular-owners.js';
 
 const limits = Object.freeze({ maxTemplates: 64, maxFileBytes: 32768, maxBytes: 131072, maxNodes: 20000, maxDepth: 128, maxOperations: 500000 });
 const check = (ok, message) => { if (!ok) throw new AngularContextError('ANGULAR_BINDING_LIMIT', message); };
@@ -106,7 +107,7 @@ export function compileAngularTemplateBindings(bundle) {
   const evidence = new Map(bundle.evidence.map(item => [item.id, item]));
   const templates = new Map(); const owners = new Map(); const decisions = []; let operations = 0, bytes = 0;
   const tick = () => check(++operations <= limits.maxOperations, 'Angular bindings exceed operation budget.');
-  for (const decision of bundle.angularTemplateContext.decisions) {
+  for (const decision of [...bundle.angularTemplateContext.decisions, ...angularOwnerBindingDecisions(bundle)]) {
     tick(); const result = { ruleId: decision.ruleId, anchor: decision.anchor, component: decision.component, template: decision.template, status: 'omitted', reason: decision.reason, diagnostics: [], bindings: [] };
     decisions.push(result); if (decision.status !== 'included') continue;
     const source = evidence.get(decision.anchor.sourceEvidenceId);

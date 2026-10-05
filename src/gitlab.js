@@ -125,7 +125,7 @@ export async function fetchGitLabMergeRequest(config) {
 }
 
 export async function createGitLabReviewBundle(config) {
-  options(config, ['repo', 'mergeRequest', 'maxEnvelopeBytes', 'maxBundleBytes', 'maxBytes', 'timeoutMs', 'rulesYaml', 'ruleSource', 'angularTemplates', 'angularBindings', 'semantic', 'contextRequests']);
+  options(config, ['repo', 'mergeRequest', 'maxEnvelopeBytes', 'maxBundleBytes', 'maxBytes', 'timeoutMs', 'rulesYaml', 'ruleSource', 'angularTemplates', 'angularBindings', 'angularOwnerPaths', 'semantic', 'contextRequests']);
   const mergeRequest = snapshot(config.mergeRequest);
   check(mergeRequest.state === 'opened' && mergeRequest.sourceProjectId !== null, 'An open merge request with an available source project is required.', 'GITLAB_MR_NOT_OPEN');
   const maxEnvelopeBytes = integer(config.maxEnvelopeBytes ?? 16 * 1024 * 1024, 64 * 1024 * 1024);

@@ -98,3 +98,5 @@ scope, source-coordinate, ownership, validation and integration contracts. The
 existing offline acceptance schema independently checks facts/rules, not these new
 relationships. Real approved-MR acceptance and measured reviewer benefit remain
 pending; no application build, real MR or AI-quality experiment is claimed.
+
+Optional [changed-template ownership](angular-template-owners.md) now supports explicit candidate component paths for template-only edits through `angularOwnerPaths` / repeatable `--angular-owner PATH` (bundle v7). It preserves rule selection and earlier modes. Optional bindings include those owners; candidate coverage and imported-tree authenticity remain explicit limits.

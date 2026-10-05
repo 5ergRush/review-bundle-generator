@@ -1,5 +1,7 @@
 # Review Bundle Generator
 
+Opt-in [changed-template owners](docs/angular-template-owners.md) follows explicit component candidates through repeatable `--angular-owner PATH` (bundle v7), including unchanged owners of template-only edits.
+
 Opt-in [Angular binding relationships](docs/angular-template-bindings.md) adds parsed template locals and pinned component-member references through `--angular-templates --angular-bindings` (bundle v6).
 
 Opt-in [Angular template context](docs/angular-template-context.md) follows explicit
