@@ -21,13 +21,78 @@ function copy(value, limit) {
 }
 function freeze(value) { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; }
 
+const ownerDecisionKey = value => JSON.stringify([value.ruleId, value.oldPath, value.newPath, value.side]);
+const canonicalSort = values => values.sort((a, b) => compare(JSON.stringify(a), JSON.stringify(b)));
+function compileOwnerExpectations(input, changes, ruleSource) {
+  keys(input, ['candidatePaths', 'decisions']);
+  check(ruleSource === 'pinned', 'Owner expectations require pinned rule mode.');
+  check(Array.isArray(input.candidatePaths) && input.candidatePaths.length > 0 && input.candidatePaths.length <= 32 && new Set(input.candidatePaths).size === input.candidatePaths.length, 'Expected 1..32 unique owner candidate paths.');
+  for (const candidate of input.candidatePaths) {
+    path(candidate);
+    check(typeof candidate === 'string' && candidate.endsWith('.ts') && !candidate.endsWith('.d.ts') && !/[\\\r\n]/u.test(candidate), 'Expected regular relative TypeScript candidate paths.');
+  }
+  const candidatePaths = [...input.candidatePaths].sort(compare), byPath = new Map(changes.map(change => [pair(change), change]));
+  check(Array.isArray(input.decisions) && input.decisions.length <= 10000, 'At most 10000 expected owner decisions.');
+  const seen = new Set();
+  const decisions = input.decisions.map(decision => {
+    keys(decision, ['ruleId', 'oldPath', 'newPath', 'side', 'status', 'reason', 'owners']);
+    check(/^[a-z][a-z0-9-]*$/u.test(text(decision.ruleId, 80)), 'Invalid owner decision rule ID.');
+    path(decision.oldPath); path(decision.newPath);
+    check(['old', 'new', null].includes(decision.side), 'Invalid expected owner side.');
+    const change = byPath.get(pair(decision));
+    check(decision.side === null ? decision.oldPath === null && decision.newPath === null && !changes.some(item => item.selectedRuleIds.includes(decision.ruleId)) : !!change && change[`${decision.side}Path`] !== null && change.selectedRuleIds.includes(decision.ruleId), 'Owner decision must refer to a selected changed path side, or an unselected rule.');
+    check(!seen.has(ownerDecisionKey(decision)), 'Duplicate expected owner decision.'); seen.add(ownerDecisionKey(decision));
+    check(['included', 'omitted'].includes(decision.status), 'Invalid expected owner status.'); text(decision.reason, 128);
+    check(Array.isArray(decision.owners) && decision.owners.length <= 64 && (decision.status === 'included' ? decision.owners.length > 0 : decision.owners.length === 0), 'Expected owner list disagrees with status.');
+    check(decision.side !== null || decision.status === 'omitted' && decision.reason === 'rule-not-selected', 'Unselected rule requires rule-not-selected omission.');
+    const owners = decision.owners.map(owner => {
+      keys(owner, ['path', 'name', 'start', 'end']);
+      check(candidatePaths.includes(owner.path), 'Expected owner must be within configured candidate paths.'); text(owner.name, 128);
+      for (const point of [owner.start, owner.end]) {
+        keys(point, ['line', 'column']);
+        check(['line', 'column'].every(field => Number.isSafeInteger(point[field]) && point[field] > 0 && point[field] <= 0x7fffffff), 'Invalid expected owner range.');
+      }
+      check(owner.end.line > owner.start.line || owner.end.line === owner.start.line && owner.end.column > owner.start.column, 'Expected owner range must be nonempty and ordered.');
+      return { path: owner.path, name: owner.name, start: { line: owner.start.line, column: owner.start.column }, end: { line: owner.end.line, column: owner.end.column } };
+    });
+    check(new Set(owners.map(owner => JSON.stringify(owner))).size === owners.length, 'Duplicate expected owner.');
+    return { ruleId: decision.ruleId, oldPath: decision.oldPath, newPath: decision.newPath, side: decision.side, status: decision.status, reason: decision.reason, owners: canonicalSort(owners) };
+  });
+  return { candidatePaths, decisions: canonicalSort(decisions) };
+}
+
+function auditOwners(bundle, expected) {
+  const context = bundle.angularTemplateOwnerContext;
+  const byId = new Map(bundle.changes.map(change => [change.id, change]));
+  const actual = (context?.decisions ?? []).map(decision => {
+    const change = byId.get(decision.changeId);
+    return { ruleId: decision.ruleId, oldPath: change?.oldPath ?? null, newPath: change?.newPath ?? null, side: decision.side,
+      status: decision.status, reason: decision.reason, owners: canonicalSort(decision.owners.map(owner => ({ path: owner.component.origin.path, name: owner.component.name, start: owner.component.origin.start, end: owner.component.origin.end }))) };
+  });
+  const byKey = new Map(actual.map(decision => [ownerDecisionKey(decision), decision]));
+  const expectedKeys = new Set(expected.decisions.map(ownerDecisionKey));
+  const candidatePaths = context?.policy.candidatePaths ?? null;
+  const candidatePathsPassed = JSON.stringify(candidatePaths) === JSON.stringify(expected.candidatePaths);
+  const results = expected.decisions.map(decision => {
+    const found = byKey.get(ownerDecisionKey(decision)) ?? null;
+    const expectedOwners = new Set(decision.owners.map(owner => JSON.stringify(owner))), actualOwners = new Set((found?.owners ?? []).map(owner => JSON.stringify(owner)));
+    return { expected: decision, actual: found, passed: found !== null && JSON.stringify(decision) === JSON.stringify(found),
+      missedOwners: decision.owners.filter(owner => !actualOwners.has(JSON.stringify(owner))),
+      unexpectedOwners: (found?.owners ?? []).filter(owner => !expectedOwners.has(JSON.stringify(owner))) };
+  });
+  const unexpectedDecisions = canonicalSort(actual.filter(decision => !expectedKeys.has(ownerDecisionKey(decision))));
+  return { passed: !!context && candidatePathsPassed && unexpectedDecisions.length === 0 && results.every(result => result.passed),
+    contextAvailable: !!context, expectedCandidatePaths: expected.candidatePaths, candidatePaths, candidatePathsPassed, results, unexpectedDecisions };
+}
+
 /** Freeze supplied expectations without reading a bundle or deriving labels from it. */
 export function compileAcceptanceExpectations(input, options = {}) {
   check(object(options) && Object.keys(options).every(key => key === 'maxExpectationsBytes'), 'Unknown expectation options.');
   const limit = bytes(options.maxExpectationsBytes ?? 1024 * 1024); const data = copy(input, limit);
   const compiledId = data?.id; if (compiledId !== undefined) delete data.id;
-  keys(data, ['schemaVersion', 'caseId', 'cohort', 'provenance', 'revisions', 'ruleConfigId', 'ruleSource', 'changes']);
-  check(data.schemaVersion === 'review-acceptance-expectations/v1', 'Expected review-acceptance-expectations/v1.');
+  const ownerVersion = data.schemaVersion === 'review-acceptance-expectations/v2';
+  keys(data, ['schemaVersion', 'caseId', 'cohort', 'provenance', 'revisions', 'ruleConfigId', 'ruleSource', 'changes', ...(ownerVersion ? ['angularOwners'] : [])]);
+  check(ownerVersion || data.schemaVersion === 'review-acceptance-expectations/v1', 'Expected review-acceptance-expectations/v1 or v2.');
   check(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/u.test(text(data.caseId, 128)), 'Invalid case identifier.');
   check(['development', 'held-out'].includes(data.cohort), 'Invalid declared cohort.');
   keys(data.provenance, ['kind', 'author', 'revision']);
@@ -66,7 +131,8 @@ export function compileAcceptanceExpectations(input, options = {}) {
   const r = data.revisions;
   const payload = { schemaVersion: data.schemaVersion, caseId: data.caseId, cohort: data.cohort, provenance,
     revisions: { requestedBaseCommit: r.requestedBaseCommit, effectiveBaseCommit: r.effectiveBaseCommit, headCommit: r.headCommit, comparison: r.comparison },
-    ruleConfigId: data.ruleConfigId, ruleSource: data.ruleSource, changes };
+    ruleConfigId: data.ruleConfigId, ruleSource: data.ruleSource, changes,
+    ...(ownerVersion ? { angularOwners: compileOwnerExpectations(data.angularOwners, changes, data.ruleSource) } : {}) };
   const result = { id: `expectations:${hash(payload)}`, ...payload };
   check(compiledId === undefined || compiledId === result.id, 'Invalid compiled expectation ID.');
   check(Buffer.byteLength(JSON.stringify(result)) <= limit, 'Compiled expectations exceed byte budget.', 'ACCEPTANCE_LIMIT');
@@ -121,9 +187,12 @@ export function auditReviewBundle(inputBundle, inputExpectations, options = {}) 
   const identityPassed = revisionsPassed && rulePolicyPassed;
   const factsPassed = revisionsPassed && unexpectedChanges.length === 0 && results.every(result => result.factsPassed);
   const ruleSelectionPassed = identityPassed && unexpectedChanges.length === 0 && results.every(result => result.ruleSelectionPassed);
-  const payload = { schemaVersion: 'review-acceptance-report/v1', caseId: expectations.caseId, expectationsId: expectations.id, bundleId: bundle.id,
+  const ownerAudit = expectations.angularOwners ? auditOwners(bundle, expectations.angularOwners) : null;
+  const angularOwnersPassed = ownerAudit ? identityPassed && unexpectedChanges.length === 0 && ownerAudit.passed : null;
+  const payload = { schemaVersion: ownerAudit ? 'review-acceptance-report/v2' : 'review-acceptance-report/v1', caseId: expectations.caseId, expectationsId: expectations.id, bundleId: bundle.id,
     declaredProvenance: expectations.provenance, declaredCohort: expectations.cohort, provenanceVerification: 'not-verified',
-    identityPassed, revisionsPassed, rulePolicyPassed, mismatches, factsPassed, ruleSelectionPassed, passed: factsPassed && ruleSelectionPassed, results, unexpectedChanges,
+    identityPassed, revisionsPassed, rulePolicyPassed, mismatches, factsPassed, ruleSelectionPassed, passed: factsPassed && ruleSelectionPassed && angularOwnersPassed !== false, results, unexpectedChanges,
+    ...(ownerAudit ? { angularOwnersPassed, angularOwners: ownerAudit } : {}),
     reviewerImprovement: 'not-measured', limitations: ['Expectations and cohort/approval/author declarations are supplied by the caller; independence and pre-run freezing are not verified.',
       'Bundle validation checks internal evidence consistency, not repository/commit/MR authenticity.',
       'Passing rule relevance is agreement with supplied policy, not defect proof, framework/runtime correctness or reviewer-quality improvement.'] };

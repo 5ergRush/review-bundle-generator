@@ -101,3 +101,6 @@ semantics, inherited/computed members, entity offset remapping, deferred/ICU ana
 and tracking scope remain the existing explicit parser limits. Synthetic tests and
 installed-package smoke verify this contract; no actual corporate MR, application
 build/runtime validation or reviewer-quality improvement is claimed.
+
+Supplied owner expectations can be audited independently with the v2 contract in
+[offline acceptance](offline-acceptance.md#configured-template-owner-expectations).

@@ -186,3 +186,5 @@ Use `--rule-source pinned` with v3 rules to recover enclosing-method context fro
 complete pinned changed TypeScript files, even when a diff hunk omits the header.
 This opt-in produces bundle/selection v4 with blob-verified source evidence; semantic
 analysis remains optional. See [the pinned rule evidence contract](docs/pinned-rule-evidence.md).
+
+Offline acceptance v2 can assert exact configured template owner sets and revision-specific class ranges; see [the expectations contract](docs/offline-acceptance.md#configured-template-owner-expectations).

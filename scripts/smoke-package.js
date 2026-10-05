@@ -104,6 +104,16 @@ try {
   await writeFile(join(temporary, 'owners.json'), JSON.stringify(owners));
   const ownerPacket = JSON.parse(run(process.execPath, [cli, 'packet', '--bundle', join(temporary, 'owners.json'), '--reviewer-id', 'package-smoke', '--reviewer-version', 'v1'], consumer, 'installed template-only packet'));
   assert.equal(ownerPacket.selectedRules[0].id, 'view');
+  const ownerExpectations = { ...expectations, schemaVersion: 'review-acceptance-expectations/v2', caseId: 'installed-template-owners',
+    revisions: { requestedBaseCommit: templateBase, effectiveBaseCommit: templateBase, headCommit: git('rev-parse', 'HEAD'), comparison: 'merge-base' },
+    ruleConfigId: owners.ruleSelection.configId,
+    changes: [{ status: 'M', oldPath: 'consumer.view', newPath: 'consumer.view', oldKind: 'file', newKind: 'file', coverage: 'text-diff', addedLines: 1, removedLines: 1,
+      selectedRuleIds: ['view'], requiredPatchLines: [], sourceCoverage: null }],
+    angularOwners: { candidatePaths: ['component.ts'], decisions: ['old', 'new'].map(side => ({ ruleId: 'view', oldPath: 'consumer.view', newPath: 'consumer.view', side,
+      status: 'included', reason: 'explicit-template-url-in-candidate-set', owners: [{ path: 'component.ts', name: 'Panel', start: { line: 2, column: 1 }, end: { line: 7, column: 2 } }] })) } };
+  await writeFile(join(temporary, 'owner-expectations.json'), JSON.stringify(ownerExpectations));
+  const ownerAcceptance = JSON.parse(run(process.execPath, [cli, 'audit', '--bundle', join(temporary, 'owners.json'), '--expectations', join(temporary, 'owner-expectations.json')], consumer, 'installed authored ownership acceptance'));
+  assert.equal(ownerAcceptance.schemaVersion, 'review-acceptance-report/v2'); assert.equal(ownerAcceptance.angularOwnersPassed, true); assert.equal(ownerAcceptance.passed, true);
   const fixtureDirectory = join(packageDirectory, 'fixtures', 'evaluation');
   const report = JSON.parse(run(process.execPath, [cli, 'evaluate', '--dataset', join(fixtureDirectory, 'dataset.json'), '--runs', join(fixtureDirectory, 'runs.json')], consumer, 'installed offline evaluation'));
   assert.equal(report.schemaVersion, 'review-evaluation-report/v1'); assert.equal(report.evidenceKind, 'synthetic-or-mixed');

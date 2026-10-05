@@ -1,7 +1,7 @@
 # Offline MR acceptance
 
 `review-bundle audit` checks Gate 1 (facts and rule relevance) on an ordinary
-generated bundle against supplied expectations. It accepts existing bundle v1–v5,
+generated bundle against supplied expectations. It accepts existing bundle v1–v7,
 including pinned-source mode and optional semantic/caller context. It performs no
 Git reads, network requests, source execution or AI review.
 
@@ -65,7 +65,7 @@ an empty array does not assert patch content. These are required lines, not an
 assertion that the complete patch contains no other lines.
 The external assertions cover the listed fields. Mode values, rename similarity,
 blob identities and caller availability are validated internally where applicable,
-but are not independently asserted by this expectations schema. Angular template ownership in v5 is internally validated by the packet boundary; these expectations do not independently assert that relationship.
+but are not independently asserted by this expectations schema. Angular template ownership in v5 is internally validated by the packet boundary; v1 expectations do not independently assert that relationship. Use v2 below for configured changed-template owner assertions.
 
 `selectedRuleIds` asserts the exact set selected for that change. Global rule
 agreement cannot hide a rule attached to the wrong file. `sourceCoverage` is null
@@ -105,3 +105,77 @@ Passing means agreement with supplied fact/relevance policy. It does not prove a
 defect, framework/runtime correctness, repository/MR authenticity or reviewer benefit.
 Gate 2 remains the separate [reviewer comparison](validation-plan.md); every report
 explicitly records `reviewerImprovement: not-measured`.
+
+## Configured template owner expectations
+
+`review-acceptance-expectations/v2` retains every v1 field and requires
+`angularOwners: {candidatePaths, decisions}`. It requires pinned rule mode.
+Author these expectations from the pinned source revisions before generation;
+copying discovered owners from a bundle does not establish independent acceptance.
+This contract checks the v7 configured owner context, not v5 selected-syntax
+context or v6 lexical bindings.
+
+`candidatePaths` is the exact configured set of 1..32 unique relative `.ts` paths
+(no declaration files). Ordering is normalized. Each decision has exactly:
+
+| Field | Assertion |
+| --- | --- |
+| `ruleId` | The rule requesting owner context |
+| `oldPath`, `newPath` | Exact expected changed path pair |
+| `side` | `old` or `new`; pins the owner to effective base or head respectively |
+| `status` | `included` or `omitted` |
+| `reason` | Exact owner decision reason |
+| `owners` | Exact set of `{path, name, start, end}` class identities |
+
+Each owner path must be in `candidatePaths`. Class ranges use one-based line and
+UTF-16 column coordinates in the complete TypeScript source, with an exclusive
+end, including decorators. Shared templates require all expected owners; matching
+names alone cannot hide a wrong class range. Included decisions require owners;
+omitted decisions require an empty list. For an unselected rule, use null paths
+and side, `omitted`, `rule-not-selected` and an empty owner list. Other decisions
+must refer to a selected expected change with the requested side present.
+There must be exactly one expected record per actual rule/change/side decision,
+including omissions. Missing or extra decisions fail. Duplicate decisions and
+owners fail compilation. Decision and owner ordering is normalized into the ID.
+
+Example additional v2 field for a single unchanged owner:
+
+```json
+{
+  "angularOwners": {
+    "candidatePaths": ["owner.ts"],
+    "decisions": [
+      {
+        "ruleId": "template",
+        "oldPath": "screen.view", "newPath": "screen.view", "side": "old",
+        "status": "included", "reason": "explicit-template-url-in-candidate-set",
+        "owners": [{"path": "owner.ts", "name": "Panel",
+          "start": {"line": 2, "column": 1}, "end": {"line": 3, "column": 15}}]
+      },
+      {
+        "ruleId": "template",
+        "oldPath": "screen.view", "newPath": "screen.view", "side": "new",
+        "status": "included", "reason": "explicit-template-url-in-candidate-set",
+        "owners": [{"path": "owner.ts", "name": "Panel",
+          "start": {"line": 2, "column": 1}, "end": {"line": 3, "column": 15}}]
+      }
+    ]
+  }
+}
+```
+
+A v2 audit emits `review-acceptance-report/v2` with `angularOwnersPassed` and
+`angularOwners`. The latter retains context availability, expected/actual candidate
+paths, per-decision expected/actual values, missed/extra owners and unexpected
+decisions. Its `passed` is the relationship comparison; top-level
+`angularOwnersPassed` also requires revision/rule identity and no unexpected changes.
+Overall `passed` requires facts, rule relevance and owners. An absent owner context
+fails even with empty expected decisions. The CLI retains exit 0/2/1 semantics.
+V1 expectation IDs and report format remain unchanged; v1 does not assert owners.
+
+At most 10000 owner decisions and 64 owners per decision are accepted, within the
+existing byte budgets. Owner assertions do not authenticate missing candidates,
+commit/tree membership, MR approval or expectation independence. Matching omissions
+means agreement about configured coverage, not proof that no owner exists elsewhere.
+Semantic template rule selection, lexical binding expectations, Angular runtime
+behavior and reviewer benefit remain outside this audit.

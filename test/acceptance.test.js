@@ -13,7 +13,7 @@ const rulesYaml = JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ i
 const clone = value => JSON.parse(JSON.stringify(value));
 const row = (path, overrides = {}) => ({ status: 'M', oldPath: path, newPath: path, oldKind: 'file', newKind: 'file', coverage: 'text-diff', addedLines: 0, removedLines: 1,
   selectedRuleIds: ['amount'], requiredPatchLines: ["-  if (amount <= 0) throw new Error('invalid');"], sourceCoverage: { available: true, reason: 'parsed-pinned-sources' }, ...overrides });
-async function fixture(t, initial = { 'left.ts': before, 'right.ts': '// old comment\n', 'binary.bin': Buffer.from([0, 1]) }, final = { 'left.ts': after, 'right.ts': '// new comment\n', 'binary.bin': Buffer.from([0, 2]) }) {
+async function fixture(t, initial = { 'left.ts': before, 'right.ts': '// old comment\n', 'binary.bin': Buffer.from([0, 1]) }, final = { 'left.ts': after, 'right.ts': '// new comment\n', 'binary.bin': Buffer.from([0, 2]) }, overrides = {}) {
   const repo = await mkdtemp(join(tmpdir(), 'review-external-acceptance-')); t.after(() => rm(repo, { recursive: true, force: true }));
   const env = { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_'))), GIT_CONFIG_GLOBAL: devNull, GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'Fixture', GIT_AUTHOR_EMAIL: 'fixture@example.invalid', GIT_COMMITTER_NAME: 'Fixture', GIT_COMMITTER_EMAIL: 'fixture@example.invalid' };
   const git = (...args) => execFileSync('git', ['-c', `core.hooksPath=${devNull}`, '-c', 'commit.gpgSign=false', ...args], { cwd: repo, env, encoding: 'utf8', timeout: 10000 }).trim();
@@ -23,7 +23,7 @@ async function fixture(t, initial = { 'left.ts': before, 'right.ts': '// old com
   for (const path of Object.keys(initial)) if (!Object.hasOwn(final, path)) await rm(join(repo, path));
   for (const [path, content] of Object.entries(final)) await writeFile(join(repo, path), content);
   git('add', '-A'); git('commit', '-qm', 'head'); const head = git('rev-parse', 'HEAD');
-  const options = { repo, base, head, comparison: 'direct', rulesYaml, ruleSource: 'pinned' };
+  const options = { repo, base, head, comparison: 'direct', rulesYaml, ruleSource: 'pinned', ...overrides };
   const definition = { schemaVersion: 'review-acceptance-expectations/v1', caseId: 'authored-multi-file', cohort: 'development', provenance: { kind: 'synthetic', author: 'contract-test', revision: '1' },
     revisions: { requestedBaseCommit: base, effectiveBaseCommit: base, headCommit: head, comparison: 'direct' }, ruleConfigId: parseRulesYaml(rulesYaml).id, ruleSource: 'pinned',
     changes: [row('left.ts'), row('right.ts', { addedLines: 1, selectedRuleIds: [], requiredPatchLines: ['-// old comment', '+// new comment'] }),
@@ -36,6 +36,110 @@ test('offline multi-file audit checks exact facts, pinned source coverage and pe
   assert.equal(report.passed, true); assert.equal(report.results.length, 3); assert.equal(report.reviewerImprovement, 'not-measured');
   assert.equal(report.provenanceVerification, 'not-verified'); assert.equal(report.results.find(r => r.newPath === 'right.ts').selectedRuleIds.length, 0);
   assert(Object.isFrozen(report.results[0].differences));
+});
+
+const ownerSource = "import { Component } from '@angular/core';\n@Component({templateUrl:'./screen.view'})\nclass Panel {}\n";
+const authoredOwner = (name = 'Panel', start = { line: 2, column: 1 }, end = { line: 3, column: 15 }) => ({ path: 'owner.ts', name, start, end });
+async function ownerFixture(t, { source = ownerSource, nextSource = source, candidatePaths = ['owner.ts'], selectedPaths = ['*.view'] } = {}) {
+  const yaml = JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'template', title: 'Template policy', instruction: 'Check declared owners.', scope: { paths: selectedPaths } }] });
+  const f = await fixture(t, { 'screen.view': 'old\n', 'owner.ts': source }, { 'screen.view': 'new\n', 'owner.ts': nextSource },
+    { rulesYaml: yaml, angularTemplates: true, angularOwnerPaths: candidatePaths });
+  f.definition = { ...f.definition, schemaVersion: 'review-acceptance-expectations/v2', ruleConfigId: parseRulesYaml(yaml).id,
+    changes: [row('screen.view', { addedLines: 1, selectedRuleIds: ['template'], requiredPatchLines: ['-old', '+new'], sourceCoverage: null })],
+    angularOwners: { candidatePaths, decisions: ['old', 'new'].map(side => ({ ruleId: 'template', oldPath: 'screen.view', newPath: 'screen.view', side,
+      status: 'included', reason: 'explicit-template-url-in-candidate-set', owners: [authoredOwner()] })) } };
+  return f;
+}
+
+test('v2 audits authored unchanged template owner identities and preserves v1 output', async t => {
+  const f = await ownerFixture(t); const report = auditReviewBundle(f.bundle, f.definition);
+  assert.equal(report.passed, true); assert.equal(report.schemaVersion, 'review-acceptance-report/v2'); assert.equal(report.angularOwnersPassed, true);
+  assert.equal(report.angularOwners.results.length, 2); assert(Object.isFrozen(report.angularOwners.results[0].actual.owners));
+  const legacy = clone(f.definition); legacy.schemaVersion = 'review-acceptance-expectations/v1'; delete legacy.angularOwners;
+  const r = auditReviewBundle(f.bundle, legacy); assert.equal(r.passed, true); assert.equal(r.schemaVersion, 'review-acceptance-report/v1'); assert(!Object.hasOwn(r, 'angularOwnersPassed'));
+});
+
+test('owner misses, extras, source ranges and side omissions fail independently of facts/rules', async t => {
+  const f = await ownerFixture(t);
+  for (const mutate of [d => d.angularOwners.decisions[0].owners[0].name = 'Wrong', d => d.angularOwners.decisions[0].owners[0].end.column++,
+    d => d.angularOwners.decisions[0].owners.push(authoredOwner('Extra')), d => d.angularOwners.decisions.pop(),
+    d => { d.angularOwners.decisions[0].status = 'omitted'; d.angularOwners.decisions[0].reason = 'owner-not-resolved-in-candidate-set'; d.angularOwners.decisions[0].owners = []; }]) {
+    const d = clone(f.definition); mutate(d); const report = auditReviewBundle(f.bundle, d);
+    assert.equal(report.factsPassed, true); assert.equal(report.ruleSelectionPassed, true); assert.equal(report.angularOwnersPassed, false); assert.equal(report.passed, false);
+  }
+  const d = clone(f.definition); d.angularOwners.decisions[0].owners[0].name = 'Wrong';
+  const result = auditReviewBundle(f.bundle, d).angularOwners.results.find(r => r.expected.side === 'old'); assert.equal(result.missedOwners[0].name, 'Wrong'); assert.equal(result.unexpectedOwners[0].name, 'Panel');
+});
+
+test('owner identity expectations are revision-specific and cannot be swapped between sides', async t => {
+  const f = await ownerFixture(t, { nextSource: ownerSource.replace('Panel', 'Other') });
+  f.definition.changes.push(row('owner.ts', { addedLines: 1, selectedRuleIds: [], requiredPatchLines: ['-class Panel {}', '+class Other {}'], sourceCoverage: null }));
+  f.definition.angularOwners.decisions[1].owners[0].name = 'Other';
+  assert.equal(auditReviewBundle(f.bundle, f.definition).passed, true);
+  f.definition.angularOwners.decisions[0].owners[0].name = 'Other'; f.definition.angularOwners.decisions[1].owners[0].name = 'Panel';
+  const report = auditReviewBundle(f.bundle, f.definition); assert.equal(report.angularOwnersPassed, false); assert(report.angularOwners.results.every(r => !r.passed));
+});
+
+test('shared owners are exact sets and expectation order cannot alter content identity', async t => {
+  const source = ownerSource + "@Component({templateUrl:'./screen.view'})\nclass Other {}\n";
+  const f = await ownerFixture(t, { source });
+  for (const d of f.definition.angularOwners.decisions) d.owners.push(authoredOwner('Other', { line: 4, column: 1 }, { line: 5, column: 15 }));
+  assert.equal(auditReviewBundle(f.bundle, f.definition).passed, true);
+  const compiled = compileAcceptanceExpectations(f.definition); f.definition.angularOwners.decisions.reverse(); f.definition.angularOwners.decisions.forEach(d => d.owners.reverse());
+  assert.deepEqual(compileAcceptanceExpectations(f.definition), compiled);
+  f.definition.angularOwners.decisions[0].owners.pop(); assert.equal(auditReviewBundle(f.bundle, f.definition).angularOwnersPassed, false);
+});
+
+test('candidate policy, absent owner context and stale identity cannot pass empty assertions', async t => {
+  const f = await ownerFixture(t); const d = clone(f.definition); d.angularOwners.candidatePaths.push('missing.ts');
+  assert.equal(auditReviewBundle(f.bundle, d).angularOwners.candidatePathsPassed, false);
+  const baseline = await createReviewBundle({ ...f.options, angularOwnerPaths: undefined }); d.angularOwners.decisions = [];
+  const absent = auditReviewBundle(baseline, d); assert.equal(absent.angularOwners.contextAvailable, false); assert.equal(absent.angularOwnersPassed, false);
+  const stale = clone(f.definition); stale.revisions.headCommit = 'a'.repeat(40); const r = auditReviewBundle(f.bundle, stale);
+  assert.equal(r.angularOwners.passed, true); assert.equal(r.angularOwnersPassed, false);
+});
+
+test('renamed template expectations retain old ownership and explicitly omit the new path', async t => {
+  const yaml = JSON.stringify({ schemaVersion: 'review-rules/v3', rules: [{ id: 'template', title: 'Template', instruction: 'Check owner.', scope: { paths: ['*.view'] } }] });
+  const f = await fixture(t, { 'screen.view': 'stable\n', 'owner.ts': ownerSource }, { 'renamed.view': 'stable\n', 'owner.ts': ownerSource },
+    { rulesYaml: yaml, angularTemplates: true, angularOwnerPaths: ['owner.ts'] });
+  f.definition.schemaVersion = 'review-acceptance-expectations/v2'; f.definition.ruleConfigId = parseRulesYaml(yaml).id;
+  f.definition.changes = [row('screen.view', { status: 'R', newPath: 'renamed.view', coverage: 'metadata-only', addedLines: 0, removedLines: 0, selectedRuleIds: ['template'], requiredPatchLines: [], sourceCoverage: null })];
+  f.definition.angularOwners = { candidatePaths: ['owner.ts'], decisions: ['old', 'new'].map(side => ({ ruleId: 'template', oldPath: 'screen.view', newPath: 'renamed.view', side,
+    status: side === 'old' ? 'included' : 'omitted', reason: side === 'old' ? 'explicit-template-url-in-candidate-set' : 'owner-not-resolved-in-candidate-set', owners: side === 'old' ? [authoredOwner()] : [] })) };
+  assert.equal(auditReviewBundle(f.bundle, f.definition).passed, true);
+  f.definition.angularOwners.decisions[1].newPath = 'screen.view';
+  assert.throws(() => compileAcceptanceExpectations(f.definition), { code: 'INVALID_ACCEPTANCE_INPUT' });
+});
+
+test('authored unresolved and unselected decisions pass with explicit bounded coverage', async t => {
+  const f = await ownerFixture(t, { candidatePaths: ['missing.ts'] });
+  for (const d of f.definition.angularOwners.decisions) { d.status = 'omitted'; d.reason = 'owner-not-resolved-in-candidate-set'; d.owners = []; }
+  assert.equal(auditReviewBundle(f.bundle, f.definition).passed, true);
+  const unselected = await ownerFixture(t, { selectedPaths: ['*.other'] }); unselected.definition.changes[0].selectedRuleIds = [];
+  unselected.definition.angularOwners.decisions = [{ ruleId: 'template', oldPath: null, newPath: null, side: null, status: 'omitted', reason: 'rule-not-selected', owners: [] }];
+  assert.equal(auditReviewBundle(unselected.bundle, unselected.definition).passed, true);
+});
+
+test('v2 malformed owner expectations fail before auditing', async t => {
+  const f = await ownerFixture(t);
+  for (const mutate of [d => delete d.angularOwners, d => d.angularOwners = null, d => d.angularOwners.candidatePaths.push('owner.ts'),
+    d => d.angularOwners.candidatePaths = ['../owner.ts'], d => d.angularOwners.decisions.push(d.angularOwners.decisions[0]),
+    d => d.angularOwners.decisions[0].owners.push(d.angularOwners.decisions[0].owners[0]), d => d.angularOwners.decisions[0].owners[0].start.line = 0,
+    d => d.angularOwners.decisions[0].owners[0].end = { line: 1, column: 1 }, d => d.angularOwners.decisions[0].owners[0].extra = true,
+    d => d.angularOwners.decisions[0].side = 'bad', d => d.angularOwners.decisions[0].newPath = 'absent.view',
+    d => { d.ruleSource = 'patch'; }, d => d.angularOwners.decisions[0].status = 'omitted']) {
+    const d = clone(f.definition); mutate(d); assert.throws(() => compileAcceptanceExpectations(d), { code: 'INVALID_ACCEPTANCE_INPUT' });
+  }
+  const compiled = clone(compileAcceptanceExpectations(f.definition)); compiled.angularOwners.decisions[0].owners[0].name = 'Edited';
+  assert.throws(() => compileAcceptanceExpectations(compiled), { code: 'INVALID_ACCEPTANCE_INPUT' });
+});
+
+test('v2 CLI emits ownership mismatches with exit 2', async t => {
+  const f = await ownerFixture(t); f.definition.angularOwners.decisions[0].owners[0].name = 'Wrong';
+  await writeFile(join(f.repo, 'bundle.json'), JSON.stringify(f.bundle)); await writeFile(join(f.repo, 'expected.json'), JSON.stringify(f.definition));
+  const result = spawnSync(process.execPath, [resolve('src/cli.js'), 'audit', '--bundle', join(f.repo, 'bundle.json'), '--expectations', join(f.repo, 'expected.json')], { encoding: 'utf8', timeout: 20000 });
+  assert.equal(result.status, 2); assert.equal(JSON.parse(result.stdout).angularOwnersPassed, false); assert.equal(result.stderr, '');
 });
 
 test('matching global rule sets do not hide swapped per-file relevance', async t => {
