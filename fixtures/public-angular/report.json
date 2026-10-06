@@ -1,0 +1,410 @@
+{
+  "schemaVersion": "public-angular-calibration-report/v1",
+  "repository": "https://github.com/angular/components.git",
+  "ruleConfigId": "rules:26af9183c32fb36ed3b99148a663b86c88ca2adbd1a91bbc643742c697602c3b",
+  "snapshotPolicy": "landed-single-parent-commit-vs-first-parent",
+  "comparison": "direct",
+  "evidenceKind": "public-upstream-landed-changes-with-same-author-frozen-expectations",
+  "expectationAuthor": "Codex (same implementation author; source inspection before generation)",
+  "results": [
+    {
+      "caseId": "angular-components-pr-23185",
+      "url": "https://github.com/angular/components/pull/23185",
+      "base": "4279ff139bb4c4612474a88089c65cf617861211",
+      "head": "2a2cd9c3e4f96b1cf3e370cec2a485bc53a7e185",
+      "expectationsId": "expectations:7d1d8633d2d396c1e003b17b374c4bdeb9497f05542935059ae06c64adc2a7b7",
+      "bundleId": "bundle:543d45b050beced483a1e7f194b7d19d2923a0d6ef37a90969ddf198062d1900",
+      "reportId": "acceptance:b32f07403d2b92fa408018131353423d92b54124d50565176b091b954f22d6be",
+      "gitVersion": "git version 2.51.1",
+      "compilerVersion": "5.9.3",
+      "changes": 4,
+      "factsPassed": true,
+      "ruleSelectionPassed": true,
+      "passed": true,
+      "repeatedGeneration": "identical",
+      "comparisons": [
+        {
+          "oldPath": "src/material-experimental/mdc-menu/menu-item.ts",
+          "newPath": "src/material-experimental/mdc-menu/menu-item.ts",
+          "changeId": "change:56fc7dd8191dfcd148fea445b48a12c63e566de2f1bd880bb04730f62c4861d3",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material/menu/menu-item.ts",
+          "newPath": "src/material/menu/menu-item.ts",
+          "changeId": "change:506bbb109e2fb5346a2d9ec51dfd0bd853926616ec21404e7f713542caef8007",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [
+            "on-push-highlight-notification",
+            "on-push-highlight-state"
+          ],
+          "selectedRuleIds": [
+            "on-push-highlight-notification",
+            "on-push-highlight-state"
+          ],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material/menu/menu-trigger.ts",
+          "newPath": "src/material/menu/menu-trigger.ts",
+          "changeId": "change:bede1a4b8bd4c5565f3a58d7d4d5b1b67c6a649eb3853c998d00113229e14642",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "tools/public_api_guard/material/menu.md",
+          "newPath": "tools/public_api_guard/material/menu.md",
+          "changeId": "change:2e07bd7d5193eaa7f63e6f211a55a763f53ab61eadea55c17801aa718c5079be",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": null,
+          "sourceCoverage": null,
+          "sourceCoveragePassed": true
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "ruleId": "on-push-highlight-notification",
+          "path": "src/material/menu/menu-item.ts",
+          "side": "added",
+          "status": "included",
+          "reason": "bound-change-detection-strategy"
+        },
+        {
+          "ruleId": "on-push-highlight-state",
+          "path": "src/material/menu/menu-item.ts",
+          "side": "added",
+          "status": "included",
+          "reason": "bound-change-detection-strategy"
+        }
+      ]
+    },
+    {
+      "caseId": "angular-components-pr-27250",
+      "url": "https://github.com/angular/components/pull/27250",
+      "base": "de7c3dbd084f84cc6601830e3639c679a91bbbd3",
+      "head": "d303ead1330a7fcf3a72d044e2161898b524ce17",
+      "expectationsId": "expectations:386eb93cd850b93912ba570fe0a4d2614b57ca6bf984b456fc7aca302b57253d",
+      "bundleId": "bundle:a46f4bf1bac6442f19bb3eccd42bf16d7da73d5ef251c3626f698322fa152e26",
+      "reportId": "acceptance:fdbb9f6c0c6454f488f600b803a8118b43ecc443293f9d3ad14d7acd488c366a",
+      "gitVersion": "git version 2.51.1",
+      "compilerVersion": "5.9.3",
+      "changes": 2,
+      "factsPassed": true,
+      "ruleSelectionPassed": true,
+      "passed": true,
+      "repeatedGeneration": "identical",
+      "comparisons": [
+        {
+          "oldPath": "src/material/slider/slider-input.ts",
+          "newPath": "src/material/slider/slider-input.ts",
+          "changeId": "change:259ce1c11fffeb4dab86f12adaab229acffaefbf9579487192f3b399154b4bf1",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [
+            "slider-parent-notification"
+          ],
+          "selectedRuleIds": [
+            "slider-parent-notification"
+          ],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material/slider/slider-interface.ts",
+          "newPath": "src/material/slider/slider-interface.ts",
+          "changeId": "change:b97bb699417fa959cf028d4115eafb4206b885bdef80a4684f51999add9c9873",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        }
+      ],
+      "qualificationChecks": []
+    },
+    {
+      "caseId": "angular-components-pr-23992",
+      "url": "https://github.com/angular/components/pull/23992",
+      "base": "3fd6f0e188eb84dc1bf23cb8c5f6ba0a88f1b553",
+      "head": "41f024430222ea68e28946548cda6c10ec86b4aa",
+      "expectationsId": "expectations:5311f9dcfcc709e4f051e9e96a154cd52166590b19d870a8469284620e9a6ac2",
+      "bundleId": "bundle:cde6a8056ba274c86a6006a5703de00e041f228d2af22df001d4dd6b1985eda0",
+      "reportId": "acceptance:fdd93a229968e2ea365a4e1e704c7b5f018ac60e5bfc053015932ce213bbb375",
+      "gitVersion": "git version 2.51.1",
+      "compilerVersion": "5.9.3",
+      "changes": 7,
+      "factsPassed": true,
+      "ruleSelectionPassed": true,
+      "passed": true,
+      "repeatedGeneration": "identical",
+      "comparisons": [
+        {
+          "oldPath": "src/material-experimental/mdc-button/BUILD.bazel",
+          "newPath": "src/material-experimental/mdc-button/BUILD.bazel",
+          "changeId": "change:e92714fa7aec7c8d604d4204cc80a519ac8dc2fd5df07af2bf933930afdf2550",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": false,
+            "reason": "not-applicable"
+          },
+          "sourceCoverage": {
+            "available": false,
+            "reason": "not-applicable"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material-experimental/mdc-button/button-base.ts",
+          "newPath": "src/material-experimental/mdc-button/button-base.ts",
+          "changeId": "change:90c4502f71d54da316b3b5146fe3d4cec2b13764c875a2e194ce889d9cbdff8c",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [
+            "native-listener-teardown"
+          ],
+          "selectedRuleIds": [
+            "native-listener-teardown"
+          ],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material-experimental/mdc-button/button.spec.ts",
+          "newPath": "src/material-experimental/mdc-button/button.spec.ts",
+          "changeId": "change:9ac8ea97e26aa276c8c7e72e985a6592def56146871a3b8e380f5d6aed058ea9",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material/button/BUILD.bazel",
+          "newPath": "src/material/button/BUILD.bazel",
+          "changeId": "change:6fe3692eb5237f4ceda814def48346576402ab6cc2faf45d3c49987ce0d78f86",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": false,
+            "reason": "not-applicable"
+          },
+          "sourceCoverage": {
+            "available": false,
+            "reason": "not-applicable"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material/button/button.spec.ts",
+          "newPath": "src/material/button/button.spec.ts",
+          "changeId": "change:795402683ba3c93d68fedb81e8fed555db7d751cfdb10b053534e0026eef6e4d",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "src/material/button/button.ts",
+          "newPath": "src/material/button/button.ts",
+          "changeId": "change:101946cc3c731cd555357c524e315eacbe025c7706ced8c9e57c439e997a817c",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [
+            "native-listener-teardown",
+            "on-push-listener-teardown",
+            "on-push-native-listener"
+          ],
+          "selectedRuleIds": [
+            "native-listener-teardown",
+            "on-push-listener-teardown",
+            "on-push-native-listener"
+          ],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoverage": {
+            "available": true,
+            "reason": "parsed-pinned-sources"
+          },
+          "sourceCoveragePassed": true
+        },
+        {
+          "oldPath": "tools/public_api_guard/material/button.md",
+          "newPath": "tools/public_api_guard/material/button.md",
+          "changeId": "change:ac0a5553ae48cc4b082588fd74b9a85505d2ba551bacd4b37f06e3cf164aed1f",
+          "factsPassed": true,
+          "ruleSelectionPassed": true,
+          "differences": [],
+          "missingPatchLines": [],
+          "expectedRuleIds": [],
+          "selectedRuleIds": [],
+          "falseSelections": [],
+          "missedRules": [],
+          "expectedSourceCoverage": null,
+          "sourceCoverage": null,
+          "sourceCoveragePassed": true
+        }
+      ],
+      "qualificationChecks": [
+        {
+          "ruleId": "on-push-listener-teardown",
+          "path": "src/material-experimental/mdc-button/button-base.ts",
+          "side": "added",
+          "status": "not-matched",
+          "reason": "nearest-class-not-bound-component"
+        },
+        {
+          "ruleId": "on-push-listener-teardown",
+          "path": "src/material/button/button.ts",
+          "side": "added",
+          "status": "included",
+          "reason": "bound-change-detection-strategy"
+        },
+        {
+          "ruleId": "on-push-native-listener",
+          "path": "src/material/button/button.ts",
+          "side": "added",
+          "status": "included",
+          "reason": "bound-change-detection-strategy"
+        }
+      ]
+    }
+  ],
+  "passed": true,
+  "reviewerImprovement": "not-measured",
+  "limitations": [
+    "Three deliberately selected development cases, not a representative or independently authored holdout.",
+    "Upstream merge approval is not corporate MR approval. No private corporate source was used.",
+    "Assertions cover exact changed paths, statuses, entry kinds, counts, per-change selected rules and source coverage. Required patch lines are not asserted.",
+    "Repeated generation agreement does not establish cross-Git-version byte equivalence.",
+    "No Angular runtime tests, actual reviewer comparison, caller context or template ownership/binding acceptance were run."
+  ]
+}

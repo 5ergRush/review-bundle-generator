@@ -1,0 +1,51 @@
+schemaVersion: review-rules/v5
+rules:
+  - id: on-push-highlight-state
+    title: Review highlighted state in an explicit OnPush component
+    instruction: Verify the highlighted-state consumers and notification path, including lazy content. This selection does not prove a defect.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: added, kind: assignment, target: this._highlighted, within: _setHighlighted, angularComponent: true, changeDetection: OnPush}
+  - id: on-push-highlight-notification
+    title: Review highlighted-state notification
+    instruction: Verify the new notification reaches the intended component and remains safe with optional injection. Do not infer receiver identity from spelling alone.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: added, kind: member-call, callee: this._changeDetectorRef.markForCheck, within: _setHighlighted, angularComponent: true, changeDetection: OnPush}
+  - id: slider-parent-notification
+    title: Review slider parent notification from the value setter
+    instruction: Verify the parent notification is appropriate for value updates and consumers. The literal receiver chain does not establish its runtime identity.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: added, kind: member-call, callee: this._slider._cdr.markForCheck, within: value}
+  - id: on-push-native-listener
+    title: Review native listener registration in an explicit OnPush component
+    instruction: Verify zone behavior, disabled-event handling and matching teardown for native listeners.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: added, kind: member-call, callee: this._elementRef.nativeElement.addEventListener, within: ngAfterViewInit, angularComponent: true, changeDetection: OnPush}
+  - id: native-listener-teardown
+    title: Review native listener teardown
+    instruction: Verify the removed listener uses the same target, event and callback identity as registration. A lifecycle name is not a runtime guarantee.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: added, kind: member-call, callee: this._elementRef.nativeElement.removeEventListener, within: ngOnDestroy}
+  - id: on-push-listener-teardown
+    title: Review native listener teardown in an explicit OnPush component
+    instruction: Verify listener cleanup in the qualified component and any inherited cleanup. Qualification applies to the lexical class only.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: added, kind: member-call, callee: this._elementRef.nativeElement.removeEventListener, within: ngOnDestroy, angularComponent: true, changeDetection: OnPush}
+  - id: unrelated-loading-state
+    title: Review unrelated loading state
+    instruction: Verify loading-state consumers and notification paths if this assignment is changed.
+    scope: {paths: ['src/**']}
+    when:
+      changedSyntax:
+        - {side: removed, kind: assignment, target: this.loading, within: load, angularComponent: true, changeDetection: OnPush}
